@@ -1,0 +1,31 @@
+# Render Blueprint for InfraCanvas API
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: infracanvas-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @infracanvas/api build
+    startCommand: pnpm --filter @infracanvas/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: APP_URL
+        sync: false  # Set this to your Vercel frontend URL
+      - key: API_URL
+        sync: false  # Set this to your Render backend URL
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false

@@ -1,5 +1,5 @@
 // API client for backend communication
-// Uses relative URLs - works on both localhost and Vercel
+// Uses VITE_API_URL env var for Render backend, falls back to relative URLs for local dev
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
@@ -16,6 +16,9 @@ class ApiError extends Error {
   }
 }
 
+// Get API base URL - use env var for production (Render), relative for local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 /**
  * Make an authenticated API request
  */
@@ -25,7 +28,10 @@ async function apiFetch<T>(
 ): Promise<T> {
   const { skipAuth, ...fetchOptions } = options;
 
-  const response = await fetch(`/api${endpoint}`, {
+  // Use full URL for Render backend, or relative /api for local proxy
+  const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : `/api${endpoint}`;
+
+  const response = await fetch(url, {
     ...fetchOptions,
     credentials: 'include', // Include cookies for session
     headers: {
@@ -52,7 +58,7 @@ export const authApi = {
    * Get the GitHub OAuth URL to redirect to
    */
   getOAuthUrl(): string {
-    return '/api/auth/github';
+    return API_BASE_URL ? `${API_BASE_URL}/auth/github` : '/api/auth/github';
   },
 
   /**
