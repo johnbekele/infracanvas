@@ -1,0 +1,35 @@
+{
+  "name": "infracanvas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Visual AWS infrastructure designer with GitHub integration for GitOps workflows",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnbekele/infracanvas.git"
+  },
+  "author": "johnbekele",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prettier": "^3.2.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
