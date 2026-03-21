@@ -24,6 +24,14 @@ Before pushing any code:
 3. Run all tests and ensure they pass
 4. Fix any failing tests before pushing
 5. Review changes for security vulnerabilities
+6. **ALWAYS scan for secret leaks** (API keys, tokens, passwords, credentials) before pushing to GitHub
+
+## New Project Setup
+
+When starting a new project:
+- **ALWAYS add a `.gitignore` file first** before any commits
+- Include common patterns: `.env`, `node_modules/`, `.DS_Store`, `*.log`, credentials, etc.
+- Verify no secrets or sensitive files are tracked before initial commit
 
 ## Code Quality Standards
 

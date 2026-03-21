@@ -1,0 +1,86 @@
+services:
+  # MongoDB - Local Database
+  mongo:
+    image: mongo:7-jammy
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=infracanvas
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Backend API - Development
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    ports:
+      - "3001:3001"
+    volumes:
+      # Mount source code for hot reload (tsx watch will pick up changes)
+      - ./apps/api/src:/app/apps/api/src
+    env_file:
+      - ./apps/api/.env.docker
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  # Frontend - Development
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: development
+    ports:
+      - "5174:3000"
+    volumes:
+      # Mount source code for hot reload (vite will pick up changes)
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/index.html:/app/apps/web/index.html
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api
+
+  # Frontend - Production
+  web-prod:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: production
+    ports:
+      - "80:80"
+    depends_on:
+      - api-prod
+    profiles:
+      - prod
+
+  # Backend API - Production
+  api-prod:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./apps/api/.env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    profiles:
+      - prod
+
+volumes:
+  mongo_data:
