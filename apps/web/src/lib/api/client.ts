@@ -1,5 +1,5 @@
 // API client for backend communication
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Uses relative URLs - works on both localhost and Vercel
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
@@ -25,7 +25,7 @@ async function apiFetch<T>(
 ): Promise<T> {
   const { skipAuth, ...fetchOptions } = options;
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`/api${endpoint}`, {
     ...fetchOptions,
     credentials: 'include', // Include cookies for session
     headers: {
@@ -33,13 +33,6 @@ async function apiFetch<T>(
       ...fetchOptions.headers,
     },
   });
-
-  // Check for refreshed token
-  const refreshedToken = response.headers.get('X-Refreshed-Token');
-  if (refreshedToken) {
-    // Token was refreshed - the cookie is already set by the server
-    console.debug('Session token refreshed');
-  }
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -59,7 +52,7 @@ export const authApi = {
    * Get the GitHub OAuth URL to redirect to
    */
   getOAuthUrl(): string {
-    return `${API_URL}/auth/github`;
+    return '/api/auth/github';
   },
 
   /**
@@ -148,14 +141,14 @@ export const githubApi = {
       name: string;
       commit: { sha: string };
       protected: boolean;
-    }>>(`/github/branches/${owner}/${repo}`);
+    }>>(`/github/branches?owner=${owner}&repo=${repo}`);
   },
 
   /**
    * Create a new branch
    */
   async createBranch(owner: string, repo: string, branchName: string, fromBranch: string) {
-    return apiFetch(`/github/branches/${owner}/${repo}`, {
+    return apiFetch(`/github/branches?owner=${owner}&repo=${repo}`, {
       method: 'POST',
       body: JSON.stringify({ branchName, fromBranch }),
     });
