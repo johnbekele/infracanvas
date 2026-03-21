@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Github, Cloud, Code, GitBranch, Zap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Logo, LogoIcon } from '@/components/ui/Logo';
+import { LogoIcon } from '@/components/ui/Logo';
 
 export function LandingPage() {
   return (

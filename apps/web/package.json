@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm run build:deps && tsc -b && vite build",
+    "build:deps": "cd ../.. && pnpm turbo build --filter=@infracanvas/core",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "vercel-build": "vite build"
+    "vercel-build": "pnpm run build:deps && vite build"
   },
   "dependencies": {
     "@infracanvas/core": "workspace:*",
