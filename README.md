@@ -44,8 +44,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### One-Click Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/johnbekele/infracanvas)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/johnbekele/infracanvas)
+<img width="3003" height="1836" alt="image" src="https://github.com/user-attachments/assets/c9fa7e3a-c6c7-443c-b26a-53efc29aee42" />
+
 
 ## Usage
 
