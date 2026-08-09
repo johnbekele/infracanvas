@@ -1,0 +1,61 @@
+name: Epic
+description: A tracking issue for a coherent body of work made of many agent tasks.
+title: 'Epic N: '
+labels: ['epic']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Epics are tracking issues. They are never assigned to an agent directly -
+        agents pick up the individual `agent-ready` tasks that reference this epic.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What is true when this epic is done, stated as an outcome rather than a task list.
+    validations:
+      required: true
+
+  - type: textarea
+    id: contracts
+    attributes:
+      label: Contracts Introduced
+      description: >
+        The interfaces, schemas, or tables this epic makes available to later work.
+        Downstream epics cannot be specified until these exist.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: Checklist of child issues. Populated as the wave is created.
+      placeholder: |
+        - [ ] #12 Implement the file walker
+        - [ ] #13 Implement tree-sitter parsing for the JS/TS family
+    validations:
+      required: true
+
+  - type: textarea
+    id: exit
+    attributes:
+      label: Exit Criteria
+      description: >
+        The demonstrable capability that proves this epic landed, and the budgets it
+        must meet.
+      placeholder: |
+        - `ic-engine index` completes on the 100k-file fixture in under 120s at under 300MB RSS
+        - Nightly e2e indexes all three fixture repos without error
+    validations:
+      required: true
+
+  - type: input
+    id: wave
+    attributes:
+      label: Wave
+      description: Which specification wave this epic's issues belong to.
+      placeholder: 'Wave 1'
+    validations:
+      required: true

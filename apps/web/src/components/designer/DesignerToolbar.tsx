@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import {
-  Download, Trash2, ZoomIn, ZoomOut,
-  Maximize2, FileDown, Image, PanelLeftClose, PanelLeft,
-  FolderArchive, Loader2, Github
+  Download,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  FileDown,
+  Image,
+  PanelLeftClose,
+  PanelLeft,
+  FolderArchive,
+  Loader2,
+  Github,
 } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
-import { useDesignerStore, PulumiLanguage } from '@/lib/stores/designer-store';
+import { useDesignerStore, type PulumiLanguage } from '@/lib/stores/designer-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   generateTerraformProject,
@@ -26,12 +35,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PushToGitHubDialog } from '@/components/github/PushToGitHubDialog';
 
 interface DesignerToolbarProps {
@@ -89,25 +93,25 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
 
   return (
     <TooltipProvider>
-      <div className="h-12 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-2 md:px-4">
+      <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-2 md:px-4 dark:border-gray-800 dark:bg-gray-900">
         {/* Left: Design Name */}
-        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink">
+        <div className="flex min-w-0 flex-shrink items-center gap-2 md:gap-3">
           {isEditingName ? (
             <Input
               value={designName}
               onChange={(e) => setDesignName(e.target.value)}
               onBlur={() => setIsEditingName(false)}
               onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
-              className="h-8 w-32 md:w-48 text-sm font-medium"
+              className="h-8 w-32 text-sm font-medium md:w-48"
               autoFocus
             />
           ) : (
             <button
               onClick={() => setIsEditingName(true)}
-              className="text-xs md:text-sm font-medium text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors truncate max-w-[100px] md:max-w-none"
+              className="max-w-[100px] truncate text-xs font-medium text-gray-900 transition-colors hover:text-violet-600 md:max-w-none md:text-sm dark:text-white dark:hover:text-violet-400"
             >
               {designName}
-              {isDirty && <span className="text-orange-500 ml-1">*</span>}
+              {isDirty && <span className="ml-1 text-orange-500">*</span>}
             </button>
           )}
         </div>
@@ -116,11 +120,11 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
         {!isMobile && (
           <div className="flex items-center gap-1">
             {/* Zoom Controls */}
-            <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-1 border-r border-gray-200 px-2 dark:border-gray-700">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomOut()}>
-                    <ZoomOut className="w-4 h-4" />
+                    <ZoomOut className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Zoom Out</TooltipContent>
@@ -129,7 +133,7 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomIn()}>
-                    <ZoomIn className="w-4 h-4" />
+                    <ZoomIn className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Zoom In</TooltipContent>
@@ -138,7 +142,7 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fitView()}>
-                    <Maximize2 className="w-4 h-4" />
+                    <Maximize2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Fit View</TooltipContent>
@@ -152,14 +156,14 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                    className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
                     onClick={() => {
                       if (nodes.length > 0 && confirm('Clear all services from canvas?')) {
                         clearCanvas();
                       }
                     }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Clear Canvas</TooltipContent>
@@ -175,20 +179,20 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Maximize2 className="w-4 h-4" />
+                  <Maximize2 className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => zoomIn()}>
-                  <ZoomIn className="w-4 h-4 mr-2" />
+                  <ZoomIn className="mr-2 h-4 w-4" />
                   Zoom In
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => zoomOut()}>
-                  <ZoomOut className="w-4 h-4 mr-2" />
+                  <ZoomOut className="mr-2 h-4 w-4" />
                   Zoom Out
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => fitView()}>
-                  <Maximize2 className="w-4 h-4 mr-2" />
+                  <Maximize2 className="mr-2 h-4 w-4" />
                   Fit View
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -200,7 +204,7 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                     }
                   }}
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Clear Canvas
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -213,7 +217,7 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               <Button
                 variant={isAuthenticated ? 'ghost' : 'outline'}
                 size="sm"
-                className="h-8 gap-1 md:gap-2 px-2 md:px-3"
+                className="h-8 gap-1 px-2 md:gap-2 md:px-3"
                 onClick={() => setShowPushDialog(true)}
               >
                 {isAuthenticated && user ? (
@@ -221,21 +225,19 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                     <img
                       src={user.githubAvatar}
                       alt={user.githubUsername}
-                      className="w-4 h-4 rounded-full"
+                      className="h-4 w-4 rounded-full"
                     />
                     <span className="hidden sm:inline">Push</span>
                   </>
                 ) : (
                   <>
-                    <Github className="w-4 h-4" />
+                    <Github className="h-4 w-4" />
                     <span className="hidden sm:inline">GitHub</span>
                   </>
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              {isAuthenticated ? 'Push to GitHub' : 'Connect GitHub'}
-            </TooltipContent>
+            <TooltipContent>{isAuthenticated ? 'Push to GitHub' : 'Connect GitHub'}</TooltipContent>
           </Tooltip>
 
           {/* Export Dropdown */}
@@ -244,27 +246,24 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1 md:gap-2 px-2 md:px-3"
+                className="h-8 gap-1 px-2 md:gap-2 md:px-3"
                 disabled={nodes.length === 0 || isExporting !== null}
               >
                 {isExporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="h-3.5 w-3.5" />
                 )}
                 <span className="hidden sm:inline">Export</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               {/* Push to GitHub */}
-              <DropdownMenuItem
-                onClick={() => setShowPushDialog(true)}
-                className="gap-2"
-              >
-                <Github className="w-4 h-4" />
+              <DropdownMenuItem onClick={() => setShowPushDialog(true)} className="gap-2">
+                <Github className="h-4 w-4" />
                 <div className="flex flex-col">
                   <span>Push to GitHub</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {isAuthenticated ? 'Commit to repository' : 'Connect first'}
                   </span>
                 </div>
@@ -276,29 +275,25 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                 className="gap-2"
               >
                 {isExporting === 'terraform' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <FolderArchive className="w-4 h-4" />
+                  <FolderArchive className="h-4 w-4" />
                 )}
                 <div className="flex flex-col">
                   <span>Terraform Project</span>
-                  <span className="text-xs text-muted-foreground">
-                    Modular .tf files + modules
-                  </span>
+                  <span className="text-muted-foreground text-xs">Modular .tf files + modules</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger disabled={isExporting !== null} className="gap-2">
                   {isExporting === 'pulumi' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <FolderArchive className="w-4 h-4" />
+                    <FolderArchive className="h-4 w-4" />
                   )}
                   <div className="flex flex-col">
                     <span>Pulumi Project</span>
-                    <span className="text-xs text-muted-foreground">
-                      TypeScript or Python
-                    </span>
+                    <span className="text-muted-foreground text-xs">TypeScript or Python</span>
                   </div>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -307,12 +302,10 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                     disabled={isExporting !== null}
                     className="gap-2"
                   >
-                    <FileDown className="w-4 h-4" />
+                    <FileDown className="h-4 w-4" />
                     <div className="flex flex-col">
                       <span>TypeScript</span>
-                      <span className="text-xs text-muted-foreground">
-                        index.ts + components
-                      </span>
+                      <span className="text-muted-foreground text-xs">index.ts + components</span>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -320,10 +313,10 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                     disabled={isExporting !== null}
                     className="gap-2"
                   >
-                    <FileDown className="w-4 h-4" />
+                    <FileDown className="h-4 w-4" />
                     <div className="flex flex-col">
                       <span>Python</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         __main__.py + components
                       </span>
                     </div>
@@ -332,12 +325,10 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled className="gap-2">
-                <Image className="w-4 h-4" />
+                <Image className="h-4 w-4" />
                 <div className="flex flex-col">
                   <span>Export as PNG</span>
-                  <span className="text-xs text-muted-foreground">
-                    Coming soon
-                  </span>
+                  <span className="text-muted-foreground text-xs">Coming soon</span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -352,24 +343,19 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
                 onClick={() => setPanelOpen(!isPanelOpen)}
               >
                 {isPanelOpen ? (
-                  <PanelLeftClose className="w-4 h-4" />
+                  <PanelLeftClose className="h-4 w-4" />
                 ) : (
-                  <PanelLeft className="w-4 h-4" />
+                  <PanelLeft className="h-4 w-4" />
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              {isPanelOpen ? 'Hide Properties' : 'Show Properties'}
-            </TooltipContent>
+            <TooltipContent>{isPanelOpen ? 'Hide Properties' : 'Show Properties'}</TooltipContent>
           </Tooltip>
         </div>
       </div>
 
       {/* Push Dialog */}
-      <PushToGitHubDialog
-        open={showPushDialog}
-        onOpenChange={setShowPushDialog}
-      />
+      <PushToGitHubDialog open={showPushDialog} onOpenChange={setShowPushDialog} />
     </TooltipProvider>
   );
 }

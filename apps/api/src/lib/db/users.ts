@@ -1,6 +1,6 @@
 // User database operations
 import { ObjectId } from 'mongodb';
-import { getCollection, UserDocument } from '../mongodb.js';
+import { getCollection, type UserDocument } from '../mongodb.js';
 
 const COLLECTION = 'users';
 

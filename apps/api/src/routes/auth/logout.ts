@@ -1,5 +1,5 @@
 // Logout endpoint
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { env } from '../../lib/env.js';
 import { SESSION_COOKIE_NAME } from '../../middleware/auth.js';
 

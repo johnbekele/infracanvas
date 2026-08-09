@@ -12,13 +12,13 @@ export function DesignerPage() {
   }, [checkAuth]);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4">
+      <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
             <svg
-              className="w-5 h-5 text-white"
+              className="h-5 w-5 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -36,13 +36,7 @@ export function DesignerPage() {
 
         {/* Auth Section */}
         <div className="flex items-center gap-3">
-          {!isLoading && (
-            isAuthenticated ? (
-              <UserMenu />
-            ) : (
-              <LoginButton size="sm" />
-            )
-          )}
+          {!isLoading && (isAuthenticated ? <UserMenu /> : <LoginButton size="sm" />)}
         </div>
       </header>
 

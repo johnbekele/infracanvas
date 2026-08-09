@@ -1,0 +1,21 @@
+# Every path needs an owner. The default catches anything not matched below.
+* @johnbekele
+
+# Tier 1 - security-sensitive surfaces.
+# Changes here require a security review in addition to human approval (Gate 7).
+/apps/api/src/routes/auth/      @johnbekele
+/apps/api/src/lib/encryption.ts @johnbekele
+/apps/api/src/lib/jwt.ts        @johnbekele
+/apps/api/src/middleware/       @johnbekele
+/infra/                         @johnbekele
+/services/brain/src/brain/codegen/ @johnbekele
+
+# Contract surfaces. A change here ripples through every consumer, so the
+# contract gate regenerates and diffs these on every PR.
+/packages/ir-schema/            @johnbekele
+/db/migrations/                 @johnbekele
+
+# The gate system itself. Changes to these files change the rules of the project.
+/.github/                       @johnbekele
+/lefthook.yml                   @johnbekele
+/scripts/ci/                    @johnbekele

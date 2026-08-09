@@ -43,7 +43,7 @@ function getEnv(): EnvConfig {
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}\n` +
-      'Please check your .env file or environment configuration.'
+        'Please check your .env file or environment configuration.'
     );
   }
 
@@ -52,7 +52,7 @@ function getEnv(): EnvConfig {
   if (!/^[a-fA-F0-9]{64}$/.test(encryptionKey)) {
     throw new Error(
       'ENCRYPTION_KEY must be a 64-character hex string (32 bytes).\n' +
-      'Generate with: openssl rand -hex 32'
+        'Generate with: openssl rand -hex 32'
     );
   }
 

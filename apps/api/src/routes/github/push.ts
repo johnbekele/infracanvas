@@ -1,7 +1,13 @@
 // GitHub push endpoint - atomic multi-file push
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import {
+  InvalidGitHubParamError,
+  assertBranch,
+  assertRepoCoordinates,
+  encodeBranch,
+} from '../../lib/github-params.js';
 
 const router = Router();
 
@@ -55,28 +61,32 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    const { owner, repo, branch, message, files } = req.body as PushRequest;
+    const body = req.body as PushRequest;
 
     // Validate request
-    if (!owner || !repo || !branch || !message || !files || !Array.isArray(files)) {
+    if (!body.owner || !body.repo || !body.branch || !body.message || !Array.isArray(body.files)) {
       res.status(400).json({
         error: 'Missing required fields: owner, repo, branch, message, files',
       });
       return;
     }
 
-    if (files.length === 0) {
+    if (body.files.length === 0) {
       res.status(400).json({ error: 'At least one file is required' });
       return;
     }
 
+    const { owner, repo } = assertRepoCoordinates(body);
+    const branch = assertBranch(body.branch);
+    const { message, files } = body;
+
     // 1. Get the current commit SHA
     const refResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${encodeBranch(branch)}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -95,8 +105,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       `${GITHUB_API}/repos/${owner}/${repo}/git/commits/${currentCommitSha}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -113,21 +123,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     // 3. Create blobs for each file
     const treeItems = await Promise.all(
       files.map(async (file) => {
-        const blobResponse = await fetch(
-          `${GITHUB_API}/repos/${owner}/${repo}/git/blobs`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: file.content,
-              encoding: 'utf-8',
-            }),
-          }
-        );
+        const blobResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/blobs`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: file.content,
+            encoding: 'utf-8',
+          }),
+        });
 
         if (!blobResponse.ok) {
           throw new Error(`Failed to create blob for ${file.path}`);
@@ -145,21 +152,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     );
 
     // 4. Create a new tree
-    const treeResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/trees`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          base_tree: baseTreeSha,
-          tree: treeItems,
-        }),
-      }
-    );
+    const treeResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/trees`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: treeItems,
+      }),
+    });
 
     if (!treeResponse.ok) {
       const error = await treeResponse.json().catch(() => ({}));
@@ -170,22 +174,19 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     const treeData = (await treeResponse.json()) as GitHubTree;
 
     // 5. Create a new commit
-    const newCommitResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/commits`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          tree: treeData.sha,
-          parents: [currentCommitSha],
-        }),
-      }
-    );
+    const newCommitResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/commits`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        tree: treeData.sha,
+        parents: [currentCommitSha],
+      }),
+    });
 
     if (!newCommitResponse.ok) {
       const error = await newCommitResponse.json().catch(() => ({}));
@@ -197,12 +198,12 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
     // 6. Update the branch reference
     const updateRefResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${encodeBranch(branch)}`,
       {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -224,6 +225,10 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       commitSha: newCommitData.sha,
     });
   } catch (error) {
+    if (error instanceof InvalidGitHubParamError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     console.error('Error pushing files:', error);
     res.status(500).json({
       error: 'Failed to push files',

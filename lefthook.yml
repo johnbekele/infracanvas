@@ -1,0 +1,65 @@
+# Gate 1: local pre-commit checks.
+#
+# Budget: under five seconds on a normal commit. Anything slower belongs in CI,
+# because a hook people are tempted to bypass is worse than no hook at all.
+# Every check here operates on staged files only.
+
+pre-commit:
+  parallel: true
+  commands:
+    prettier:
+      glob: '*.{ts,tsx,js,jsx,json,md,yml,yaml}'
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+
+    eslint:
+      glob: '*.{ts,tsx}'
+      run: pnpm exec eslint --fix --max-warnings=0 {staged_files}
+      stage_fixed: true
+
+    ruff-format:
+      glob: '*.py'
+      run: |
+        if [ -f services/brain/pyproject.toml ]; then
+          uv run --directory services/brain ruff format {staged_files}
+          uv run --directory services/brain ruff check --fix {staged_files}
+        fi
+      stage_fixed: true
+
+    rustfmt:
+      glob: '*.rs'
+      run: |
+        if [ -f Cargo.toml ]; then cargo fmt -- {staged_files}; fi
+      stage_fixed: true
+
+    secrets:
+      # The last line of defence before a credential reaches the remote. CI
+      # scans again, but by then a push may already have leaked it.
+      run: |
+        if command -v gitleaks >/dev/null 2>&1; then
+          gitleaks protect --staged --redact --verbose
+        else
+          echo "gitleaks not installed; install it with 'brew install gitleaks' for local secret scanning."
+        fi
+
+commit-msg:
+  commands:
+    # Runs before commitlint. Some editors and agent tooling append assistant
+    # co-author trailers automatically; CLAUDE.md forbids them and Gate 2 rejects
+    # them, so strip them here rather than failing the commit.
+    01-strip-assistant-trailers:
+      run: |
+        if grep -qiE '^(Co-authored-by:[[:space:]]*(Claude|Cursor|Copilot|AI\b)|Generated with)' {1}; then
+          sed -i.bak -E '/^([Cc]o-authored-by:[[:space:]]*(Claude|Cursor|Copilot|AI\b)|Generated with)/d' {1}
+          rm -f {1}.bak
+          echo "Removed assistant co-author trailer from the commit message."
+        fi
+
+    02-commitlint:
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  parallel: true
+  commands:
+    typecheck:
+      run: pnpm turbo typecheck

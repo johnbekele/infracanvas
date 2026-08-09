@@ -16,17 +16,39 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "prepare": "lefthook install",
+    "gh:labels": "node scripts/gh/seed-labels.mjs",
+    "gh:milestones": "node scripts/gh/seed-milestones.mjs",
+    "gh:ruleset": "node scripts/gh/apply-ruleset.mjs"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.18.0",
     "@types/node": "^20.11.0",
+    "eslint": "^9.18.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.14.0",
+    "lefthook": "^1.10.0",
     "prettier": "^3.2.0",
+    "prettier-plugin-tailwindcss": "^0.6.9",
     "turbo": "^2.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.20.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "path-to-regexp@0.1.12": "0.1.13"
+    }
   },
   "packageManager": "pnpm@8.15.0",
   "engines": {

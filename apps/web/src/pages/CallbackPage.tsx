@@ -31,7 +31,7 @@ export function CallbackPage() {
           setTimeout(() => {
             navigate('/designer', { replace: true });
           }, 1500);
-        } catch (err) {
+        } catch (_err) {
           setStatus('error');
           setError('Failed to complete authentication');
         }
@@ -47,12 +47,12 @@ export function CallbackPage() {
   }, [searchParams, navigate, checkAuth]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <div className="text-center max-w-md mx-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="mx-4 max-w-md text-center">
         {status === 'loading' && (
           <>
-            <Loader2 className="w-12 h-12 text-violet-600 animate-spin mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
+            <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Completing Authentication
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -63,33 +63,31 @@ export function CallbackPage() {
 
         {status === 'success' && (
           <>
-            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+            <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Successfully Connected
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Redirecting to designer...
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">Redirecting to designer...</p>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <XCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Authentication Error
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-            <div className="flex gap-3 justify-center">
+            <p className="mb-6 text-gray-600 dark:text-gray-400">{error}</p>
+            <div className="flex justify-center gap-3">
               <button
                 onClick={() => navigate('/designer')}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               >
                 Return to Designer
               </button>
               <button
-                onClick={() => window.location.href = '/'}
-                className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
+                onClick={() => (window.location.href = '/')}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-white hover:bg-violet-700"
               >
                 Try Again
               </button>

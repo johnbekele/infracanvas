@@ -8,8 +8,8 @@ export function LandingPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <LogoIcon size={32} />
               <span className="text-xl font-bold text-gray-900 dark:text-white">InfraCanvas</span>
@@ -21,7 +21,7 @@ export function LandingPage() {
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               >
-                <Github className="w-5 h-5" />
+                <Github className="h-5 w-5" />
               </a>
               <Link to="/designer">
                 <Button>Open Designer</Button>
@@ -32,21 +32,21 @@ export function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h1 className="mb-6 text-4xl font-bold text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
             Visual AWS Infrastructure
             <span className="block text-violet-600">Designer</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+          <p className="mx-auto mb-8 max-w-2xl text-xl text-gray-600 dark:text-gray-400">
             Design your AWS architecture visually and export production-ready Terraform or Pulumi
             code. Push directly to GitHub for automated deployments.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Link to="/designer">
-              <Button size="lg" className="gap-2 w-full sm:w-auto">
+              <Button size="lg" className="w-full gap-2 sm:w-auto">
                 Start Designing
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <a
@@ -54,8 +54,8 @@ export function LandingPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
-                <Github className="w-4 h-4" />
+              <Button variant="outline" size="lg" className="w-full gap-2 sm:w-auto">
+                <Github className="h-4 w-4" />
                 View on GitHub
               </Button>
             </a>
@@ -64,12 +64,12 @@ export function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+      <section className="bg-gray-50 px-4 py-20 sm:px-6 lg:px-8 dark:bg-gray-900">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 dark:text-white">
             Everything you need for IaC
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={Cloud}
               title="20+ AWS Services"
@@ -105,26 +105,26 @@ export function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
             Ready to visualize your infrastructure?
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+          <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
             No account required. Start designing right now.
           </p>
           <Link to="/designer">
             <Button size="lg" className="gap-2">
               Open Designer
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 py-8 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <footer className="border-t border-gray-200 px-4 py-8 dark:border-gray-800">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <LogoIcon size={20} />
             <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -165,11 +165,11 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-      <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center mb-4">
-        <Icon className="w-6 h-6 text-violet-600" />
+    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+        <Icon className="h-6 w-6 text-violet-600" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
+      <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
       <p className="text-gray-600 dark:text-gray-400">{description}</p>
     </div>
   );

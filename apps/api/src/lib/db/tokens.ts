@@ -1,6 +1,6 @@
 // GitHub token database operations
 import { ObjectId } from 'mongodb';
-import { getCollection, GitHubTokenDocument } from '../mongodb.js';
+import { getCollection, type GitHubTokenDocument } from '../mongodb.js';
 import { encrypt, decrypt } from '../encryption.js';
 
 const COLLECTION = 'github_tokens';

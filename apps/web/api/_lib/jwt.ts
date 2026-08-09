@@ -1,5 +1,5 @@
 // JWT session management
-import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { getEnv } from './env';
 
 export interface SessionPayload extends JWTPayload {

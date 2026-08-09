@@ -1,6 +1,6 @@
 // Simple in-memory rate limiting
 // For production, use Redis-based rate limiting
-import { Request, Response, NextFunction } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
 
 interface RateLimitEntry {
   count: number;

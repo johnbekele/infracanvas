@@ -1,0 +1,149 @@
+name: Gate 2 - Static
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  push:
+    branches: [main]
+
+concurrency:
+  group: gate-static-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Every job here always runs and decides internally whether it has work to do.
+# Job-level `if` would report a skipped conclusion, and a skipped job that a
+# ruleset requires can leave a pull request unmergeable forever.
+
+jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      python: ${{ steps.filter.outputs.python }}
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+        id: filter
+        with:
+          # On push and merge_group there is no pull request to diff against,
+          # so treat everything as changed and run the full gate.
+          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref }}
+          filters: |
+            node:
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.mjs'
+              - '**/package.json'
+              - 'pnpm-lock.yaml'
+              - 'eslint.config.mjs'
+            python:
+              - '**/*.py'
+              - '**/pyproject.toml'
+            rust:
+              - 'crates/**'
+              - '**/Cargo.toml'
+              - 'Cargo.lock'
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm exec prettier --check "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}"
+
+  lint-node:
+    name: Lint and typecheck (TypeScript)
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - if: needs.changes.outputs.node != 'true'
+        run: echo "::notice::No TypeScript changes; nothing to check."
+      - uses: ./.github/actions/setup-node
+        if: needs.changes.outputs.node == 'true'
+      - name: ESLint
+        if: needs.changes.outputs.node == 'true'
+        run: pnpm exec eslint . --max-warnings=0
+      - name: Build workspace dependencies
+        if: needs.changes.outputs.node == 'true'
+        run: pnpm turbo build --filter=@infracanvas/core
+      - name: Typecheck
+        if: needs.changes.outputs.node == 'true'
+        run: pnpm turbo typecheck
+
+  lint-python:
+    name: Lint and typecheck (Python)
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Decide whether to run
+        id: guard
+        run: |
+          if [ "${{ needs.changes.outputs.python }}" = "true" ] && [ -f services/brain/pyproject.toml ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Python project or no Python changes; gate is inert."
+          fi
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        if: steps.guard.outputs.run == 'true'
+        with:
+          enable-cache: true
+      - if: steps.guard.outputs.run == 'true'
+        run: uv sync --directory services/brain --all-extras
+      - name: Ruff format
+        if: steps.guard.outputs.run == 'true'
+        run: uv run --directory services/brain ruff format --check .
+      - name: Ruff lint
+        if: steps.guard.outputs.run == 'true'
+        run: uv run --directory services/brain ruff check .
+      - name: Mypy strict
+        if: steps.guard.outputs.run == 'true'
+        run: uv run --directory services/brain mypy --strict src
+
+  lint-rust:
+    name: Lint (Rust)
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Decide whether to run
+        id: guard
+        run: |
+          if [ "${{ needs.changes.outputs.rust }}" = "true" ] && [ -f Cargo.toml ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Cargo workspace or no Rust changes; gate is inert."
+          fi
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        if: steps.guard.outputs.run == 'true'
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        if: steps.guard.outputs.run == 'true'
+      - name: Rustfmt
+        if: steps.guard.outputs.run == 'true'
+        run: cargo fmt --all --check
+      - name: Clippy
+        if: steps.guard.outputs.run == 'true'
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  forbidden-patterns:
+    name: Forbidden patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-node
+      - run: node scripts/ci/check-forbidden-patterns.mjs "origin/${{ github.base_ref || 'main' }}"

@@ -1,7 +1,7 @@
 // Auth utilities for serverless functions
-import { VercelRequest } from '@vercel/node';
+import { type VercelRequest } from '@vercel/node';
 import { parse as parseCookie } from 'cookie';
-import { verifySessionToken, SessionPayload } from './jwt';
+import { verifySessionToken, type SessionPayload } from './jwt';
 
 export const SESSION_COOKIE_NAME = 'infracanvas_session';
 
@@ -25,7 +25,10 @@ export async function getSession(req: VercelRequest): Promise<SessionPayload | n
   return null;
 }
 
-export function setCorsHeaders(res: { setHeader: (name: string, value: string) => void }, origin?: string) {
+export function setCorsHeaders(
+  res: { setHeader: (name: string, value: string) => void },
+  origin?: string
+) {
   const allowedOrigins = [
     process.env.VITE_APP_URL,
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,

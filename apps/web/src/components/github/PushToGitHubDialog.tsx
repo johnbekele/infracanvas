@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
-  Github, GitBranch, FolderGit2, Loader2, CheckCircle2,
-  XCircle, ExternalLink, Plus, RefreshCw
+  Github,
+  GitBranch,
+  FolderGit2,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 import { githubApi } from '@/lib/api/client';
-import {
-  generateTerraformProject,
-  generatePulumiProject,
-} from '@infracanvas/core';
+import { generateTerraformProject, generatePulumiProject } from '@infracanvas/core';
 import { generateWorkflow, generateWorkflowReadme } from '@/lib/gitops';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,10 +49,7 @@ interface PushToGitHubDialogProps {
 type Step = 'select-repo' | 'configure' | 'pushing' | 'success' | 'error';
 type IaCType = 'terraform' | 'pulumi-ts' | 'pulumi-py';
 
-export function PushToGitHubDialog({
-  open,
-  onOpenChange,
-}: PushToGitHubDialogProps) {
+export function PushToGitHubDialog({ open, onOpenChange }: PushToGitHubDialogProps) {
   const { isAuthenticated, login } = useAuthStore();
   const { nodes, edges, designName } = useDesignerStore();
 
@@ -75,7 +76,11 @@ export function PushToGitHubDialog({
   const [isCreatingRepo, setIsCreatingRepo] = useState(false);
 
   // Result state
-  const [pushResult, setPushResult] = useState<{ success: boolean; message: string; commitUrl?: string } | null>(null);
+  const [pushResult, setPushResult] = useState<{
+    success: boolean;
+    message: string;
+    commitUrl?: string;
+  } | null>(null);
 
   // Load repos on mount
   useEffect(() => {
@@ -89,6 +94,8 @@ export function PushToGitHubDialog({
     if (selectedRepo) {
       loadBranches();
     }
+    // `loadBranches` is recreated every render; including it would refetch in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRepo]);
 
   // Set default commit message
@@ -96,6 +103,9 @@ export function PushToGitHubDialog({
     if (!commitMessage) {
       setCommitMessage(`Add ${designName} infrastructure`);
     }
+    // Deliberately keyed on `designName` only, so a message the user has edited
+    // is never overwritten when this component re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designName]);
 
   const loadRepos = async () => {
@@ -114,13 +124,10 @@ export function PushToGitHubDialog({
     if (!selectedRepo) return;
     setIsLoadingBranches(true);
     try {
-      const branchList = await githubApi.listBranches(
-        selectedRepo.owner.login,
-        selectedRepo.name
-      );
+      const branchList = await githubApi.listBranches(selectedRepo.owner.login, selectedRepo.name);
       setBranches(branchList);
       // Set default branch
-      if (!selectedBranch || !branchList.find(b => b.name === selectedBranch)) {
+      if (!selectedBranch || !branchList.find((b) => b.name === selectedBranch)) {
         setSelectedBranch(selectedRepo.default_branch || 'main');
       }
     } catch (error) {
@@ -141,7 +148,7 @@ export function PushToGitHubDialog({
       );
       // Refetch repos to get the full repo object with owner info
       await loadRepos();
-      const fullRepo = repos.find(r => r.name === response.name);
+      const fullRepo = repos.find((r) => r.name === response.name);
       if (fullRepo) {
         setSelectedRepo(fullRepo);
       }
@@ -254,14 +261,14 @@ export function PushToGitHubDialog({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 text-center">
-          <Github className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-lg font-semibold mb-2">Connect GitHub</h2>
-          <p className="text-gray-500 mb-6">
+        <div className="relative mx-4 w-full max-w-md rounded-xl bg-white p-6 text-center shadow-2xl dark:bg-gray-900">
+          <Github className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+          <h2 className="mb-2 text-lg font-semibold">Connect GitHub</h2>
+          <p className="mb-6 text-gray-500">
             Sign in with GitHub to push infrastructure code directly to your repositories.
           </p>
           <Button onClick={login} className="gap-2">
-            <Github className="w-4 h-4" />
+            <Github className="h-4 w-4" />
             Connect GitHub
           </Button>
         </div>
@@ -273,13 +280,11 @@ export function PushToGitHubDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
-          <FolderGit2 className="w-5 h-5 text-violet-500" />
-          <h2 className="font-semibold text-gray-900 dark:text-white">
-            Push to GitHub
-          </h2>
+        <div className="flex items-center gap-3 border-b border-gray-200 p-4 dark:border-gray-800">
+          <FolderGit2 className="h-5 w-5 text-violet-500" />
+          <h2 className="font-semibold text-gray-900 dark:text-white">Push to GitHub</h2>
         </div>
 
         {/* Content */}
@@ -296,7 +301,7 @@ export function PushToGitHubDialog({
                     className="h-7 gap-1"
                     onClick={() => setShowNewRepo(!showNewRepo)}
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="h-3 w-3" />
                     New
                   </Button>
                 </div>
@@ -312,7 +317,7 @@ export function PushToGitHubDialog({
                       onClick={handleCreateRepo}
                       disabled={!newRepoName.trim() || isCreatingRepo}
                     >
-                      {isCreatingRepo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create'}
+                      {isCreatingRepo ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
                     </Button>
                   </div>
                 ) : (
@@ -341,7 +346,7 @@ export function PushToGitHubDialog({
                       onClick={loadRepos}
                       disabled={isLoadingRepos}
                     >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingRepos ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`h-4 w-4 ${isLoadingRepos ? 'animate-spin' : ''}`} />
                     </Button>
                   </div>
                 )}
@@ -354,10 +359,7 @@ export function PushToGitHubDialog({
                     <Label>Branch</Label>
                   </div>
                   <div className="flex gap-2">
-                    <Select
-                      value={selectedBranch}
-                      onValueChange={setSelectedBranch}
-                    >
+                    <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                       <SelectTrigger className="flex-1">
                         <SelectValue />
                       </SelectTrigger>
@@ -365,7 +367,7 @@ export function PushToGitHubDialog({
                         {branches.map((branch) => (
                           <SelectItem key={branch.name} value={branch.name}>
                             <div className="flex items-center gap-2">
-                              <GitBranch className="w-3 h-3" />
+                              <GitBranch className="h-3 w-3" />
                               {branch.name}
                             </div>
                           </SelectItem>
@@ -383,7 +385,11 @@ export function PushToGitHubDialog({
                       onClick={handleCreateBranch}
                       disabled={!newBranchName.trim() || isCreatingBranch}
                     >
-                      {isCreatingBranch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      {isCreatingBranch ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -425,7 +431,8 @@ export function PushToGitHubDialog({
                   placeholder="infrastructure"
                 />
                 <p className="text-xs text-gray-500">
-                  Files will be pushed to: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{directory}/</code>
+                  Files will be pushed to:{' '}
+                  <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">{directory}/</code>
                 </p>
               </div>
 
@@ -441,13 +448,13 @@ export function PushToGitHubDialog({
               </div>
 
               {/* GitHub Actions Workflow */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                 <input
                   type="checkbox"
                   id="include-workflow"
                   checked={includeWorkflow}
                   onChange={(e) => setIncludeWorkflow(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                 />
                 <label htmlFor="include-workflow" className="flex-1 cursor-pointer">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -460,7 +467,7 @@ export function PushToGitHubDialog({
               </div>
 
               {/* Summary */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+              <div className="rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-800">
                 <p className="text-gray-600 dark:text-gray-400">
                   Push {nodes.length} resources as {iacType} to{' '}
                   <span className="font-medium text-gray-900 dark:text-white">
@@ -470,18 +477,11 @@ export function PushToGitHubDialog({
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setStep('select-repo')}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => setStep('select-repo')}>
                   Back
                 </Button>
-                <Button
-                  className="flex-1 gap-2"
-                  onClick={handlePush}
-                >
-                  <Github className="w-4 h-4" />
+                <Button className="flex-1 gap-2" onClick={handlePush}>
+                  <Github className="h-4 w-4" />
                   Push
                 </Button>
               </div>
@@ -489,8 +489,8 @@ export function PushToGitHubDialog({
           )}
 
           {step === 'pushing' && (
-            <div className="text-center py-8">
-              <Loader2 className="w-12 h-12 mx-auto mb-4 text-violet-500 animate-spin" />
+            <div className="py-8 text-center">
+              <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-500" />
               <p className="text-gray-600 dark:text-gray-400">
                 Pushing to {selectedRepo?.full_name}...
               </p>
@@ -498,12 +498,10 @@ export function PushToGitHubDialog({
           )}
 
           {step === 'success' && pushResult && (
-            <div className="text-center py-8">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-500" />
-              <h3 className="text-lg font-semibold mb-2">Success!</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {pushResult.message}
-              </p>
+            <div className="py-8 text-center">
+              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+              <h3 className="mb-2 text-lg font-semibold">Success!</h3>
+              <p className="mb-4 text-gray-600 dark:text-gray-400">{pushResult.message}</p>
               {pushResult.commitUrl && (
                 <a
                   href={pushResult.commitUrl}
@@ -512,7 +510,7 @@ export function PushToGitHubDialog({
                   className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-700"
                 >
                   View commit
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               )}
               <div className="mt-6">
@@ -522,13 +520,11 @@ export function PushToGitHubDialog({
           )}
 
           {step === 'error' && pushResult && (
-            <div className="text-center py-8">
-              <XCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-              <h3 className="text-lg font-semibold mb-2">Push Failed</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {pushResult.message}
-              </p>
-              <div className="flex gap-2 justify-center">
+            <div className="py-8 text-center">
+              <XCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+              <h3 className="mb-2 text-lg font-semibold">Push Failed</h3>
+              <p className="mb-4 text-gray-600 dark:text-gray-400">{pushResult.message}</p>
+              <div className="flex justify-center gap-2">
                 <Button variant="outline" onClick={() => setStep('configure')}>
                   Try Again
                 </Button>

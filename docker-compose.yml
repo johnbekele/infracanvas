@@ -3,13 +3,13 @@ services:
   mongo:
     image: mongo:7-jammy
     ports:
-      - "27018:27017"
+      - '27018:27017'
     volumes:
       - mongo_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=infracanvas
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
       dockerfile: apps/api/Dockerfile
       target: development
     ports:
-      - "3001:3001"
+      - '3001:3001'
     volumes:
       # Mount source code for hot reload (tsx watch will pick up changes)
       - ./apps/api/src:/app/apps/api/src
@@ -41,7 +41,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: development
     ports:
-      - "5174:3000"
+      - '5174:3000'
     volumes:
       # Mount source code for hot reload (vite will pick up changes)
       - ./apps/web/src:/app/apps/web/src
@@ -58,7 +58,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: production
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
       - api-prod
     profiles:
@@ -71,7 +71,7 @@ services:
       dockerfile: apps/api/Dockerfile
       target: production
     ports:
-      - "3001:3001"
+      - '3001:3001'
     env_file:
       - ./apps/api/.env
     environment:

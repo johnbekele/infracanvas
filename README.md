@@ -46,7 +46,6 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 <img width="3003" height="1836" alt="image" src="https://github.com/user-attachments/assets/c9fa7e3a-c6c7-443c-b26a-53efc29aee42" />
 
-
 ## Usage
 
 ### Designing Infrastructure
@@ -65,15 +64,15 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Supported AWS Services
 
-| Category | Services |
-|----------|----------|
-| **Compute** | EC2, Lambda, ECS, EKS, Fargate |
-| **Storage** | S3, EBS, EFS |
-| **Database** | RDS, DynamoDB, ElastiCache, Aurora |
-| **Networking** | VPC, Subnet, ALB, NLB, API Gateway, CloudFront |
-| **Security** | IAM, Cognito, Secrets Manager, KMS |
-| **Integration** | SQS, SNS, EventBridge, Step Functions |
-| **Monitoring** | CloudWatch |
+| Category        | Services                                       |
+| --------------- | ---------------------------------------------- |
+| **Compute**     | EC2, Lambda, ECS, EKS, Fargate                 |
+| **Storage**     | S3, EBS, EFS                                   |
+| **Database**    | RDS, DynamoDB, ElastiCache, Aurora             |
+| **Networking**  | VPC, Subnet, ALB, NLB, API Gateway, CloudFront |
+| **Security**    | IAM, Cognito, Secrets Manager, KMS             |
+| **Integration** | SQS, SNS, EventBridge, Step Functions          |
+| **Monitoring**  | CloudWatch                                     |
 
 ## Project Structure
 
@@ -130,11 +129,7 @@ pnpm typecheck
 The `@infracanvas/core` package contains all the IaC generation logic and can be used independently:
 
 ```typescript
-import {
-  generateTerraformProject,
-  generatePulumiProject,
-  awsServices,
-} from '@infracanvas/core';
+import { generateTerraformProject, generatePulumiProject, awsServices } from '@infracanvas/core';
 
 // Generate Terraform from nodes and edges
 const project = generateTerraformProject(nodes, edges);

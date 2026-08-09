@@ -1,0 +1,131 @@
+# Canonical label taxonomy. Applied by `scripts/gh/seed-labels.sh`, which is
+# idempotent and safe to re-run. Labels not listed here are left untouched.
+
+# --- Workflow state -----------------------------------------------------------
+- name: agent-ready
+  color: '0E8A16'
+  description: Spec is complete and verified by Gate 0. An agent may start this.
+- name: needs-spec
+  color: 'D93F0B'
+  description: Missing or incomplete required sections. Not startable.
+- name: status:blocked
+  color: 'B60205'
+  description: Waiting on a dependency issue to land.
+- name: status:in-progress
+  color: 'FBCA04'
+  description: Actively being worked on.
+- name: do-not-merge
+  color: '000000'
+  description: Hard block on the merge queue.
+
+# --- Risk tier ----------------------------------------------------------------
+- name: 'tier:1'
+  color: 'B60205'
+  description: Auth, IAM, deploy, credentials, or codegen. Security review required.
+- name: 'tier:2'
+  color: 'FBCA04'
+  description: Normal application code. Human approval required.
+- name: 'tier:3'
+  color: 'C2E0C6'
+  description: Docs or tests only. Eligible for the fast lane.
+
+# --- Size ---------------------------------------------------------------------
+- name: 'size:s'
+  color: 'C2E0C6'
+  description: Under 200 lines of diff.
+- name: 'size:m'
+  color: 'FEF2C0'
+  description: 200 to 600 lines of diff.
+- name: 'size:l'
+  color: 'F9D0C4'
+  description: Over 600 lines. Must justify why it cannot be split.
+
+# --- Area ---------------------------------------------------------------------
+- name: 'area:rust'
+  color: 'DEA584'
+  description: crates/ic-engine and the ingestion pipeline.
+- name: 'area:brain'
+  color: '3572A5'
+  description: services/brain, agents, RAG, and analysis.
+- name: 'area:api'
+  color: '1D76DB'
+  description: apps/api Express BFF.
+- name: 'area:web'
+  color: '61DAFB'
+  description: apps/web React canvas and dashboards.
+- name: 'area:ir'
+  color: '5319E7'
+  description: packages/ir-schema and resource contracts.
+- name: 'area:infra'
+  color: 'FF9900'
+  description: AWS deployment, Pulumi, and CodeBuild.
+- name: 'area:ci'
+  color: '2B7489'
+  description: Gates, workflows, and developer tooling.
+- name: 'area:db'
+  color: '336791'
+  description: Postgres schema, migrations, and queries.
+
+# --- Epics --------------------------------------------------------------------
+- name: epic
+  color: '5319E7'
+  description: Tracking issue for a body of work.
+- name: 'epic:0-delivery'
+  color: 'EDEDED'
+  description: Delivery infrastructure and the gate system.
+- name: 'epic:1-data'
+  color: 'EDEDED'
+  description: Postgres foundation, migrations, and the job queue.
+- name: 'epic:2-ir'
+  color: 'EDEDED'
+  description: Architecture IR and the 24 resource contracts.
+- name: 'epic:3-engine'
+  color: 'EDEDED'
+  description: Rust ingestion engine.
+- name: 'epic:4-retrieval'
+  color: 'EDEDED'
+  description: Hybrid retrieval and the evaluation harness.
+- name: 'epic:5-graphrag'
+  color: 'EDEDED'
+  description: Code property graph and community summarisation.
+- name: 'epic:6-brain'
+  color: 'EDEDED'
+  description: Agent runtime and LLM provider layer.
+- name: 'epic:7-prediction'
+  color: 'EDEDED'
+  description: Cost, latency, scale, and reliability models.
+- name: 'epic:8-codegen'
+  color: 'EDEDED'
+  description: Pulumi Python generation and validation.
+- name: 'epic:9-deploy'
+  color: 'EDEDED'
+  description: AWS connection, CodeBuild deployment, and guardrails.
+- name: 'epic:10-loadtest'
+  color: 'EDEDED'
+  description: Load testing and measured SLIs.
+- name: 'epic:11-ui'
+  color: 'EDEDED'
+  description: Canvas and analysis dashboards.
+- name: 'epic:12-launch'
+  color: 'EDEDED'
+  description: Merge-back, documentation, and OSS launch.
+
+# --- Special handling ---------------------------------------------------------
+- name: 'db:destructive-approved'
+  color: 'B60205'
+  description: Explicitly approves destructive DDL through Gate 4.
+- name: 'needs:security-review'
+  color: 'B60205'
+  description: Requires the security-review pass before merge.
+- name: perf-regression
+  color: 'D93F0B'
+  description: Opened automatically when a benchmark regresses beyond budget.
+- name: nightly-failure
+  color: 'D93F0B'
+  description: Opened automatically by the nightly pipeline.
+- name: bug
+  color: 'D73A4A'
+  description: Behaviour differs from specification.
+- name: good-first-issue
+  color: '7057FF'
+  description: Well-scoped entry point for new contributors.

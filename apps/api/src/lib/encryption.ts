@@ -1,5 +1,5 @@
 // AES-256-GCM encryption for sensitive data (GitHub tokens, etc.)
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import { env } from './env.js';
 
 const ALGORITHM = 'aes-256-gcm';
@@ -68,6 +68,5 @@ export function decrypt(encryptedData: string): string {
  * Uses SHA-256 for consistent, non-reversible hashing
  */
 export function hash(data: string): string {
-  const { createHash } = require('crypto');
   return createHash('sha256').update(data).digest('hex');
 }

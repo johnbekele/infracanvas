@@ -22,11 +22,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 /**
  * Make an authenticated API request
  */
-async function apiFetch<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T> {
-  const { skipAuth, ...fetchOptions } = options;
+async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  const { skipAuth: _skipAuth, ...fetchOptions } = options;
 
   // Use full URL for Render backend, or relative /api for local proxy
   const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : `/api${endpoint}`;
@@ -42,11 +39,7 @@ async function apiFetch<T>(
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new ApiError(
-      data.error || `API error: ${response.status}`,
-      response.status,
-      data
-    );
+    throw new ApiError(data.error || `API error: ${response.status}`, response.status, data);
   }
 
   return response.json();
@@ -106,21 +99,23 @@ export const githubApi = {
    * List user repositories
    */
   async listRepos() {
-    return apiFetch<Array<{
-      id: number;
-      name: string;
-      full_name: string;
-      private: boolean;
-      description: string | null;
-      default_branch: string;
-      html_url: string;
-      clone_url: string;
-      pushed_at: string;
-      owner: {
-        login: string;
-        avatar_url: string;
-      };
-    }>>('/github/repos');
+    return apiFetch<
+      Array<{
+        id: number;
+        name: string;
+        full_name: string;
+        private: boolean;
+        description: string | null;
+        default_branch: string;
+        html_url: string;
+        clone_url: string;
+        pushed_at: string;
+        owner: {
+          login: string;
+          avatar_url: string;
+        };
+      }>
+    >('/github/repos');
   },
 
   /**
@@ -143,11 +138,13 @@ export const githubApi = {
    * List branches for a repository
    */
   async listBranches(owner: string, repo: string) {
-    return apiFetch<Array<{
-      name: string;
-      commit: { sha: string };
-      protected: boolean;
-    }>>(`/github/branches?owner=${owner}&repo=${repo}`);
+    return apiFetch<
+      Array<{
+        name: string;
+        commit: { sha: string };
+        protected: boolean;
+      }>
+    >(`/github/branches?owner=${owner}&repo=${repo}`);
   },
 
   /**

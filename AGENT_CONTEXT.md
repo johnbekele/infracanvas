@@ -20,6 +20,7 @@ This is an extraction project to create **InfraCanvas** from the Archyra AWS Arc
 ### ✅ COMPLETED
 
 #### Phase 1: Project Setup (100%)
+
 - Monorepo structure with Turborepo + pnpm
 - `packages/core/` - TypeScript package with tsup
 - `apps/web/` - Vite + React + TypeScript + Tailwind
@@ -27,6 +28,7 @@ This is an extraction project to create **InfraCanvas** from the Archyra AWS Arc
 - 3 pages created (Landing, Designer, Callback)
 
 #### Phase 2: Core Migration (100%) ✅
+
 - `packages/core/src/types.ts` ✅
 - `packages/core/src/aws-services.ts` ✅ (20+ services)
 - `packages/core/src/codegen/terraform.ts` ✅
@@ -58,6 +60,7 @@ This is an extraction project to create **InfraCanvas** from the Archyra AWS Arc
 ## File Locations Reference
 
 ### Source Files (Archyra)
+
 ```
 /Users/yohansbekele/Archyra/
 ├── lib/
@@ -81,6 +84,7 @@ This is an extraction project to create **InfraCanvas** from the Archyra AWS Arc
 ```
 
 ### Target Files (InfraCanvas)
+
 ```
 /Users/yohansbekele/infracanvas/
 ├── packages/core/src/
@@ -112,6 +116,7 @@ This is an extraction project to create **InfraCanvas** from the Archyra AWS Arc
 ## Migration Notes
 
 ### Import Changes Required
+
 When migrating components from Archyra to InfraCanvas:
 
 1. **Remove `'use client'`** - Not needed in Vite
@@ -124,6 +129,7 @@ When migrating components from Archyra to InfraCanvas:
    - "archyra-" → "infracanvas-" (localStorage keys)
 
 ### Key Exports from @infracanvas/core
+
 ```typescript
 // AWS Services
 import { awsServices, serviceCategories, getServiceById, canConnect } from '@infracanvas/core';
@@ -175,10 +181,10 @@ cd packages/core && pnpm build
 
 ## Session History
 
-| Date | Session | Work Done |
-|------|---------|-----------|
+| Date       | Session   | Work Done                                               |
+| ---------- | --------- | ------------------------------------------------------- |
 | 2026-03-19 | Session 1 | Phase 1 complete, Phase 2 started (core logic migrated) |
 
 ---
 
-*Update this file after completing each phase or significant milestone.*
+_Update this file after completing each phase or significant milestone._
