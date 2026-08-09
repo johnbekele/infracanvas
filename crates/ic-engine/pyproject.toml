@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ic-engine"
+description = "Repository ingestion engine for InfraCanvas"
+requires-python = ">=3.12"
+classifiers = ["Programming Language :: Rust"]
+dynamic = ["version"]
+
+[tool.maturin]
+module-name = "ic_engine"
+# `extension-module` is applied here rather than in Cargo.toml so that
+# `cargo test --all-features` still links libpython and can run.
+features = ["python", "pyo3/extension-module"]

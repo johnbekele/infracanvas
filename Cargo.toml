@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/johnbekele/infracanvas"
+
+[workspace.lints.clippy]
+# Pedantic as a warning set, then denied in CI. Locally a lint should tell you
+# something without stopping you mid-thought; in CI it should block.
+pedantic = { level = "warn", priority = -1 }
+
+# Panic-avoidance lints are declared per crate root rather than here. A workspace
+# lint reaches integration tests too, where a panic is the assertion mechanism
+# rather than a defect, and blanket-allowing it back in every test file would
+# suppress the lint exactly where it does apply.
+
+[profile.release]
+# Ingest is the memory-sensitive path and the binary ships to user machines.
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
