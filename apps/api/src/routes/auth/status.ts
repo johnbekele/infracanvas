@@ -41,17 +41,20 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
     }
 
     // Check if user has a stored GitHub token
-    const hasToken = await hasGitHubToken(user._id);
+    const hasToken = await hasGitHubToken(user.id);
 
     const response: AuthStatusResponse = {
       authenticated: true,
       user: {
-        id: user._id.toString(),
+        id: user.id,
         githubId: user.githubId,
         githubUsername: user.githubUsername,
         githubAvatar: user.githubAvatar,
-        name: user.name,
-        email: user.email,
+        // The database records an absent optional field as null; the response
+        // contract omits it. Converting here keeps the JSON the client sees
+        // identical to what it saw before the store changed.
+        name: user.name ?? undefined,
+        email: user.email ?? undefined,
       },
       hasGitHubToken: hasToken,
     };

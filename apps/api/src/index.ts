@@ -3,7 +3,7 @@ import express from 'express';
 import { corsMiddleware } from './middleware/cors.js';
 import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
-import { closeConnection } from './lib/mongodb.js';
+import { closePool, ping } from './lib/db/client.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,9 +12,15 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: '10mb' }));
 app.use(corsMiddleware);
 
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check. Reports the database separately so a load balancer can tell a
+// process that is up from one that cannot serve requests.
+app.get('/health', async (_req, res) => {
+  const database = await ping();
+  res.status(database ? 200 : 503).json({
+    status: database ? 'ok' : 'degraded',
+    database: database ? 'up' : 'down',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // API routes
@@ -41,7 +47,7 @@ const server = app.listen(PORT, () => {
 const shutdown = async () => {
   console.log('Shutting down gracefully...');
   server.close();
-  await closeConnection();
+  await closePool();
   process.exit(0);
 };
 
