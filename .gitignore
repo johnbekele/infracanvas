@@ -45,6 +45,19 @@ coverage
 # TypeScript
 *.tsbuildinfo
 
+# Compiled config files. `tsc -b` emits these next to vite.config.ts, so
+# committing them means a build silently dirties the working tree.
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
+
+# Python
+.venv
+__pycache__/
+*.py[cod]
+
+# Rust
+target/
+
 # Docker
 docker-compose.override.yml
 
