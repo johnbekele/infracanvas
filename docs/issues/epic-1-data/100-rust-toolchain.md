@@ -79,7 +79,6 @@ uses the binary as its benchmark entry point.
 
 - `version_is_not_empty` - Rust unit test
 - `cli_version_exits_zero` - Rust integration test invoking the binary
-- `test_python_module_reports_same_version` - Python test asserting parity across the boundary
 
 ### Performance Budget
 
@@ -91,6 +90,9 @@ binary is under 20MB.
 - Do not add tree-sitter, embedding, or database code; those are the engine epic
 - Do not publish the crate or the wheel to any registry
 - Do not add a second crate; the workspace has one member until there is a reason for more
+- Do not wire the wheel into the brain's test environment. `services/brain` does not exist on `main`
+  yet, and building plus installing the wheel is a CI change that belongs with the Python package.
+  Version parity is tracked separately in #38.
 
 ### Dependencies
 

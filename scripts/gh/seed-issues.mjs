@@ -29,6 +29,16 @@ function gh(argv) {
   return execFileSync('gh', argv, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 }
 
+/**
+ * Strip the quotes YAML uses to protect a value, so a title is not created with
+ * them embedded. Titles start with `[area]`, and a bare `[` opens a YAML flow
+ * sequence, so quoting them is required rather than stylistic.
+ */
+function unquote(value) {
+  const quoted = /^(['"])([\s\S]*)\1$/.exec(value);
+  return quoted ? quoted[2] : value;
+}
+
 /** Keys whose value is a comma separated list. Everything else stays a string,
  * so a title containing a comma is not silently torn into fragments. */
 const LIST_KEYS = new Set(['labels', 'assignees']);
@@ -48,7 +58,7 @@ function parseFile(path) {
     const idx = line.indexOf(':');
     if (idx === -1) throw new Error(`${path}: cannot parse frontmatter line "${line}"`);
     const key = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim();
+    const value = unquote(line.slice(idx + 1).trim());
     meta[key] = LIST_KEYS.has(key)
       ? value
           .split(',')
