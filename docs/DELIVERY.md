@@ -23,7 +23,7 @@ Two rules underpin everything:
 | 4    | Contract and migration | PR, merge queue | Generated-type drift, irreversible migrations, unapproved destructive DDL |
 | 5    | Security               | PR, merge queue | Secrets, vulnerable dependencies, disallowed licences, IaC policy         |
 | 6    | Performance            | PR, merge queue | Benchmark regression, memory ceiling, bundle budget                       |
-| 7    | Review                 | PR              | PR hygiene, risk-tier routing, code owner approval                        |
+| 7    | Review                 | PR              | PR hygiene, risk-tier routing, security review on tier 1                  |
 | 8    | Merge queue            | Merge           | Re-runs every required check against the merged result                    |
 | 9    | Nightly                | Schedule        | End-to-end pipeline, retrieval quality, cost-model accuracy               |
 
@@ -62,9 +62,25 @@ Tier is derived from the **paths a pull request touches**, not from what the aut
 nobody can quietly downgrade their own change.
 
 - **Tier 1** — auth, IAM, deployment, credentials, code generation, or the gates themselves.
-  Requires a security review in addition to code owner approval.
-- **Tier 2** — normal application code. Requires code owner approval.
+  Requires a passing security review job in addition to every other gate.
+- **Tier 2** — normal application code.
 - **Tier 3** — docs or tests only. Eligible for the fast lane.
+
+### Why approval is not currently required
+
+The ruleset asked for one approving review including a code owner. With a single maintainer that is
+not a high bar, it is an unreachable one: `CODEOWNERS` names the same person who opens every pull
+request, and GitHub does not permit self-approval. Every pull request in the repository was therefore
+permanently unmergeable, and the only way through was the admin bypass that `CLAUDE.md` forbids.
+
+A rule that can only be satisfied by breaking another rule is not a quality bar. It is a habit of
+overriding protections, which costs more than the review was ever worth.
+
+So approval is not required today, and all 25 status checks still are. Nothing merges without the
+gates passing; the change is that no human signature is demanded from someone who cannot give it.
+Restore `required_approving_review_count` to 1 and `require_code_owner_review` to true the moment a
+second maintainer exists or agent pull requests are opened by a separate account, which is the point
+at which the requirement starts meaning something.
 
 ## Waves
 
