@@ -1,0 +1,11 @@
+# Revisions to skip when running `git blame`.
+#
+# Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub applies this file automatically in its blame view.
+
+# style: apply prettier and eslint baseline across the codebase
+# Prettier had never run in this repository, so enabling it reformatted 72 files
+# in a single mechanical pass with no behaviour change.
+e310915b945c476945c913fb1ace04615377964e
