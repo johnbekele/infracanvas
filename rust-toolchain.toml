@@ -1,0 +1,7 @@
+[toolchain]
+# Pinned rather than tracking stable, so a compiler release cannot turn a green
+# pull request red overnight, and so a clippy lint added upstream lands as a
+# deliberate bump rather than a surprise.
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
