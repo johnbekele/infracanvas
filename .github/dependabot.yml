@@ -1,0 +1,33 @@
+version: 2
+
+# Actions are pinned to commit SHAs for supply-chain safety, which means they do
+# not pick up security fixes on their own. Dependabot is what keeps those pins
+# current, so the two settings only work as a pair.
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: 'ci(deps)'
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # Grouped so a routine bump is one reviewable pull request rather than
+      # twenty that each have to clear the full gate suite.
+      dev-dependencies:
+        dependency-type: development
+        update-types: ['minor', 'patch']
+      production-minor-patch:
+        dependency-type: production
+        update-types: ['minor', 'patch']

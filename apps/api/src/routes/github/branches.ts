@@ -2,6 +2,12 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import {
+  InvalidGitHubParamError,
+  assertBranch,
+  assertRepoCoordinates,
+  encodeBranch,
+} from '../../lib/github-params.js';
 
 const router = Router();
 
@@ -20,7 +26,7 @@ router.get('/:owner/:repo', requireAuth, async (req: Request, res: Response) => 
       return;
     }
 
-    const { owner, repo } = req.params;
+    const { owner, repo } = assertRepoCoordinates(req.params);
 
     const response = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, {
       headers: {
@@ -38,6 +44,10 @@ router.get('/:owner/:repo', requireAuth, async (req: Request, res: Response) => 
     const branches = await response.json();
     res.json(branches);
   } catch (error) {
+    if (error instanceof InvalidGitHubParamError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     console.error('Error fetching branches:', error);
     res.status(500).json({ error: 'Failed to fetch branches' });
   }
@@ -56,17 +66,19 @@ router.post('/:owner/:repo', requireAuth, async (req: Request, res: Response) =>
       return;
     }
 
-    const { owner, repo } = req.params;
-    const { branchName, fromBranch } = req.body;
+    const { owner, repo } = assertRepoCoordinates(req.params);
 
-    if (!branchName || !fromBranch) {
+    if (!req.body?.branchName || !req.body?.fromBranch) {
       res.status(400).json({ error: 'branchName and fromBranch are required' });
       return;
     }
 
+    const branchName = assertBranch(req.body.branchName);
+    const fromBranch = assertBranch(req.body.fromBranch);
+
     // Get the SHA of the source branch
     const refResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${fromBranch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${encodeBranch(fromBranch)}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -106,6 +118,10 @@ router.post('/:owner/:repo', requireAuth, async (req: Request, res: Response) =>
 
     res.json(createData);
   } catch (error) {
+    if (error instanceof InvalidGitHubParamError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     console.error('Error creating branch:', error);
     res.status(500).json({ error: 'Failed to create branch' });
   }

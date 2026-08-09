@@ -2,6 +2,12 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import {
+  InvalidGitHubParamError,
+  assertBranch,
+  assertRepoCoordinates,
+  encodeBranch,
+} from '../../lib/github-params.js';
 
 const router = Router();
 
@@ -55,24 +61,28 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    const { owner, repo, branch, message, files } = req.body as PushRequest;
+    const body = req.body as PushRequest;
 
     // Validate request
-    if (!owner || !repo || !branch || !message || !files || !Array.isArray(files)) {
+    if (!body.owner || !body.repo || !body.branch || !body.message || !Array.isArray(body.files)) {
       res.status(400).json({
         error: 'Missing required fields: owner, repo, branch, message, files',
       });
       return;
     }
 
-    if (files.length === 0) {
+    if (body.files.length === 0) {
       res.status(400).json({ error: 'At least one file is required' });
       return;
     }
 
+    const { owner, repo } = assertRepoCoordinates(body);
+    const branch = assertBranch(body.branch);
+    const { message, files } = body;
+
     // 1. Get the current commit SHA
     const refResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${encodeBranch(branch)}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -188,7 +198,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
     // 6. Update the branch reference
     const updateRefResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${encodeBranch(branch)}`,
       {
         method: 'PATCH',
         headers: {
@@ -215,6 +225,10 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       commitSha: newCommitData.sha,
     });
   } catch (error) {
+    if (error instanceof InvalidGitHubParamError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     console.error('Error pushing files:', error);
     res.status(500).json({
       error: 'Failed to push files',

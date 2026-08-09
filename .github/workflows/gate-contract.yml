@@ -17,7 +17,7 @@ jobs:
     name: Generated types match their schema
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup-node
       - name: Regenerate IR types
         run: |
@@ -39,7 +39,7 @@ jobs:
     name: API client matches the server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup-node
       - name: Regenerate the OpenAPI client
         run: |
@@ -70,7 +70,7 @@ jobs:
     env:
       DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_migrate?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Up, down, up
         run: |
           if [ ! -d db/migrations ]; then
@@ -90,7 +90,7 @@ jobs:
     name: Destructive DDL requires approval
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
       - name: Scan added migrations
@@ -127,7 +127,7 @@ jobs:
     name: IR schema changes require a version bump
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
       - name: Compare schema and version

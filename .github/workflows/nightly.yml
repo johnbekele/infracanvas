@@ -30,7 +30,7 @@ jobs:
     env:
       DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_e2e?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup-node
       - name: Run the full pipeline over the fixture repositories
         run: |
@@ -44,7 +44,7 @@ jobs:
     name: Retrieval quality regression
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Score retrieval against the golden set
         run: |
           if [ ! -d services/brain/src/brain/eval ]; then
@@ -58,7 +58,7 @@ jobs:
     name: Cost model accuracy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Compare the price snapshot against the live Price List
         run: |
           if [ ! -f scripts/pricing/verify-snapshot.mjs ]; then

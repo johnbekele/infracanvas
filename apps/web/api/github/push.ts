@@ -2,6 +2,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSession, setCorsHeaders } from '../_lib/auth';
 import { getGitHubToken } from '../_lib/db';
+import {
+  InvalidGitHubParamError,
+  assertBranch,
+  assertRepoCoordinates,
+  encodeBranch,
+} from '../_lib/github-params';
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -34,9 +40,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const token = await getGitHubToken(session.userId);
   if (!token) return res.status(401).json({ error: 'GitHub token not found' });
 
-  const { owner, repo, branch, message, files } = req.body;
+  const { message, files } = req.body ?? {};
 
-  if (!owner || !repo || !branch || !message || !files || !Array.isArray(files)) {
+  if (
+    !req.body?.owner ||
+    !req.body?.repo ||
+    !req.body?.branch ||
+    !message ||
+    !Array.isArray(files)
+  ) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -44,10 +56,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'At least one file required' });
   }
 
+  let owner: string;
+  let repo: string;
+  let branch: string;
+  try {
+    ({ owner, repo } = assertRepoCoordinates(req.body));
+    branch = assertBranch(req.body.branch);
+  } catch (err) {
+    if (err instanceof InvalidGitHubParamError) {
+      return res.status(400).json({ error: err.message });
+    }
+    throw err;
+  }
+
   try {
     // 1. Get current commit SHA
     const refResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${encodeBranch(branch)}`,
       { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } }
     );
 
@@ -126,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 6. Update branch ref
     const updateRefResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${encodeBranch(branch)}`,
       {
         method: 'PATCH',
         headers: {
