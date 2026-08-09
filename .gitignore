@@ -54,6 +54,11 @@ apps/web/vite.config.d.ts
 .venv
 __pycache__/
 *.py[cod]
+.coverage
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Rust
 target/
