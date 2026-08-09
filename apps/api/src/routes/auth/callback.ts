@@ -118,7 +118,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Save encrypted GitHub token
     await saveGitHubToken({
-      userId: user._id,
+      userId: user.id,
       accessToken: tokenData.access_token,
       tokenType: tokenData.token_type,
       scope: tokenData.scope,
@@ -126,7 +126,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Create session token
     const sessionToken = await createSessionToken({
-      userId: user._id.toString(),
+      userId: user.id,
       githubId: user.githubId,
       githubUsername: user.githubUsername,
     });

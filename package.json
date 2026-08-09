@@ -25,6 +25,11 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules",
     "prepare": "lefthook install",
+    "db:up": "docker compose up -d postgres",
+    "db:migrate": "dbmate --migrations-dir db/migrations --no-dump-schema up",
+    "db:rollback": "dbmate --migrations-dir db/migrations --no-dump-schema rollback",
+    "db:status": "dbmate --migrations-dir db/migrations status",
+    "db:new": "dbmate --migrations-dir db/migrations new",
     "gh:labels": "node scripts/gh/seed-labels.mjs",
     "gh:milestones": "node scripts/gh/seed-milestones.mjs",
     "gh:ruleset": "node scripts/gh/apply-ruleset.mjs"

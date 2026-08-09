@@ -1,18 +1,20 @@
 services:
-  # MongoDB - Local Database
-  mongo:
-    image: mongo:7-jammy
+  # Postgres with pgvector - application data, embeddings, graph, and job queue
+  postgres:
+    image: pgvector/pgvector:pg17
     ports:
-      - '27018:27017'
+      - '5433:5432'
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - MONGO_INITDB_DATABASE=infracanvas
+      - POSTGRES_USER=infracanvas
+      - POSTGRES_PASSWORD=infracanvas
+      - POSTGRES_DB=infracanvas
     healthcheck:
-      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
-      interval: 10s
+      test: ['CMD-SHELL', 'pg_isready -U infracanvas -d infracanvas']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 10s
 
   # Backend API - Development
@@ -31,7 +33,7 @@ services:
     environment:
       - NODE_ENV=development
     depends_on:
-      mongo:
+      postgres:
         condition: service_healthy
 
   # Frontend - Development
@@ -77,10 +79,10 @@ services:
     environment:
       - NODE_ENV=production
     depends_on:
-      mongo:
+      postgres:
         condition: service_healthy
     profiles:
       - prod
 
 volumes:
-  mongo_data:
+  postgres_data:

@@ -6,8 +6,8 @@ interface EnvConfig {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
 
-  // MongoDB
-  MONGODB_URI: string;
+  // Postgres
+  DATABASE_URL: string;
 
   // Security
   ENCRYPTION_KEY: string;
@@ -31,7 +31,7 @@ function getEnv(): EnvConfig {
   const requiredVars = [
     'GITHUB_CLIENT_ID',
     'GITHUB_CLIENT_SECRET',
-    'MONGODB_URI',
+    'DATABASE_URL',
     'ENCRYPTION_KEY',
     'JWT_SECRET',
     'APP_URL',
@@ -59,7 +59,7 @@ function getEnv(): EnvConfig {
   return {
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID!,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET!,
-    MONGODB_URI: process.env.MONGODB_URI!,
+    DATABASE_URL: process.env.DATABASE_URL!,
     ENCRYPTION_KEY: encryptionKey,
     JWT_SECRET: process.env.JWT_SECRET!,
     APP_URL: process.env.APP_URL!,
@@ -87,7 +87,7 @@ export function envSafe(): Partial<EnvConfig> {
   return {
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-    MONGODB_URI: process.env.MONGODB_URI,
+    DATABASE_URL: process.env.DATABASE_URL,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
     APP_URL: process.env.APP_URL || 'http://localhost:5173',
