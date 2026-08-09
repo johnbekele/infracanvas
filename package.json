@@ -27,7 +27,8 @@
     "prepare": "lefthook install",
     "gh:labels": "node scripts/gh/seed-labels.mjs",
     "gh:milestones": "node scripts/gh/seed-milestones.mjs",
-    "gh:ruleset": "node scripts/gh/apply-ruleset.mjs"
+    "gh:ruleset": "node scripts/gh/apply-ruleset.mjs",
+    "gh:issues": "node scripts/gh/seed-issues.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
