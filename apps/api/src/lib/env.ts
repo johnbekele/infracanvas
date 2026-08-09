@@ -1,10 +1,31 @@
 // Environment variable validation and access
 // Throws at startup if required variables are missing
 
+/**
+ * Where a GitHub token comes from.
+ *
+ * `oauth` is the hosted, multi-user path: each user authorises the application
+ * and gets their own token. `token` is for a laptop or a single-user self-host,
+ * where the operator already has a token and registering an OAuth application
+ * is friction with nothing behind it.
+ */
+export type AuthProvider = 'oauth' | 'token';
+
 interface EnvConfig {
-  // GitHub OAuth
+  AUTH_PROVIDER: AuthProvider;
+
+  // GitHub OAuth. Empty strings under the `token` provider, which never reads
+  // them; typed as string so the OAuth routes need no null handling.
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
+
+  /**
+   * Allow the `token` provider to authenticate a caller that is not on the
+   * loopback interface. Off by default: that provider hands out a session for
+   * the operator's own GitHub account, so exposing it to a network gives
+   * anyone who can reach it the operator's repository access.
+   */
+  AUTH_TOKEN_ALLOW_REMOTE: boolean;
 
   // Postgres
   DATABASE_URL: string;
@@ -27,16 +48,30 @@ interface EnvConfig {
   NODE_ENV: 'development' | 'production' | 'test';
 }
 
+function parseAuthProvider(raw: string | undefined): AuthProvider {
+  // Defaults to oauth. A deployment that forgets to set this should get the
+  // multi-user flow, not one that signs everybody in as the operator.
+  if (raw === undefined || raw === '') return 'oauth';
+  if (raw === 'oauth' || raw === 'token') return raw;
+
+  throw new Error(
+    `AUTH_PROVIDER must be "oauth" or "token", got "${raw}".\n` +
+      'Use "oauth" for a hosted multi-user deployment, or "token" for local development ' +
+      'and single-user self-hosting.'
+  );
+}
+
 function getEnv(): EnvConfig {
-  const requiredVars = [
-    'GITHUB_CLIENT_ID',
-    'GITHUB_CLIENT_SECRET',
-    'DATABASE_URL',
-    'ENCRYPTION_KEY',
-    'JWT_SECRET',
-    'APP_URL',
-    'API_URL',
-  ];
+  const authProvider = parseAuthProvider(process.env.AUTH_PROVIDER);
+
+  const requiredVars = ['DATABASE_URL', 'ENCRYPTION_KEY', 'JWT_SECRET', 'APP_URL', 'API_URL'];
+
+  // Only the OAuth provider ever reads these, and demanding them under the
+  // token provider is what made a fresh clone unrunnable without first
+  // registering a GitHub application.
+  if (authProvider === 'oauth') {
+    requiredVars.push('GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET');
+  }
 
   const missing = requiredVars.filter((key) => !process.env[key]);
 
@@ -57,8 +92,10 @@ function getEnv(): EnvConfig {
   }
 
   return {
-    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID!,
-    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET!,
+    AUTH_PROVIDER: authProvider,
+    AUTH_TOKEN_ALLOW_REMOTE: process.env.AUTH_TOKEN_ALLOW_REMOTE === 'true',
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ?? '',
+    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET ?? '',
     DATABASE_URL: process.env.DATABASE_URL!,
     ENCRYPTION_KEY: encryptionKey,
     JWT_SECRET: process.env.JWT_SECRET!,
@@ -85,6 +122,8 @@ export function env(): EnvConfig {
 // For development: allow partial env without throwing
 export function envSafe(): Partial<EnvConfig> {
   return {
+    AUTH_PROVIDER: process.env.AUTH_PROVIDER === 'token' ? 'token' : 'oauth',
+    AUTH_TOKEN_ALLOW_REMOTE: process.env.AUTH_TOKEN_ALLOW_REMOTE === 'true',
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
