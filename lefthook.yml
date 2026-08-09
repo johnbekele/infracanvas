@@ -19,10 +19,13 @@ pre-commit:
 
     ruff-format:
       glob: '*.py'
+      # `--project` rather than `--directory`: the latter changes the working
+      # directory, and the staged paths lefthook substitutes are relative to the
+      # repository root, so ruff would be handed files that do not exist.
       run: |
         if [ -f services/brain/pyproject.toml ]; then
-          uv run --directory services/brain ruff format {staged_files}
-          uv run --directory services/brain ruff check --fix {staged_files}
+          uv run --project services/brain ruff format {staged_files}
+          uv run --project services/brain ruff check --fix {staged_files}
         fi
       stage_fixed: true
 
