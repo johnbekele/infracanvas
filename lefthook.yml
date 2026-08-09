@@ -44,7 +44,18 @@ pre-commit:
 
 commit-msg:
   commands:
-    commitlint:
+    # Runs before commitlint. Some editors and agent tooling append assistant
+    # co-author trailers automatically; CLAUDE.md forbids them and Gate 2 rejects
+    # them, so strip them here rather than failing the commit.
+    01-strip-assistant-trailers:
+      run: |
+        if grep -qiE '^(Co-authored-by:[[:space:]]*(Claude|Cursor|Copilot|AI\b)|Generated with)' {1}; then
+          sed -i.bak -E '/^([Cc]o-authored-by:[[:space:]]*(Claude|Cursor|Copilot|AI\b)|Generated with)/d' {1}
+          rm -f {1}.bak
+          echo "Removed assistant co-author trailer from the commit message."
+        fi
+
+    02-commitlint:
       run: pnpm exec commitlint --edit {1}
 
 pre-push:

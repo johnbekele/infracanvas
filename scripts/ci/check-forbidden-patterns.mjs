@@ -63,6 +63,12 @@ const RULES = [
 /** Commit trailers that attribute authorship to an assistant, forbidden by CLAUDE.md. */
 const FORBIDDEN_TRAILERS = /^(Co-Authored-By:\s*(Claude|Cursor|Copilot|AI\b)|Generated with)/im;
 
+/**
+ * This file necessarily contains the very patterns it searches for, so it is
+ * excluded from the added-line rules. Its own behaviour is covered by tests.
+ */
+const SELF = 'scripts/ci/check-forbidden-patterns.mjs';
+
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
@@ -96,7 +102,8 @@ function main() {
       lineNo = Number.parseInt(hunkMatch[1], 10);
       continue;
     }
-    if (!currentFile || !line.startsWith('+') || line.startsWith('+++')) continue;
+    if (!currentFile || currentFile === SELF) continue;
+    if (!line.startsWith('+') || line.startsWith('+++')) continue;
 
     const content = line.slice(1);
     const position = lineNo;
