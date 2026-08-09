@@ -56,66 +56,59 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 300, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className={`
-        bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 flex flex-col
-        ${isMobile
-          ? 'fixed inset-y-0 right-0 w-[90vw] max-w-[320px] z-50 shadow-2xl'
-          : 'w-72 md:w-80 h-full'
-        }
-      `}
+      className={`flex flex-col border-l border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 ${
+        isMobile
+          ? 'fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[320px] shadow-2xl'
+          : 'h-full w-72 md:w-80'
+      } `}
     >
       {/* Header */}
-      <div className="p-3 md:p-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+      <div className="shrink-0 border-b border-gray-200 p-3 md:p-4 dark:border-gray-800">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
               style={{ backgroundColor: selectedNode.data.color }}
             >
-              <Settings className="w-4 h-4 text-white" />
+              <Settings className="h-4 w-4 text-white" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-sm md:text-base text-gray-900 dark:text-white truncate">
+              <h3 className="truncate text-sm font-semibold text-gray-900 md:text-base dark:text-white">
                 {selectedNode.data.serviceName}
               </h3>
-              <p className="text-[10px] md:text-xs text-gray-500 capitalize">
+              <p className="text-[10px] capitalize text-gray-500 md:text-xs">
                 {selectedNode.data.category}
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={handleClose}
-          >
-            <X className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleClose}>
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Properties - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-3 md:p-4">
         <div>
-          <h4 className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 md:mb-3">
+          <h4 className="mb-2 text-xs font-medium text-gray-700 md:mb-3 md:text-sm dark:text-gray-300">
             Configuration
           </h4>
 
           <div className="space-y-3 md:space-y-4">
             {serviceDefinition.properties.map((prop) => {
-              const currentValue =
-                selectedNode.data.properties[prop.name] ?? prop.default;
+              const currentValue = selectedNode.data.properties[prop.name] ?? prop.default;
 
               return (
                 <div key={prop.name} className="space-y-1 md:space-y-1.5">
-                  <Label htmlFor={prop.name} className="text-[11px] md:text-xs flex items-center gap-1">
+                  <Label
+                    htmlFor={prop.name}
+                    className="flex items-center gap-1 text-[11px] md:text-xs"
+                  >
                     {prop.label}
-                    {prop.required && (
-                      <span className="text-red-500">*</span>
-                    )}
+                    {prop.required && <span className="text-red-500">*</span>}
                     {prop.description && (
-                      <span className="text-gray-400 hidden md:inline" title={prop.description}>
-                        <Info className="w-3 h-3" />
+                      <span className="hidden text-gray-400 md:inline" title={prop.description}>
+                        <Info className="h-3 w-3" />
                       </span>
                     )}
                   </Label>
@@ -125,14 +118,10 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
                       id={prop.name}
                       value={String(currentValue)}
                       onChange={(e) =>
-                        updateNodeProperty(
-                          selectedNode.id,
-                          prop.name,
-                          e.target.value
-                        )
+                        updateNodeProperty(selectedNode.id, prop.name, e.target.value)
                       }
                       placeholder={prop.description}
-                      className="h-8 md:h-9 text-xs md:text-sm"
+                      className="h-8 text-xs md:h-9 md:text-sm"
                     />
                   )}
 
@@ -141,14 +130,10 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
                       id={prop.name}
                       value={String(currentValue)}
                       onChange={(e) =>
-                        updateNodeProperty(
-                          selectedNode.id,
-                          prop.name,
-                          e.target.value
-                        )
+                        updateNodeProperty(selectedNode.id, prop.name, e.target.value)
                       }
                       placeholder={prop.description}
-                      className="text-xs md:text-sm min-h-[60px] resize-none"
+                      className="min-h-[60px] resize-none text-xs md:text-sm"
                       rows={3}
                     />
                   )}
@@ -159,13 +144,9 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
                       type="number"
                       value={Number(currentValue)}
                       onChange={(e) =>
-                        updateNodeProperty(
-                          selectedNode.id,
-                          prop.name,
-                          Number(e.target.value)
-                        )
+                        updateNodeProperty(selectedNode.id, prop.name, Number(e.target.value))
                       }
-                      className="h-8 md:h-9 text-xs md:text-sm"
+                      className="h-8 text-xs md:h-9 md:text-sm"
                     />
                   )}
 
@@ -176,12 +157,16 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
                         updateNodeProperty(selectedNode.id, prop.name, value)
                       }
                     >
-                      <SelectTrigger className="h-8 md:h-9 text-xs md:text-sm">
+                      <SelectTrigger className="h-8 text-xs md:h-9 md:text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {prop.options.map((option) => (
-                          <SelectItem key={option.value} value={option.value} className="text-xs md:text-sm">
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="text-xs md:text-sm"
+                          >
                             {option.label}
                           </SelectItem>
                         ))}
@@ -195,21 +180,17 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
                         id={prop.name}
                         checked={Boolean(currentValue)}
                         onCheckedChange={(checked) =>
-                          updateNodeProperty(
-                            selectedNode.id,
-                            prop.name,
-                            checked
-                          )
+                          updateNodeProperty(selectedNode.id, prop.name, checked)
                         }
                       />
-                      <Label htmlFor={prop.name} className="text-[10px] md:text-xs text-gray-500">
+                      <Label htmlFor={prop.name} className="text-[10px] text-gray-500 md:text-xs">
                         {currentValue ? 'Enabled' : 'Disabled'}
                       </Label>
                     </div>
                   )}
 
                   {prop.description && prop.type !== 'text' && prop.type !== 'textarea' && (
-                    <p className="text-[9px] md:text-[10px] text-gray-500 md:hidden">
+                    <p className="text-[9px] text-gray-500 md:hidden md:text-[10px]">
                       {prop.description}
                     </p>
                   )}
@@ -220,15 +201,15 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
         </div>
 
         {/* Connections Info */}
-        <div className="pt-3 md:pt-4 border-t border-gray-200 dark:border-gray-800">
-          <h4 className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="border-t border-gray-200 pt-3 md:pt-4 dark:border-gray-800">
+          <h4 className="mb-2 text-xs font-medium text-gray-700 md:text-sm dark:text-gray-300">
             Allowed Connections
           </h4>
           <div className="flex flex-wrap gap-1">
             {serviceDefinition.allowedConnections.map((connId) => (
               <span
                 key={connId}
-                className="px-1.5 md:px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[9px] md:text-[10px] rounded-full uppercase"
+                className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] uppercase text-gray-600 md:px-2 md:text-[10px] dark:bg-gray-800 dark:text-gray-400"
               >
                 {connId}
               </span>
@@ -238,17 +219,17 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
       </div>
 
       {/* Footer Actions */}
-      <div className="p-3 md:p-4 border-t border-gray-200 dark:border-gray-800 shrink-0">
+      <div className="shrink-0 border-t border-gray-200 p-3 md:p-4 dark:border-gray-800">
         <Button
           variant="destructive"
           size="sm"
-          className="w-full gap-2 h-8 md:h-9 text-xs md:text-sm"
+          className="h-8 w-full gap-2 text-xs md:h-9 md:text-sm"
           onClick={() => {
             removeNode(selectedNode.id);
             selectNode(null);
           }}
         >
-          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
           Remove Service
         </Button>
       </div>
@@ -265,7 +246,7 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 z-40 bg-black/50"
             onClick={handleClose}
           />
           {panelContent}

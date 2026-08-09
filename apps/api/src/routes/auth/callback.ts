@@ -1,5 +1,5 @@
 // GitHub OAuth callback - exchange code for token
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { parse as parseCookie } from 'cookie';
 import { env } from '../../lib/env.js';
 import { createSessionToken } from '../../lib/jwt.js';
@@ -72,7 +72,7 @@ router.get('/', async (req: Request, res: Response) => {
     const tokenResponse = await fetch(GITHUB_TOKEN_URL, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -95,8 +95,8 @@ router.get('/', async (req: Request, res: Response) => {
     // Fetch user info from GitHub
     const userResponse = await fetch(GITHUB_USER_URL, {
       headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-        'Accept': 'application/vnd.github.v3+json',
+        Authorization: `Bearer ${tokenData.access_token}`,
+        Accept: 'application/vnd.github.v3+json',
       },
     });
 

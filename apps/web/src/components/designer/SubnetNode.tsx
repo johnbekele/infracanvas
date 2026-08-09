@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { NodeProps, NodeResizeControl, Handle, Position } from 'reactflow';
+import { type NodeProps, NodeResizeControl, Handle, Position } from 'reactflow';
 import { motion } from 'framer-motion';
 import { Globe, Shield, Maximize2 } from 'lucide-react';
-import { ServiceNodeData } from '@/lib/stores/designer-store';
+import { type ServiceNodeData } from '@/lib/stores/designer-store';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
 const controlStyle = {
@@ -42,12 +42,13 @@ function SubnetNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>)
         hintIcon: 'text-orange-400 dark:text-orange-600',
       };
 
-  const subnetName = data?.properties?.subnetName || (isPublic ? 'Public Subnet' : 'Private Subnet');
+  const subnetName =
+    data?.properties?.subnetName || (isPublic ? 'Public Subnet' : 'Private Subnet');
   const cidrBlock = data?.properties?.cidrBlock || (isPublic ? '10.0.1.0/24' : '10.0.10.0/24');
 
   return (
     <div
-      className="relative w-full h-full min-w-[200px] min-h-[150px]"
+      className="relative h-full min-h-[150px] w-full min-w-[200px]"
       style={{ zIndex: isSelected ? 0 : -1 }}
       onClick={(e) => {
         e.stopPropagation();
@@ -61,46 +62,43 @@ function SubnetNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>)
         minHeight={150}
         position="bottom-right"
       >
-        <div className={`w-3 h-3 flex items-center justify-center ${isSelected ? 'opacity-100' : 'opacity-0'} transition-opacity cursor-se-resize`}>
+        <div
+          className={`flex h-3 w-3 items-center justify-center ${isSelected ? 'opacity-100' : 'opacity-0'} cursor-se-resize transition-opacity`}
+        >
           <Maximize2
-            className={`w-2.5 h-2.5 ${colors.iconColor}`}
+            className={`h-2.5 w-2.5 ${colors.iconColor}`}
             style={{ transform: 'rotate(90deg)' }}
           />
         </div>
       </NodeResizeControl>
 
       {/* Subnet Header - positioned above the container */}
-      <div className="absolute -top-7 left-0 flex items-center gap-2 pointer-events-none">
-        <div className={`w-5 h-5 rounded ${colors.icon} flex items-center justify-center shadow-sm`}>
-          <Icon className="w-3 h-3 text-white" />
+      <div className="pointer-events-none absolute -top-7 left-0 flex items-center gap-2">
+        <div
+          className={`h-5 w-5 rounded ${colors.icon} flex items-center justify-center shadow-sm`}
+        >
+          <Icon className="h-3 w-3 text-white" />
         </div>
-        <span className={`text-xs font-semibold ${colors.text}`}>
-          {subnetName}
-        </span>
-        <span className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+        <span className={`text-xs font-semibold ${colors.text}`}>{subnetName}</span>
+        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">
           {cidrBlock}
         </span>
       </div>
 
       {/* Container Area - this is the drop zone */}
       <div
-        className={`
-          w-full h-full
-          border-2 border-dashed rounded-lg
-          transition-all duration-200
-          ${isSelected
+        className={`h-full w-full rounded-lg border-2 border-dashed transition-all duration-200 ${
+          isSelected
             ? `${colors.borderSelected} ${colors.bgHover}`
             : `${colors.border} ${colors.bg}`
-          }
-        `}
+        } `}
       >
         {/* Drop zone hint */}
-        <div className="absolute inset-2 flex items-center justify-center pointer-events-none">
-          <div className={`
-            text-center transition-opacity duration-200
-            ${isSelected ? 'opacity-80' : 'opacity-40'}
-          `}>
-            <Icon className={`w-8 h-8 mx-auto ${colors.hintIcon} mb-1`} />
+        <div className="pointer-events-none absolute inset-2 flex items-center justify-center">
+          <div
+            className={`text-center transition-opacity duration-200 ${isSelected ? 'opacity-80' : 'opacity-40'} `}
+          >
+            <Icon className={`mx-auto h-8 w-8 ${colors.hintIcon} mb-1`} />
             <p className={`text-xs font-medium ${colors.hint}`}>
               {isPublic ? 'Drop ALB, NAT, EC2' : 'Drop ECS, RDS, Cache'}
             </p>
@@ -114,7 +112,7 @@ function SubnetNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>)
           initial={{ opacity: 0, scale: 0.8 }}
           whileHover={{ scale: 1.1 }}
           animate={{ opacity: 1 }}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow-md hover:bg-red-600 transition-all z-20"
+          className="absolute -right-2 -top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow-md transition-all hover:bg-red-600"
           onClick={(e) => {
             e.stopPropagation();
             removeNodeWithChildren(id);
@@ -128,26 +126,36 @@ function SubnetNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>)
       {isSelected && (
         <motion.div
           layoutId={`subnet-selection-${id}`}
-          className={`absolute -inset-0.5 border-2 ${colors.borderSelected} rounded-lg pointer-events-none`}
+          className={`absolute -inset-0.5 border-2 ${colors.borderSelected} pointer-events-none rounded-lg`}
           initial={false}
           transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
         />
       )}
 
       {/* Subnet type badge */}
-      <div className={`
-        absolute bottom-2 right-2 px-2 py-0.5 rounded text-[9px] font-medium pointer-events-none
-        ${isPublic
-          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-          : 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-        }
-      `}>
+      <div
+        className={`pointer-events-none absolute bottom-2 right-2 rounded px-2 py-0.5 text-[9px] font-medium ${
+          isPublic
+            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+            : 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+        } `}
+      >
         {isPublic ? 'PUBLIC' : 'PRIVATE'}
       </div>
 
       {/* Hidden handles for edge connections - disabled to not interfere */}
-      <Handle type="target" position={Position.Left} className="opacity-0 pointer-events-none" isConnectable={false} />
-      <Handle type="source" position={Position.Right} className="opacity-0 pointer-events-none" isConnectable={false} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="pointer-events-none opacity-0"
+        isConnectable={false}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="pointer-events-none opacity-0"
+        isConnectable={false}
+      />
     </div>
   );
 }

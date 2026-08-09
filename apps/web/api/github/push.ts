@@ -5,11 +5,22 @@ import { getGitHubToken } from '../_lib/db';
 
 const GITHUB_API = 'https://api.github.com';
 
-interface GitHubRef { object: { sha: string } }
-interface GitHubCommit { sha: string; tree: { sha: string } }
-interface GitHubBlob { sha: string }
-interface GitHubTree { sha: string }
-interface GitHubNewCommit { sha: string }
+interface GitHubRef {
+  object: { sha: string };
+}
+interface GitHubCommit {
+  sha: string;
+  tree: { sha: string };
+}
+interface GitHubBlob {
+  sha: string;
+}
+interface GitHubTree {
+  sha: string;
+}
+interface GitHubNewCommit {
+  sha: string;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res, req.headers.origin);
@@ -37,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Get current commit SHA
     const refResponse = await fetch(
       `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${branch}`,
-      { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } }
     );
 
     if (!refResponse.ok) {
@@ -50,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2. Get tree SHA
     const commitResponse = await fetch(
       `${GITHUB_API}/repos/${owner}/${repo}/git/commits/${currentCommitSha}`,
-      { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } }
     );
 
     if (!commitResponse.ok) {
@@ -62,18 +73,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 3. Create blobs
     const treeItems = await Promise.all(
       files.map(async (file: { path: string; content: string }) => {
-        const blobResponse = await fetch(
-          `${GITHUB_API}/repos/${owner}/${repo}/git/blobs`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ content: file.content, encoding: 'utf-8' }),
-          }
-        );
+        const blobResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/blobs`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: file.content, encoding: 'utf-8' }),
+        });
 
         if (!blobResponse.ok) throw new Error(`Failed to create blob for ${file.path}`);
         const blobData = (await blobResponse.json()) as GitHubBlob;
@@ -83,18 +91,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     // 4. Create tree
-    const treeResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/trees`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ base_tree: commitData.tree.sha, tree: treeItems }),
-      }
-    );
+    const treeResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/trees`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ base_tree: commitData.tree.sha, tree: treeItems }),
+    });
 
     if (!treeResponse.ok) {
       return res.status(treeResponse.status).json(await treeResponse.json());
@@ -103,18 +108,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const treeData = (await treeResponse.json()) as GitHubTree;
 
     // 5. Create commit
-    const newCommitResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/commits`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message, tree: treeData.sha, parents: [currentCommitSha] }),
-      }
-    );
+    const newCommitResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/commits`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, tree: treeData.sha, parents: [currentCommitSha] }),
+    });
 
     if (!newCommitResponse.ok) {
       return res.status(newCommitResponse.status).json(await newCommitResponse.json());
@@ -128,8 +130,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ sha: newCommitData.sha }),

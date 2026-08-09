@@ -59,7 +59,7 @@ export const useGitHubStore = create<GitHubState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error) {
+        } catch (_error) {
           set({
             token: null,
             user: null,
@@ -101,7 +101,7 @@ export const useGitHubStore = create<GitHubState>()(
       },
 
       setUser: (user) => {
-        set({ user, isAuthenticated: !!user });
+        set({ user, isAuthenticated: Boolean(user) });
       },
     }),
     {

@@ -23,15 +23,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      const response = await fetch(
-        `${GITHUB_API}/repos/${owner}/${repo}/branches`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-          },
-        }
-      );
+      const response = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
       const data = await response.json();
       return res.status(response.status).json(data);
     }
@@ -48,8 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${fromBranch}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
           },
         }
       );
@@ -62,21 +59,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const refData = (await refResponse.json()) as { object: { sha: string } };
 
       // Create branch
-      const createResponse = await fetch(
-        `${GITHUB_API}/repos/${owner}/${repo}/git/refs`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ref: `refs/heads/${branchName}`,
-            sha: refData.object.sha,
-          }),
-        }
-      );
+      const createResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/refs`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: `refs/heads/${branchName}`,
+          sha: refData.object.sha,
+        }),
+      });
 
       const data = await createResponse.json();
       return res.status(createResponse.status).json(data);

@@ -7,13 +7,13 @@ import ReactFlow, {
   useReactFlow,
   ConnectionLineType,
   ConnectionMode,
-  Node,
+  type Node,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Layers, X, ArrowRight } from 'lucide-react';
 
-import { useDesignerStore, ServiceNodeData } from '@/lib/stores/designer-store';
-import { AWSService, canConnect } from '@infracanvas/core';
+import { useDesignerStore, type ServiceNodeData } from '@/lib/stores/designer-store';
+import { type AWSService, canConnect } from '@infracanvas/core';
 import { ServiceNode } from './ServiceNode';
 import { VpcEnvironmentNode } from './VpcEnvironmentNode';
 import { SubnetNode } from './SubnetNode';
@@ -43,15 +43,8 @@ function DesignerCanvasInner() {
   const [isMobile, setIsMobile] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
 
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    addNode,
-    selectNode,
-  } = useDesignerStore();
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, selectNode } =
+    useDesignerStore();
 
   // Check for mobile screen size
   useEffect(() => {
@@ -66,13 +59,10 @@ function DesignerCanvasInner() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const onDragStart = useCallback(
-    (event: React.DragEvent, service: AWSService) => {
-      event.dataTransfer.setData('application/reactflow', JSON.stringify(service));
-      event.dataTransfer.effectAllowed = 'move';
-    },
-    []
-  );
+  const onDragStart = useCallback((event: React.DragEvent, service: AWSService) => {
+    event.dataTransfer.setData('application/reactflow', JSON.stringify(service));
+    event.dataTransfer.effectAllowed = 'move';
+  }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -126,11 +116,13 @@ function DesignerCanvasInner() {
 
       for (const container of sortedContainers) {
         // Get the container's actual dimensions from style or defaults
-        const width = (container.style?.width as number) ||
-          (container.width) ||
+        const width =
+          (container.style?.width as number) ||
+          container.width ||
           (container.type === 'vpcEnvironment' ? 500 : 220);
-        const height = (container.style?.height as number) ||
-          (container.height) ||
+        const height =
+          (container.style?.height as number) ||
+          container.height ||
           (container.type === 'vpcEnvironment' ? 400 : 180);
 
         // Get absolute position accounting for parent nesting
@@ -158,7 +150,7 @@ function DesignerCanvasInner() {
   );
 
   // Validate if service can be placed in container
-  const validatePlacement = (service: AWSService, container: typeof nodes[0] | null): boolean => {
+  const validatePlacement = (service: AWSService, container: (typeof nodes)[0] | null): boolean => {
     // Subnets must go in VPC
     if (service.parentRequired === 'vpc-environment') {
       return container?.data.serviceId === 'vpc-environment';
@@ -239,7 +231,8 @@ function DesignerCanvasInner() {
 
         const isServiceGoingIntoSubnet =
           !service.isContainer &&
-          (container.data.serviceId === 'public-subnet' || container.data.serviceId === 'private-subnet');
+          (container.data.serviceId === 'public-subnet' ||
+            container.data.serviceId === 'private-subnet');
 
         if (isSubnetGoingIntoVpc || isServiceGoingIntoSubnet) {
           parentNode = container.id;
@@ -270,7 +263,7 @@ function DesignerCanvasInner() {
           color: service.color,
           category: service.category,
           properties,
-          nodeType: service.isContainer ? service.id as ServiceNodeData['nodeType'] : 'service',
+          nodeType: service.isContainer ? (service.id as ServiceNodeData['nodeType']) : 'service',
           parentId: parentNode,
         },
       };
@@ -278,13 +271,23 @@ function DesignerCanvasInner() {
       // Add default size and zIndex for container nodes
       // zIndex: VPC = -2, Subnet = -1, Services = 0 (default)
       if (nodeType === 'vpcEnvironment') {
-        const vpcNode = newNode as typeof newNode & { style: Record<string, unknown>; width: number; height: number; zIndex: number };
+        const vpcNode = newNode as typeof newNode & {
+          style: Record<string, unknown>;
+          width: number;
+          height: number;
+          zIndex: number;
+        };
         vpcNode.style = { width: 500, height: 400 };
         vpcNode.width = 500;
         vpcNode.height = 400;
         vpcNode.zIndex = -2; // VPC at bottom layer
       } else if (nodeType === 'subnet') {
-        const subnetNode = newNode as typeof newNode & { style: Record<string, unknown>; width: number; height: number; zIndex: number };
+        const subnetNode = newNode as typeof newNode & {
+          style: Record<string, unknown>;
+          width: number;
+          height: number;
+          zIndex: number;
+        };
         subnetNode.style = { width: 220, height: 180 };
         subnetNode.width = 220;
         subnetNode.height = 180;
@@ -293,11 +296,20 @@ function DesignerCanvasInner() {
 
       addNode(newNode);
     },
+    // `validatePlacement` is intentionally omitted: it is recreated on every
+    // render and including it would rebuild this handler on each keystroke.
+    // Stabilising it is tracked separately as canvas work.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [screenToFlowPosition, addNode, findContainerAtPosition, getAbsolutePosition]
   );
 
   const onConnectValidate = useCallback(
-    (connection: { source: string | null; target: string | null; sourceHandle: string | null; targetHandle: string | null }) => {
+    (connection: {
+      source: string | null;
+      target: string | null;
+      sourceHandle: string | null;
+      targetHandle: string | null;
+    }) => {
       console.log('Connection attempt:', connection);
 
       if (!connection.source || !connection.target) {
@@ -344,7 +356,12 @@ function DesignerCanvasInner() {
   );
 
   const handleConnect = useCallback(
-    (connection: { source: string | null; target: string | null; sourceHandle: string | null; targetHandle: string | null }) => {
+    (connection: {
+      source: string | null;
+      target: string | null;
+      sourceHandle: string | null;
+      targetHandle: string | null;
+    }) => {
       if (onConnectValidate(connection)) {
         onConnect(connection);
       }
@@ -353,60 +370,58 @@ function DesignerCanvasInner() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-950 relative">
+    <div className="relative flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-950">
       {/* Mobile Service Palette Toggle */}
       {isMobile && (
         <Button
           variant="default"
           size="sm"
-          className="absolute top-14 left-2 z-50 gap-2 shadow-lg"
+          className="absolute left-2 top-14 z-50 gap-2 shadow-lg"
           onClick={() => setShowPalette(!showPalette)}
         >
-          <Layers className="w-4 h-4" />
+          <Layers className="h-4 w-4" />
           <span className="text-xs">Services</span>
         </Button>
       )}
 
       {/* Service Palette - Desktop: always visible, Mobile: slide-over */}
       <div
-        className={`
-          ${isMobile
+        className={` ${
+          isMobile
             ? `fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${showPalette ? 'translate-x-0' : '-translate-x-full'}`
             : 'relative'
-          }
-        `}
+        } `}
       >
         {isMobile && showPalette && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 h-8 w-8"
+            className="absolute right-2 top-2 z-10 h-8 w-8"
             onClick={() => setShowPalette(false)}
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </Button>
         )}
-        <ServicePalette onDragStart={(e, service) => {
-          onDragStart(e, service);
-          if (isMobile) setShowPalette(false);
-        }} />
+        <ServicePalette
+          onDragStart={(e, service) => {
+            onDragStart(e, service);
+            if (isMobile) setShowPalette(false);
+          }}
+        />
       </div>
 
       {/* Mobile Overlay */}
       {isMobile && showPalette && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setShowPalette(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowPalette(false)} />
       )}
 
       {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Toolbar */}
         <DesignerToolbar isMobile={isMobile} />
 
         {/* Canvas */}
-        <div ref={reactFlowWrapper} className="flex-1 relative">
+        <div ref={reactFlowWrapper} className="relative flex-1">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -443,38 +458,38 @@ function DesignerCanvasInner() {
           >
             <Background gap={15} size={1} color="#e5e7eb" />
             <Controls
-              className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !shadow-lg"
+              className="!border-gray-200 !bg-white !shadow-lg dark:!border-gray-700 dark:!bg-gray-800"
               position={isMobile ? 'bottom-right' : 'bottom-left'}
             />
             {!isMobile && (
               <MiniMap
                 nodeColor={(node) => node.data?.color || '#6366f1'}
                 maskColor="rgba(0,0,0,0.1)"
-                className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700"
+                className="!border-gray-200 !bg-white dark:!border-gray-700 dark:!bg-gray-800"
               />
             )}
           </ReactFlow>
 
           {/* Connection Legend */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-lg px-4 py-2 flex items-center gap-4 text-xs border border-gray-200 dark:border-gray-700">
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white shadow" />
+              <div className="h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow" />
               <span className="text-gray-600 dark:text-gray-300">Output</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
+            <ArrowRight className="h-4 w-4 text-gray-400" />
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow" />
+              <div className="h-3 w-3 rounded-full border-2 border-white bg-blue-500 shadow" />
               <span className="text-gray-600 dark:text-gray-300">Input</span>
             </div>
           </div>
 
           {/* Empty State */}
           {nodes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
               <div className="text-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 md:h-20 md:w-20 dark:bg-gray-800">
                   <svg
-                    className="w-8 h-8 md:w-10 md:h-10 text-gray-400"
+                    className="h-8 w-8 text-gray-400 md:h-10 md:w-10"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -487,24 +502,23 @@ function DesignerCanvasInner() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-base md:text-lg font-medium text-gray-900 dark:text-white mb-1">
+                <h3 className="mb-1 text-base font-medium text-gray-900 md:text-lg dark:text-white">
                   Start designing your architecture
                 </h3>
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-3">
+                <p className="mx-auto mb-3 max-w-xs text-xs text-gray-500 md:text-sm dark:text-gray-400">
                   {isMobile
                     ? 'Tap "Services" to add AWS services to your canvas'
-                    : 'Drag AWS services from the left panel onto the canvas to begin building your infrastructure'
-                  }
+                    : 'Drag AWS services from the left panel onto the canvas to begin building your infrastructure'}
                 </p>
                 <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                   <span>Connect services:</span>
                   <div className="flex items-center gap-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
                     <span>OUT</span>
                   </div>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="h-3 w-3" />
                   <div className="flex items-center gap-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                     <span>IN</span>
                   </div>
                 </div>

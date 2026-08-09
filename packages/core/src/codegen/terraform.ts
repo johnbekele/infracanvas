@@ -712,8 +712,7 @@ function generateModuleVariables(serviceId: string): string {
   content += `variable "environment" {\n  type = string\n}\n\n`;
 
   service.properties.forEach((prop) => {
-    const tfType =
-      prop.type === 'boolean' ? 'bool' : prop.type === 'number' ? 'number' : 'string';
+    const tfType = prop.type === 'boolean' ? 'bool' : prop.type === 'number' ? 'number' : 'string';
     content += `variable "${prop.name}" {\n`;
     content += `  type    = ${tfType}\n`;
     content += `  default = ${JSON.stringify(prop.default)}\n`;

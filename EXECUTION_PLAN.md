@@ -7,6 +7,7 @@ This document contains step-by-step execution plans for each phase.
 ## Phase 1: Project Setup ✅ COMPLETE
 
 ### 1.1 Initialize Monorepo ✅
+
 - [x] Create `/Users/yohansbekele/infracanvas/` directory
 - [x] Create root `package.json` with Turborepo
 - [x] Create `pnpm-workspace.yaml`
@@ -16,12 +17,14 @@ This document contains step-by-step execution plans for each phase.
 - [x] Create `.prettierrc` and `.prettierignore`
 
 ### 1.2 Set up packages/core ✅
+
 - [x] Create `packages/core/package.json`
 - [x] Create `packages/core/tsconfig.json`
 - [x] Create `packages/core/tsup.config.ts`
 - [x] Create directory structure: `src/`, `src/codegen/`
 
 ### 1.3 Set up apps/web ✅
+
 - [x] Create `apps/web/package.json` with all dependencies
 - [x] Create `apps/web/tsconfig.json`
 - [x] Create `apps/web/vite.config.ts`
@@ -34,6 +37,7 @@ This document contains step-by-step execution plans for each phase.
 - [x] Create `apps/web/src/lib/utils.ts` (cn function)
 
 ### 1.4 Create UI Components ✅
+
 - [x] `components/ui/button.tsx`
 - [x] `components/ui/input.tsx`
 - [x] `components/ui/label.tsx`
@@ -47,6 +51,7 @@ This document contains step-by-step execution plans for each phase.
 - [x] `components/ui/toaster.tsx`
 
 ### 1.5 Create Pages ✅
+
 - [x] `pages/LandingPage.tsx`
 - [x] `pages/DesignerPage.tsx`
 - [x] `pages/CallbackPage.tsx` (for OAuth)
@@ -56,6 +61,7 @@ This document contains step-by-step execution plans for each phase.
 ## Phase 2: Core Migration ✅ COMPLETE
 
 ### 2.1 Migrate Core Types ✅
+
 - [x] Create `packages/core/src/types.ts`
   - ServiceNodeData interface
   - ArchitectureDesign interface
@@ -63,6 +69,7 @@ This document contains step-by-step execution plans for each phase.
   - PulumiLanguage type
 
 ### 2.2 Migrate AWS Services ✅
+
 - [x] Create `packages/core/src/aws-services.ts`
   - Copy all 20+ service definitions
   - Update branding from "Archyra" to "InfraCanvas"
@@ -70,6 +77,7 @@ This document contains step-by-step execution plans for each phase.
   - Export getServiceById, getServicesByCategory, canConnect
 
 ### 2.3 Migrate Code Generators ✅
+
 - [x] Create `packages/core/src/codegen/terraform.ts`
   - generateTerraform() - single file preview
   - generateTerraformProject() - modular project
@@ -84,18 +92,21 @@ This document contains step-by-step execution plans for each phase.
   - downloadBlob()
 
 ### 2.4 Create Core Index ✅
+
 - [x] Create `packages/core/src/index.ts`
   - Export all types
   - Export all services
   - Export all generators
 
 ### 2.5 Migrate Designer Store ✅
+
 - [x] Create `apps/web/src/lib/stores/designer-store.ts`
   - Copied from Archyra
   - Updated imports to use `@infracanvas/core`
   - Changed localStorage key to `infracanvas-designer-v1`
 
 ### 2.6 Migrate Designer Components ✅
+
 - [x] Create `apps/web/src/components/designer/DesignerCanvas.tsx`
   - Removed `'use client'` directive
   - Updated imports to use `@infracanvas/core`
@@ -110,10 +121,12 @@ This document contains step-by-step execution plans for each phase.
 - [x] Create `apps/web/src/components/designer/index.ts` (barrel export)
 
 ### 2.7 Update DesignerPage ✅
+
 - [x] Updated `pages/DesignerPage.tsx` to use migrated components
 - [x] Wired up ReactFlow with proper providers
 
 ### 2.8 Test Build ✅
+
 - [x] Run `pnpm install` in root
 - [x] Run `pnpm build` to verify no errors
 - Build output:
@@ -125,6 +138,7 @@ This document contains step-by-step execution plans for each phase.
 ## Phase 3: GitHub Integration ⏳ PENDING
 
 ### 3.1 GitHub Auth Utilities
+
 - [ ] Create `apps/web/src/lib/github/config.ts`
   - GitHub OAuth app configuration
   - Client ID, redirect URI
@@ -154,6 +168,7 @@ This document contains step-by-step execution plans for each phase.
   - useGitHubBranches() - branches query
 
 ### 3.2 GitHub UI Components
+
 - [ ] Create `apps/web/src/components/github/GitHubLoginButton.tsx`
   - Login/logout button
   - Show user avatar when logged in
@@ -172,12 +187,14 @@ This document contains step-by-step execution plans for each phase.
   - Opens full push flow dialog
 
 ### 3.3 Update Callback Page
+
 - [ ] Update `pages/CallbackPage.tsx`
   - Handle OAuth code exchange
   - Store token securely
   - Redirect to designer
 
 ### 3.4 Integrate with Toolbar
+
 - [ ] Update `DesignerToolbar.tsx`
   - Add GitHub login button
   - Add "Push to GitHub" in export menu
@@ -187,6 +204,7 @@ This document contains step-by-step execution plans for each phase.
 ## Phase 4: GitOps Pipeline ⏳ PENDING
 
 ### 4.1 Workflow Templates
+
 - [ ] Create `apps/web/src/lib/gitops/templates/terraform.yml`
   - GitHub Actions workflow for Terraform
   - terraform init, plan, apply
@@ -198,12 +216,14 @@ This document contains step-by-step execution plans for each phase.
   - GitHub Actions workflow for Pulumi Python
 
 ### 4.2 Workflow Generator
+
 - [ ] Create `apps/web/src/lib/gitops/workflow-generator.ts`
   - generateTerraformWorkflow()
   - generatePulumiWorkflow()
   - Include workflow in push if user opts in
 
 ### 4.3 Workflow Options UI
+
 - [ ] Add checkbox in CommitDialog
   - "Include GitHub Actions workflow"
   - Select workflow type
@@ -213,6 +233,7 @@ This document contains step-by-step execution plans for each phase.
 ## Phase 5: Polish & Launch ⏳ PENDING
 
 ### 5.1 Documentation
+
 - [ ] Create `README.md` with:
   - Project description
   - Screenshots/GIFs
@@ -224,6 +245,7 @@ This document contains step-by-step execution plans for each phase.
 - [ ] Create `SECURITY.md`
 
 ### 5.2 CI/CD Workflows
+
 - [ ] Create `.github/workflows/ci.yml`
   - Lint, typecheck, test, build
   - Run on PR and push to main
@@ -234,17 +256,20 @@ This document contains step-by-step execution plans for each phase.
   - Deploy docs to GitHub Pages
 
 ### 5.3 Deploy Buttons
+
 - [ ] Add Vercel deploy button to README
 - [ ] Add Netlify deploy button to README
 - [ ] Test one-click deploys
 
 ### 5.4 Final Testing
+
 - [ ] Manual test full design flow
 - [ ] Manual test GitHub OAuth flow
 - [ ] Manual test push to repository
 - [ ] Test on Vercel deployment
 
 ### 5.5 Create GitHub Repository
+
 - [ ] Initialize git in infracanvas/
 - [ ] Create remote repo: johnbekele/infracanvas
 - [ ] Push initial commit
@@ -255,18 +280,21 @@ This document contains step-by-step execution plans for each phase.
 ## Verification Checklist
 
 ### Unit Tests
+
 - [ ] AWS service definitions load correctly
 - [ ] Terraform generator produces valid HCL
 - [ ] Pulumi generator produces valid TypeScript/Python
 - [ ] ZIP exporter creates downloadable files
 
 ### Integration Tests
+
 - [ ] Canvas renders with drag-and-drop
 - [ ] Nodes connect with edges
 - [ ] Properties panel updates node data
 - [ ] Code panel shows generated code
 
 ### E2E Tests
+
 - [ ] Full design flow: add → connect → export
 - [ ] GitHub OAuth flow
 - [ ] Push to repository flow

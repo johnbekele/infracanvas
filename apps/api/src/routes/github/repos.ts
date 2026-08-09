@@ -1,5 +1,5 @@
 // GitHub repositories endpoint
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 
@@ -25,8 +25,8 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
       `${GITHUB_API}/user/repos?sort=pushed&per_page=100&affiliation=owner,collaborator`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -68,8 +68,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     const response = await fetch(`${GITHUB_API}/user/repos`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

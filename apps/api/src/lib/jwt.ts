@@ -1,5 +1,5 @@
 // JWT session management using jose library
-import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { env } from './env.js';
 
 // Session duration: 1 hour

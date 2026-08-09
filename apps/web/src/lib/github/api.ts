@@ -39,11 +39,7 @@ export async function listRepos(token: string): Promise<GitHubRepo[]> {
   return repos;
 }
 
-export async function getRepo(
-  token: string,
-  owner: string,
-  repo: string
-): Promise<GitHubRepo> {
+export async function getRepo(token: string, owner: string, repo: string): Promise<GitHubRepo> {
   return githubFetch<GitHubRepo>(`/repos/${owner}/${repo}`, token);
 }
 
@@ -69,10 +65,7 @@ export async function listBranches(
   owner: string,
   repo: string
 ): Promise<GitHubBranch[]> {
-  return githubFetch<GitHubBranch[]>(
-    `/repos/${owner}/${repo}/branches`,
-    token
-  );
+  return githubFetch<GitHubBranch[]>(`/repos/${owner}/${repo}/branches`, token);
 }
 
 export async function createBranch(
@@ -261,16 +254,12 @@ export async function pushFilesAtomic(
     );
 
     // 6. Update the branch reference
-    await githubFetch(
-      `/repos/${owner}/${repo}/git/refs/heads/${branch}`,
-      token,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({
-          sha: newCommitResponse.sha,
-        }),
-      }
-    );
+    await githubFetch(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        sha: newCommitResponse.sha,
+      }),
+    });
 
     return {
       success: true,

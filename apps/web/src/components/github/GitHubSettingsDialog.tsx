@@ -30,25 +30,18 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={() => onOpenChange(false)}
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
 
       {/* Dialog */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+      <div className="relative mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-gray-900">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center">
-            <Github className="w-6 h-6 text-white dark:text-gray-900" />
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 dark:bg-white">
+            <Github className="h-6 w-6 text-white dark:text-gray-900" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              GitHub Settings
-            </h2>
-            <p className="text-sm text-gray-500">
-              Connect to push your infrastructure code
-            </p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">GitHub Settings</h2>
+            <p className="text-sm text-gray-500">Connect to push your infrastructure code</p>
           </div>
         </div>
 
@@ -56,26 +49,18 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
         {isAuthenticated && user ? (
           <div className="space-y-4">
             {/* Connected User */}
-            <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-              <img
-                src={user.avatar_url}
-                alt={user.login}
-                className="w-10 h-10 rounded-full"
-              />
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
+              <img src={user.avatar_url} alt={user.login} className="h-10 w-10 rounded-full" />
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-white">
                   {user.name || user.login}
                 </p>
                 <p className="text-sm text-gray-500">@{user.login}</p>
               </div>
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
 
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={handleDisconnect}
-            >
+            <Button variant="destructive" className="w-full" onClick={handleDisconnect}>
               Disconnect
             </Button>
           </div>
@@ -85,7 +70,7 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
             <div className="space-y-2">
               <Label htmlFor="github-token">Personal Access Token</Label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="github-token"
                   type="password"
@@ -98,21 +83,22 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
               </div>
               {error && (
                 <div className="flex items-center gap-2 text-sm text-red-500">
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className="h-4 w-4" />
                   {error}
                 </div>
               )}
             </div>
 
             {/* Instructions */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm space-y-2">
-              <p className="font-medium text-gray-900 dark:text-white">
-                How to create a token:
-              </p>
-              <ol className="list-decimal list-inside space-y-1 text-gray-600 dark:text-gray-400">
+            <div className="space-y-2 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-800">
+              <p className="font-medium text-gray-900 dark:text-white">How to create a token:</p>
+              <ol className="list-inside list-decimal space-y-1 text-gray-600 dark:text-gray-400">
                 <li>Go to GitHub Settings → Developer Settings</li>
                 <li>Personal Access Tokens → Tokens (classic)</li>
-                <li>Generate new token with <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">repo</code> scope</li>
+                <li>
+                  Generate new token with{' '}
+                  <code className="rounded bg-gray-200 px-1 dark:bg-gray-700">repo</code> scope
+                </li>
               </ol>
               <a
                 href="https://github.com/settings/tokens/new?scopes=repo&description=InfraCanvas"
@@ -121,7 +107,7 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
                 className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-700"
               >
                 Create token on GitHub
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="h-3 w-3" />
               </a>
             </div>
 
@@ -132,12 +118,12 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Connecting...
                 </>
               ) : (
                 <>
-                  <Github className="w-4 h-4" />
+                  <Github className="h-4 w-4" />
                   Connect
                 </>
               )}
@@ -146,8 +132,8 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
         )}
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-800">
+          <p className="text-center text-xs text-gray-500">
             Your token is stored locally and never sent to any server.
           </p>
         </div>
@@ -155,9 +141,9 @@ export function GitHubSettingsDialog({ open, onOpenChange }: GitHubSettingsDialo
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
         >
-          <XCircle className="w-5 h-5" />
+          <XCircle className="h-5 w-5" />
         </button>
       </div>
     </div>

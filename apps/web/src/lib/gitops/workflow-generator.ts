@@ -37,12 +37,24 @@ export function generateWorkflow(options: WorkflowOptions): GeneratedWorkflow {
     case 'pulumi-ts':
       return {
         path: '.github/workflows/pulumi.yml',
-        content: generatePulumiWorkflow({ directory, branch, autoApply, awsRegion, language: 'typescript' }),
+        content: generatePulumiWorkflow({
+          directory,
+          branch,
+          autoApply,
+          awsRegion,
+          language: 'typescript',
+        }),
       };
     case 'pulumi-py':
       return {
         path: '.github/workflows/pulumi.yml',
-        content: generatePulumiWorkflow({ directory, branch, autoApply, awsRegion, language: 'python' }),
+        content: generatePulumiWorkflow({
+          directory,
+          branch,
+          autoApply,
+          awsRegion,
+          language: 'python',
+        }),
       };
   }
 }
@@ -148,16 +160,20 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
-${autoApply ? `
+${
+  autoApply
+    ? `
       - name: Terraform Apply
         if: github.ref == 'refs/heads/${branch}' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
-` : `
+`
+    : `
       # Uncomment to enable auto-apply on push to ${branch}
       # - name: Terraform Apply
       #   if: github.ref == 'refs/heads/${branch}' && github.event_name == 'push'
       #   run: terraform apply -auto-approve -input=false
-`}
+`
+}
 `;
 }
 
@@ -172,8 +188,9 @@ interface PulumiWorkflowOptions {
 function generatePulumiWorkflow(options: PulumiWorkflowOptions): string {
   const { directory, branch, autoApply, awsRegion, language } = options;
 
-  const setupSteps = language === 'typescript'
-    ? `
+  const setupSteps =
+    language === 'typescript'
+      ? `
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -184,7 +201,7 @@ function generatePulumiWorkflow(options: PulumiWorkflowOptions): string {
       - name: Install Dependencies
         working-directory: ${directory}
         run: npm ci`
-    : `
+      : `
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -245,7 +262,9 @@ ${setupSteps}
           stack-name: dev
           comment-on-pr: true
           github-token: \${{ secrets.GITHUB_TOKEN }}
-${autoApply ? `
+${
+  autoApply
+    ? `
       - name: Pulumi Up
         if: github.ref == 'refs/heads/${branch}' && github.event_name == 'push'
         uses: pulumi/actions@v5
@@ -253,7 +272,8 @@ ${autoApply ? `
           command: up
           work-dir: ${directory}
           stack-name: dev
-` : `
+`
+    : `
       # Uncomment to enable auto-deploy on push to ${branch}
       # - name: Pulumi Up
       #   if: github.ref == 'refs/heads/${branch}' && github.event_name == 'push'
@@ -262,7 +282,8 @@ ${autoApply ? `
       #     command: up
       #     work-dir: ${directory}
       #     stack-name: dev
-`}
+`
+}
 `;
 }
 
@@ -270,14 +291,15 @@ ${autoApply ? `
  * Generate a README with setup instructions for the workflow
  */
 export function generateWorkflowReadme(iacType: IaCType): string {
-  const secrets = iacType === 'terraform'
-    ? `
+  const secrets =
+    iacType === 'terraform'
+      ? `
 | Secret | Description |
 |--------|-------------|
 | \`AWS_ACCESS_KEY_ID\` | Your AWS access key ID |
 | \`AWS_SECRET_ACCESS_KEY\` | Your AWS secret access key |
 `
-    : `
+      : `
 | Secret | Description |
 |--------|-------------|
 | \`AWS_ACCESS_KEY_ID\` | Your AWS access key ID |
@@ -285,8 +307,9 @@ export function generateWorkflowReadme(iacType: IaCType): string {
 | \`PULUMI_ACCESS_TOKEN\` | Your Pulumi access token ([get one here](https://app.pulumi.com/account/tokens)) |
 `;
 
-  const initInstructions = iacType === 'terraform'
-    ? `
+  const initInstructions =
+    iacType === 'terraform'
+      ? `
 ### Terraform State Backend
 
 By default, Terraform stores state locally. For team collaboration, configure a remote backend:
@@ -302,7 +325,7 @@ terraform {
 }
 \`\`\`
 `
-    : `
+      : `
 ### Pulumi State Backend
 
 Create a new Pulumi stack:
@@ -328,34 +351,44 @@ ${initInstructions}
 
 ## Manual Deployment
 
-${iacType === 'terraform' ? `
+${
+  iacType === 'terraform'
+    ? `
 \`\`\`bash
 cd infrastructure
 terraform init
 terraform plan
 terraform apply
 \`\`\`
-` : `
+`
+    : `
 \`\`\`bash
 cd infrastructure
 ${iacType === 'pulumi-ts' ? 'npm install' : 'pip install -r requirements.txt'}
 pulumi up
 \`\`\`
-`}
+`
+}
 
 ## Structure
 
 \`\`\`
 infrastructure/
-${iacType === 'terraform' ? `├── main.tf          # Main configuration
+${
+  iacType === 'terraform'
+    ? `├── main.tf          # Main configuration
 ├── variables.tf     # Input variables
 ├── outputs.tf       # Output values
 ├── providers.tf     # Provider configuration
-└── modules/         # Reusable modules` : iacType === 'pulumi-ts' ? `├── index.ts         # Main Pulumi program
+└── modules/         # Reusable modules`
+    : iacType === 'pulumi-ts'
+      ? `├── index.ts         # Main Pulumi program
 ├── package.json     # Node.js dependencies
-└── Pulumi.yaml      # Pulumi project config` : `├── __main__.py      # Main Pulumi program
+└── Pulumi.yaml      # Pulumi project config`
+      : `├── __main__.py      # Main Pulumi program
 ├── requirements.txt # Python dependencies
-└── Pulumi.yaml      # Pulumi project config`}
+└── Pulumi.yaml      # Pulumi project config`
+}
 \`\`\`
 `;
 }

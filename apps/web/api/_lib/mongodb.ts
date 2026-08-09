@@ -1,5 +1,5 @@
 // MongoDB client for Vercel serverless
-import { MongoClient, Db, ObjectId } from 'mongodb';
+import { MongoClient, type Db, ObjectId } from 'mongodb';
 import { getEnv } from './env';
 
 let cachedClient: MongoClient | null = null;

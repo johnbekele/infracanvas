@@ -1,6 +1,6 @@
 // Database operations
 import { ObjectId } from 'mongodb';
-import { getDb, UserDocument, GitHubTokenDocument } from './mongodb';
+import { getDb, type UserDocument, type GitHubTokenDocument } from './mongodb';
 import { encrypt, decrypt } from './encryption';
 
 // Users

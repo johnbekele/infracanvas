@@ -1,16 +1,12 @@
 // CORS middleware
-import { Request, Response, NextFunction } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
 import { envSafe } from '../lib/env.js';
 
 /**
  * CORS middleware for API routes
  * Allows credentials and configures allowed origins
  */
-export function corsMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const config = envSafe();
   const allowedOrigins = [
     config.APP_URL,
@@ -29,22 +25,13 @@ export function corsMiddleware(
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Allowed methods
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 
   // Allowed headers
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Requested-With'
-  );
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
   // Expose custom headers
-  res.setHeader(
-    'Access-Control-Expose-Headers',
-    'X-Refreshed-Token'
-  );
+  res.setHeader('Access-Control-Expose-Headers', 'X-Refreshed-Token');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {

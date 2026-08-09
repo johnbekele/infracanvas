@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Copy, Check, Code2, FileCode, ChevronDown, ChevronUp, GripHorizontal } from 'lucide-react';
-import { useDesignerStore, PulumiLanguage } from '@/lib/stores/designer-store';
+import { useDesignerStore, type PulumiLanguage } from '@/lib/stores/designer-store';
 import { generateTerraform, generatePulumi } from '@infracanvas/core';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,7 +16,8 @@ interface CodePanelProps {
 }
 
 export function CodePanel({ isMobile = false }: CodePanelProps) {
-  const { nodes, edges, activeTab, setActiveTab, pulumiLanguage, setPulumiLanguage } = useDesignerStore();
+  const { nodes, edges, activeTab, setActiveTab, pulumiLanguage, setPulumiLanguage } =
+    useDesignerStore();
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!isMobile);
   const [height, setHeight] = useState(isMobile ? MOBILE_DEFAULT_HEIGHT : DEFAULT_HEIGHT);
@@ -25,10 +26,7 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
   const startYRef = useRef(0);
   const startHeightRef = useRef(0);
 
-  const terraformCode = useMemo(
-    () => generateTerraform(nodes, edges),
-    [nodes, edges]
-  );
+  const terraformCode = useMemo(() => generateTerraform(nodes, edges), [nodes, edges]);
 
   const pulumiCode = useMemo(
     () => generatePulumi(nodes, edges, pulumiLanguage),
@@ -43,27 +41,33 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
 
   const currentCode = activeTab === 'terraform' ? terraformCode : pulumiCode;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    startYRef.current = e.clientY;
-    startHeightRef.current = height;
-  }, [height]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+      startYRef.current = e.clientY;
+      startHeightRef.current = height;
+    },
+    [height]
+  );
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
 
-    const deltaY = startYRef.current - e.clientY;
-    const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startHeightRef.current + deltaY));
-    setHeight(newHeight);
+      const deltaY = startYRef.current - e.clientY;
+      const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startHeightRef.current + deltaY));
+      setHeight(newHeight);
 
-    // Auto-collapse if dragged below minimum
-    if (newHeight <= MIN_HEIGHT + 10) {
-      setIsExpanded(false);
-    } else {
-      setIsExpanded(true);
-    }
-  }, [isDragging]);
+      // Auto-collapse if dragged below minimum
+      if (newHeight <= MIN_HEIGHT + 10) {
+        setIsExpanded(false);
+      } else {
+        setIsExpanded(true);
+      }
+    },
+    [isDragging]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -99,31 +103,27 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
   return (
     <div
       ref={panelRef}
-      className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col"
+      className="flex flex-col border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
       style={{ height: isExpanded ? height : MIN_HEIGHT }}
     >
       {/* Resize Handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`
-          h-2 flex items-center justify-center cursor-ns-resize
-          hover:bg-violet-500/10 transition-colors group
-          ${isDragging ? 'bg-violet-500/20' : ''}
-        `}
+        className={`group flex h-2 cursor-ns-resize items-center justify-center transition-colors hover:bg-violet-500/10 ${isDragging ? 'bg-violet-500/20' : ''} `}
       >
-        <GripHorizontal className={`w-8 h-3 text-gray-300 dark:text-gray-600 group-hover:text-violet-500 ${isDragging ? 'text-violet-500' : ''}`} />
+        <GripHorizontal
+          className={`h-3 w-8 text-gray-300 group-hover:text-violet-500 dark:text-gray-600 ${isDragging ? 'text-violet-500' : ''}`}
+        />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-2 md:px-4 py-1.5 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-1 md:gap-2 min-w-0">
-          <Code2 className="w-4 h-4 text-gray-500 shrink-0" />
-          <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+      <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1.5 md:px-4 dark:border-gray-800">
+        <div className="flex min-w-0 items-center gap-1 md:gap-2">
+          <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+          <span className="truncate text-xs font-medium text-gray-700 md:text-sm dark:text-gray-300">
             {isMobile ? 'Code' : 'Generated Code'}
           </span>
-          <span className="text-[10px] md:text-xs text-gray-400 shrink-0">
-            ({nodes.length})
-          </span>
+          <span className="shrink-0 text-[10px] text-gray-400 md:text-xs">({nodes.length})</span>
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
@@ -132,12 +132,18 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
             onValueChange={(v) => setActiveTab(v as 'terraform' | 'pulumi')}
           >
             <TabsList className="h-7 md:h-8">
-              <TabsTrigger value="terraform" className="text-[10px] md:text-xs h-6 md:h-7 px-2 md:px-3">
-                {!isMobile && <FileCode className="w-3 h-3 mr-1" />}
+              <TabsTrigger
+                value="terraform"
+                className="h-6 px-2 text-[10px] md:h-7 md:px-3 md:text-xs"
+              >
+                {!isMobile && <FileCode className="mr-1 h-3 w-3" />}
                 TF
               </TabsTrigger>
-              <TabsTrigger value="pulumi" className="text-[10px] md:text-xs h-6 md:h-7 px-2 md:px-3">
-                {!isMobile && <FileCode className="w-3 h-3 mr-1" />}
+              <TabsTrigger
+                value="pulumi"
+                className="h-6 px-2 text-[10px] md:h-7 md:px-3 md:text-xs"
+              >
+                {!isMobile && <FileCode className="mr-1 h-3 w-3" />}
                 Pulumi
               </TabsTrigger>
             </TabsList>
@@ -153,13 +159,13 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
             >
               <ToggleGroupItem
                 value="typescript"
-                className="text-[10px] md:text-xs h-6 md:h-7 px-2 data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 dark:data-[state=on]:bg-violet-900 dark:data-[state=on]:text-violet-300"
+                className="h-6 px-2 text-[10px] data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 md:h-7 md:text-xs dark:data-[state=on]:bg-violet-900 dark:data-[state=on]:text-violet-300"
               >
                 TS
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="python"
-                className="text-[10px] md:text-xs h-6 md:h-7 px-2 data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 dark:data-[state=on]:bg-violet-900 dark:data-[state=on]:text-violet-300"
+                className="h-6 px-2 text-[10px] data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 md:h-7 md:text-xs dark:data-[state=on]:bg-violet-900 dark:data-[state=on]:text-violet-300"
               >
                 PY
               </ToggleGroupItem>
@@ -169,18 +175,18 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 md:h-8 px-1.5 md:px-2 gap-1"
+            className="h-7 gap-1 px-1.5 md:h-8 md:px-2"
             onClick={() => copyToClipboard(currentCode)}
           >
             {copied ? (
               <>
-                <Check className="w-3 md:w-3.5 h-3 md:h-3.5 text-green-500" />
-                <span className="text-[10px] md:text-xs hidden sm:inline">Copied</span>
+                <Check className="h-3 w-3 text-green-500 md:h-3.5 md:w-3.5" />
+                <span className="hidden text-[10px] sm:inline md:text-xs">Copied</span>
               </>
             ) : (
               <>
-                <Copy className="w-3 md:w-3.5 h-3 md:h-3.5" />
-                <span className="text-[10px] md:text-xs hidden sm:inline">Copy</span>
+                <Copy className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                <span className="hidden text-[10px] sm:inline md:text-xs">Copy</span>
               </>
             )}
           </Button>
@@ -191,11 +197,7 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
             className="h-7 w-7 md:h-8 md:w-8"
             onClick={toggleExpanded}
           >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronUp className="w-4 h-4" />
-            )}
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -203,7 +205,7 @@ export function CodePanel({ isMobile = false }: CodePanelProps) {
       {/* Code Content */}
       {isExpanded && (
         <div className="flex-1 overflow-auto">
-          <pre className="p-4 text-xs font-mono text-gray-800 dark:text-gray-200 leading-relaxed">
+          <pre className="p-4 font-mono text-xs leading-relaxed text-gray-800 dark:text-gray-200">
             <code>{currentCode}</code>
           </pre>
         </div>

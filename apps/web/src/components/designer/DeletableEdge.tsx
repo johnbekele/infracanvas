@@ -1,10 +1,5 @@
 import { memo, useState } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  EdgeProps,
-  getSmoothStepPath,
-} from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getSmoothStepPath } from 'reactflow';
 import { X } from 'lucide-react';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
@@ -113,10 +108,10 @@ function DeletableEdgeComponent({
           {showDeleteButton && (
             <button
               onClick={onEdgeClick}
-              className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110 border-2 border-white"
+              className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-red-500 text-white shadow-lg transition-all hover:scale-110 hover:bg-red-600"
               title="Delete connection"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

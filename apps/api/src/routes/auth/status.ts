@@ -1,5 +1,5 @@
 // Auth status endpoint
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { optionalAuth } from '../../middleware/auth.js';
 import { findUserById } from '../../lib/db/users.js';
 import { hasGitHubToken } from '../../lib/db/tokens.js';

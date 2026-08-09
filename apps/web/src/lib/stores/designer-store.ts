@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
-  Node,
-  Edge,
-  Connection,
+  type Node,
+  type Edge,
+  type Connection,
   addEdge,
   applyNodeChanges,
   applyEdgeChanges,
-  NodeChange,
-  EdgeChange,
+  type NodeChange,
+  type EdgeChange,
 } from 'reactflow';
 
 export interface ServiceNodeData {
@@ -60,7 +60,11 @@ export interface DesignerState {
   addNode: (node: Node<ServiceNodeData>) => void;
   removeNode: (nodeId: string) => void;
   updateNodeData: (nodeId: string, data: Partial<ServiceNodeData>) => void;
-  updateNodeProperty: (nodeId: string, propertyName: string, value: string | number | boolean) => void;
+  updateNodeProperty: (
+    nodeId: string,
+    propertyName: string,
+    value: string | number | boolean
+  ) => void;
 
   selectNode: (nodeId: string | null) => void;
 
@@ -149,9 +153,7 @@ export const useDesignerStore = create<DesignerState>()(
       updateNodeData: (nodeId, data) => {
         set({
           nodes: get().nodes.map((node) =>
-            node.id === nodeId
-              ? { ...node, data: { ...node.data, ...data } }
-              : node
+            node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
           ),
           isDirty: true,
         });
@@ -329,7 +331,7 @@ export const useDesignerStore = create<DesignerState>()(
             return true;
           });
 
-          const nodeMap = new Map(state.nodes.map(n => [n.id, n]));
+          const nodeMap = new Map(state.nodes.map((n) => [n.id, n]));
 
           const hasCycle = (nodeId: string, visited: Set<string> = new Set()): boolean => {
             if (visited.has(nodeId)) return true;

@@ -1,5 +1,5 @@
 // MongoDB client with connection pooling
-import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
+import { MongoClient, type Db, type Collection, ObjectId } from 'mongodb';
 import { env } from './env.js';
 
 // Singleton client for connection pooling
@@ -49,9 +49,7 @@ export async function getDb(): Promise<Db> {
 /**
  * Get a typed collection
  */
-export async function getCollection<T extends object>(
-  name: string
-): Promise<Collection<T>> {
+export async function getCollection<T extends object>(name: string): Promise<Collection<T>> {
   const database = await getDb();
   return database.collection<T>(name);
 }

@@ -76,7 +76,6 @@ infracanvas/
    ```
 
 2. **Make your changes**
-
    - Follow the existing code style
    - Add tests if applicable
    - Update documentation if needed
@@ -148,7 +147,6 @@ To add a new AWS service:
 3. **Add Pulumi generation in `packages/core/src/codegen/pulumi.ts`**
 
 4. **Test the new service**
-
    - Verify it appears in the service palette
    - Test drag and drop
    - Test property editing

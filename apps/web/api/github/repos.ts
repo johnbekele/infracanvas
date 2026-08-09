@@ -22,8 +22,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `${GITHUB_API}/user/repos?sort=pushed&per_page=100&affiliation=owner,collaborator`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
           },
         }
       );
@@ -39,8 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const response = await fetch(`${GITHUB_API}/user/repos`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

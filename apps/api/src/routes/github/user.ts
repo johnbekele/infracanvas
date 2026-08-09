@@ -1,5 +1,5 @@
 // GitHub user endpoint
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 
@@ -22,8 +22,8 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 
     const response = await fetch(`${GITHUB_API}/user`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
       },
     });
 

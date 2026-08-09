@@ -1,5 +1,5 @@
 // GitHub push endpoint - atomic multi-file push
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 
@@ -75,8 +75,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${branch}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -95,8 +95,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       `${GITHUB_API}/repos/${owner}/${repo}/git/commits/${currentCommitSha}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -113,21 +113,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     // 3. Create blobs for each file
     const treeItems = await Promise.all(
       files.map(async (file) => {
-        const blobResponse = await fetch(
-          `${GITHUB_API}/repos/${owner}/${repo}/git/blobs`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: file.content,
-              encoding: 'utf-8',
-            }),
-          }
-        );
+        const blobResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/blobs`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: file.content,
+            encoding: 'utf-8',
+          }),
+        });
 
         if (!blobResponse.ok) {
           throw new Error(`Failed to create blob for ${file.path}`);
@@ -145,21 +142,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     );
 
     // 4. Create a new tree
-    const treeResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/trees`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          base_tree: baseTreeSha,
-          tree: treeItems,
-        }),
-      }
-    );
+    const treeResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/trees`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: treeItems,
+      }),
+    });
 
     if (!treeResponse.ok) {
       const error = await treeResponse.json().catch(() => ({}));
@@ -170,22 +164,19 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     const treeData = (await treeResponse.json()) as GitHubTree;
 
     // 5. Create a new commit
-    const newCommitResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/commits`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          tree: treeData.sha,
-          parents: [currentCommitSha],
-        }),
-      }
-    );
+    const newCommitResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/commits`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        tree: treeData.sha,
+        parents: [currentCommitSha],
+      }),
+    });
 
     if (!newCommitResponse.ok) {
       const error = await newCommitResponse.json().catch(() => ({}));
@@ -201,8 +192,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

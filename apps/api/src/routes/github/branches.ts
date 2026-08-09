@@ -1,5 +1,5 @@
 // GitHub branches endpoint
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 
@@ -22,15 +22,12 @@ router.get('/:owner/:repo', requireAuth, async (req: Request, res: Response) => 
 
     const { owner, repo } = req.params;
 
-    const response = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/branches`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      }
-    );
+    const response = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/branches`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -72,8 +69,8 @@ router.post('/:owner/:repo', requireAuth, async (req: Request, res: Response) =>
       `${GITHUB_API}/repos/${owner}/${repo}/git/ref/heads/${fromBranch}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
         },
       }
     );
@@ -87,21 +84,18 @@ router.post('/:owner/:repo', requireAuth, async (req: Request, res: Response) =>
     const refData = (await refResponse.json()) as { object: { sha: string } };
 
     // Create new branch
-    const createResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/git/refs`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ref: `refs/heads/${branchName}`,
-          sha: refData.object.sha,
-        }),
-      }
-    );
+    const createResponse = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/git/refs`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ref: `refs/heads/${branchName}`,
+        sha: refData.object.sha,
+      }),
+    });
 
     const createData = await createResponse.json();
 

@@ -1,10 +1,18 @@
 // Authentication middleware
-import { Request, Response, NextFunction } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
 import { parse as parseCookie } from 'cookie';
-import { verifySessionToken, SessionPayload, shouldRefreshToken, refreshSessionToken } from '../lib/jwt.js';
+import {
+  verifySessionToken,
+  type SessionPayload,
+  shouldRefreshToken,
+  refreshSessionToken,
+} from '../lib/jwt.js';
 
-// Extend Express Request type to include session
+// Extend Express Request type to include session.
+// Express ships its types as a global namespace, so augmenting it is the only
+// supported mechanism here.
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       session?: SessionPayload;
@@ -41,11 +49,7 @@ function extractToken(req: Request): string | null {
  * Require authentication middleware
  * Returns 401 if not authenticated
  */
-export async function requireAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = extractToken(req);
 
   if (!token) {
@@ -80,11 +84,7 @@ export async function requireAuth(
  * Optional authentication middleware
  * Attaches session if available but doesn't require it
  */
-export async function optionalAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function optionalAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = extractToken(req);
 
   if (token) {

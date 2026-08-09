@@ -8,7 +8,11 @@ interface LoginButtonProps {
   className?: string;
 }
 
-export function LoginButton({ variant = 'default', size = 'default', className }: LoginButtonProps) {
+export function LoginButton({
+  variant = 'default',
+  size = 'default',
+  className,
+}: LoginButtonProps) {
   const { login, isLoading } = useAuthStore();
 
   return (
@@ -20,9 +24,9 @@ export function LoginButton({ variant = 'default', size = 'default', className }
       disabled={isLoading}
     >
       {isLoading ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
-        <Github className="w-4 h-4 mr-2" />
+        <Github className="mr-2 h-4 w-4" />
       )}
       Connect GitHub
     </Button>
