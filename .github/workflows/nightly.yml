@@ -1,0 +1,90 @@
+name: Gate 9 - Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  e2e:
+    name: End-to-end pipeline
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: infracanvas
+          POSTGRES_PASSWORD: infracanvas
+          POSTGRES_DB: infracanvas_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U infracanvas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_e2e?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Run the full pipeline over the fixture repositories
+        run: |
+          if [ ! -f scripts/e2e/run.sh ]; then
+            echo "::notice::E2E harness not present yet."
+            exit 0
+          fi
+          bash scripts/e2e/run.sh
+
+  rag-eval:
+    name: Retrieval quality regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Score retrieval against the golden set
+        run: |
+          if [ ! -d services/brain/src/brain/eval ]; then
+            echo "::notice::Eval harness not present yet."
+            exit 0
+          fi
+          uv run --directory services/brain python -m brain.eval.harness \
+            --dataset golden --fail-on-regression 3
+
+  cost-accuracy:
+    name: Cost model accuracy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare the price snapshot against the live Price List
+        run: |
+          if [ ! -f scripts/pricing/verify-snapshot.mjs ]; then
+            echo "::notice::Pricing snapshot tooling not present yet."
+            exit 0
+          fi
+          node scripts/pricing/verify-snapshot.mjs
+
+  report-failure:
+    name: Open an issue on failure
+    needs: [e2e, rag-eval, cost-accuracy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: File a nightly failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Nightly regressions feed straight back into Gate 0 as new work,
+          # which is what closes the loop on the gate system.
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "[nightly] Pipeline failure on $(date -u +%Y-%m-%d)" \
+            --label nightly-failure \
+            --body "The nightly pipeline failed.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Triage, then either fix forward or convert this into a specified agent task."

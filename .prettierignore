@@ -1,4 +1,21 @@
 node_modules
 dist
+build
 .turbo
+coverage
 pnpm-lock.yaml
+
+# Python
+.venv
+uv.lock
+__pycache__
+
+# Rust
+target
+Cargo.lock
+
+# Generated artefacts are formatted by their generator, and reformatting them
+# here would show up as drift in Gate 4.
+packages/ir-schema/generated
+services/brain/src/brain/ir/generated
+tests/fixtures/generated

@@ -8,18 +8,35 @@
 
 ## Git & GitHub Configuration
 
-**CRITICAL**: Never use Claude profile for any git/GitHub operations.
+**CRITICAL**: Never use an assistant profile for any git/GitHub operation.
 
-- Always use MCP GitHub tools (`mcp__github__*`) for remote operations (push, PR, issues, branches)
-- Use terminal git commands only for local operations (staging, committing, local branches)
-- Do NOT include any Claude/AI co-author attribution in commits
-- Do NOT add "Co-Authored-By: Claude" or similar lines
-- Only use the user's GitHub profile (johnbekele) for all operations
+- Use the **`gh` CLI** for all remote operations (issues, pull requests, labels, branches, rulesets).
+  It is already authenticated as **johnbekele**, which is the only profile permitted here.
+- No GitHub MCP server is configured on this machine. Do not wait for `mcp__github__*` tools; they
+  are unavailable and the `gh` CLI is the supported path.
+- `gh` reads its token from the OS keyring, which sandboxed processes cannot access. Run `gh`
+  commands **outside the sandbox**, otherwise authentication fails with a misleading
+  "token in keyring is invalid" error. Verify with `gh api user --jq .login`.
+- Use terminal git for local operations only (staging, committing, local branches).
+- Do NOT add any AI or assistant co-author attribution to commits. Gate 2 rejects commits carrying
+  `Co-Authored-By: Claude`, `Generated with`, or similar trailers.
+
+## Quality Gates
+
+This repository is governed by a ten-gate system. Details live in `docs/DELIVERY.md`.
+
+- Work begins only on issues labelled `agent-ready` by Gate 0. If a required section of the issue is
+  missing, fix the issue first rather than guessing at the contract.
+- Every pull request must close an issue, tick the full checklist, and paste real verification
+  output. "Tests pass" is not evidence.
+- Never bypass a gate with `--no-verify` or an admin merge. If a gate is wrong, change the gate in
+  its own pull request so the change is reviewable.
 
 ## Pre-Push Checklist
 
 Before pushing any code:
-1. Run linter and fix all issues
+
+1. `pnpm lint` and fix all issues
 2. Write clean, comprehensive tests
 3. Run all tests and ensure they pass
 4. Fix any failing tests before pushing
@@ -29,6 +46,7 @@ Before pushing any code:
 ## New Project Setup
 
 When starting a new project:
+
 - **ALWAYS add a `.gitignore` file first** before any commits
 - Include common patterns: `.env`, `node_modules/`, `.DS_Store`, `*.log`, credentials, etc.
 - Verify no secrets or sensitive files are tracked before initial commit
@@ -36,17 +54,20 @@ When starting a new project:
 ## Code Quality Standards
 
 ### Modularity
+
 - Keep components small and focused - one responsibility per file
 - Do NOT pack multiple components in a single file
 - Extract reusable logic into separate modules
 - Organize files precisely in well-named folders
 
 ### TypeScript
+
 - Avoid `any` type unless absolutely necessary
 - Use proper type definitions and interfaces
 - Prefer strict typing for reliability
 
 ### Architecture Principles
+
 - **Reliable**: Robust error handling, graceful degradation
 - **Low Latency**: Optimize for performance, minimize unnecessary operations
 - **Easy to Use**: Clear APIs, intuitive interfaces

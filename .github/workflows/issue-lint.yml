@@ -1,0 +1,27 @@
+name: Gate 0 - Issue Readiness
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  validate:
+    name: Validate the agent task specification
+    runs-on: ubuntu-latest
+    # Epics and bugs are written for humans and are not picked up by agents.
+    if: >-
+      !contains(github.event.issue.labels.*.name, 'epic') &&
+      !contains(github.event.issue.labels.*.name, 'bug')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Check required sections
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: node scripts/ci/check-issue-spec.mjs

@@ -1,0 +1,76 @@
+name: Gate 7 - Review
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled, ready_for_review]
+    branches: [main]
+  merge_group:
+
+concurrency:
+  group: gate-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# These jobs also run on merge_group so their check names report inside the
+# merge queue. The pull request body no longer exists in that context, and it
+# was already validated on the pull request, so they become a no-op there.
+
+jobs:
+  hygiene:
+    name: PR hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide whether to run
+        id: guard
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Merge queue context; hygiene was validated on the pull request."
+          fi
+      - uses: ./.github/actions/setup-node
+        if: steps.guard.outputs.run == 'true'
+      - name: Validate title, linked issue, checklist, and risk tier
+        if: steps.guard.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/ci/check-pr-hygiene.mjs
+
+  tier-routing:
+    name: Route by risk tier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Classify by the paths actually touched
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Tier is derived from the diff rather than from what the author claims,
+          # so nobody can quietly downgrade the risk of their own change.
+          tier1=$(git diff --name-only "origin/${BASE_REF}...HEAD" | grep -E \
+            '^(apps/api/src/routes/auth/|apps/api/src/lib/(encryption|jwt)\.ts|apps/api/src/middleware/|infra/|services/brain/src/brain/codegen/|\.github/)' || true)
+
+          if [ -z "$tier1" ]; then
+            echo "No security-sensitive paths touched."
+            exit 0
+          fi
+
+          echo "Security-sensitive paths touched:"
+          echo "$tier1"
+          gh pr edit "$PR_NUMBER" --add-label 'tier:1' --add-label 'needs:security-review'
+          echo "::notice::This pull request requires a security review before merge."

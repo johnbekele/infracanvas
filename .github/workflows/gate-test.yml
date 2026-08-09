@@ -1,0 +1,135 @@
+name: Gate 3 - Test
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  push:
+    branches: [main]
+
+concurrency:
+  group: gate-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm turbo build
+
+  test-node:
+    name: Unit tests (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm turbo build --filter=@infracanvas/core
+      - run: pnpm turbo test
+
+  test-python:
+    name: Unit tests (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: exists
+        run: |
+          if [ -f services/brain/pyproject.toml ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::services/brain not present yet; Python tests are inert."
+          fi
+      - uses: astral-sh/setup-uv@v5
+        if: steps.exists.outputs.found == 'true'
+        with:
+          enable-cache: true
+      - if: steps.exists.outputs.found == 'true'
+        run: uv sync --directory services/brain --all-extras
+      - if: steps.exists.outputs.found == 'true'
+        run: uv run --directory services/brain pytest -m "not integration" --cov=src --cov-report=xml
+
+  test-rust:
+    name: Unit tests (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: exists
+        run: |
+          if [ -f Cargo.toml ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Cargo workspace not present yet; Rust tests are inert."
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.exists.outputs.found == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.exists.outputs.found == 'true'
+      - if: steps.exists.outputs.found == 'true'
+        run: cargo test --all-features --workspace
+
+  test-integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Must match the image in docker-compose.yml so local and CI agree.
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: infracanvas
+          POSTGRES_PASSWORD: infracanvas
+          POSTGRES_DB: infracanvas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U infracanvas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Apply migrations
+        run: |
+          if [ -d db/migrations ]; then
+            curl -fsSL -o /usr/local/bin/dbmate \
+              https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+            chmod +x /usr/local/bin/dbmate
+            dbmate --migrations-dir db/migrations up
+          else
+            echo "::notice::db/migrations not present yet; skipping."
+          fi
+      - name: Run integration suites
+        run: |
+          if [ -d db/migrations ]; then
+            pnpm turbo test:integration
+          else
+            echo "::notice::No integration suites to run yet."
+          fi
+
+  coverage:
+    name: Diff coverage
+    needs: [test-node, test-python, test-rust]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enforce 85% coverage on changed lines
+        run: |
+          # A global coverage threshold is trivially gamed by adding tests to
+          # untouched code. Diff coverage holds each PR to its own standard.
+          if ! ls coverage.xml **/coverage*.xml >/dev/null 2>&1; then
+            echo "::notice::No coverage reports produced yet; gate is inert."
+            exit 0
+          fi
+          pipx install diff-cover
+          diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref || 'main' }} --fail-under=85

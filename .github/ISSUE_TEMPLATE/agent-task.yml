@@ -1,0 +1,162 @@
+name: Agent Task
+description: A fully-specified unit of work sized for a single coding-agent session.
+title: '[area] '
+labels: ['needs-spec']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every section below is required. Gate 0 (`issue-lint`) will refuse to apply the
+        `agent-ready` label until this issue is complete and unambiguous.
+
+        The bar: an agent with no prior context reads only this issue plus the linked
+        spec, and delivers code that passes every gate on the first attempt.
+
+  - type: input
+    id: epic
+    attributes:
+      label: Epic
+      description: The epic tracking issue this belongs to.
+      placeholder: '#1'
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: >
+        Why this work exists and the minimum background needed to do it correctly.
+        Link the authoritative spec in `docs/specs/`.
+      placeholder: |
+        Retrieval currently ranks by dense similarity only, which loses exact-identifier
+        matches (a query for `createSessionToken` ranks paraphrases above the definition).
+
+        Spec: docs/specs/retrieval.md#hybrid-fusion
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Contract
+      description: >
+        Exact signatures, types, DDL, or schema to implement. Copy-pasteable and
+        non-negotiable. If you cannot write this section, the issue is not ready and
+        its dependencies must land first.
+      render: typescript
+      placeholder: |
+        export interface Retriever {
+          readonly id: string;
+          retrieve(q: Query, k: number): Promise<ScoredChunk[]>;
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Files
+      description: Explicit paths, each marked CREATE, MODIFY, or DELETE.
+      placeholder: |
+        - CREATE services/brain/src/brain/rag/retrievers/bm25.py
+        - MODIFY services/brain/src/brain/rag/registry.py
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: >
+        Checkbox list. One observable behaviour per line, each independently testable.
+        Avoid "works correctly" - state the behaviour.
+      placeholder: |
+        - [ ] `BM25Retriever.retrieve` returns results ordered by descending score
+        - [ ] An empty query returns `[]` rather than raising
+        - [ ] Results are restricted to the requested `repo_id`
+    validations:
+      required: true
+
+  - type: textarea
+    id: tests
+    attributes:
+      label: Required Tests
+      description: >
+        Named test cases including the edge and failure cases. An agent will write
+        exactly the tests listed here, so omissions become coverage gaps.
+      placeholder: |
+        - `test_ranks_exact_identifier_above_paraphrase`
+        - `test_empty_query_returns_empty_list`
+        - `test_does_not_leak_chunks_across_repos`
+    validations:
+      required: true
+
+  - type: input
+    id: perf
+    attributes:
+      label: Performance Budget
+      description: Concrete, measurable numbers, or `n/a`.
+      placeholder: 'p95 under 80ms at 1M chunks; peak RSS under 150MB'
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: >
+        What must NOT be touched. This is the primary defence against agent drift, so
+        be specific about adjacent code that looks tempting to refactor.
+      placeholder: |
+        - Do not modify the dense retriever or the HNSW index parameters
+        - Do not change the `chunks` table schema
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: 'Use GitHub keywords so the graph stays accurate. Write `none` if unblocked.'
+      placeholder: 'Blocked by #23. Blocks #31.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Exact commands a reviewer runs to confirm the work.
+      render: bash
+      placeholder: |
+        uv run --directory services/brain pytest tests/rag/test_bm25.py -v
+        uv run --directory services/brain pytest tests/rag/bench_retrieval.py --benchmark-only
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Risk Tier
+      description: >
+        Tier 1 covers auth, IAM, deployment, credentials, and code generation - it
+        requires a security review plus human approval before merge.
+      options:
+        - 'tier:1 - auth, IAM, deploy, credentials, or codegen'
+        - 'tier:2 - normal application code'
+        - 'tier:3 - docs or tests only'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: If this exceeds roughly 600 lines of diff, split it.
+      options:
+        - 'size:s - under 200 lines'
+        - 'size:m - 200 to 600 lines'
+        - 'size:l - over 600 lines, must justify why it cannot be split'
+    validations:
+      required: true

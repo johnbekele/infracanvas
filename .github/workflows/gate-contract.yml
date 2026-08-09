@@ -1,0 +1,150 @@
+name: Gate 4 - Contract and Migration
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+concurrency:
+  group: gate-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  schema-drift:
+    name: Generated types match their schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Regenerate IR types
+        run: |
+          if [ -d packages/ir-schema ]; then
+            pnpm --filter @infracanvas/ir-schema generate
+          else
+            echo "::notice::packages/ir-schema not present yet; drift gate is inert."
+          fi
+      - name: Fail on drift
+        run: |
+          # Generated code is committed so that consumers get types without a build
+          # step. If regeneration changes anything, the commit is stale.
+          if ! git diff --exit-code; then
+            echo "::error::Generated types are out of date. Run the generator and commit the result."
+            exit 1
+          fi
+
+  openapi-drift:
+    name: API client matches the server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Regenerate the OpenAPI client
+        run: |
+          if [ -f services/brain/pyproject.toml ]; then
+            pnpm run generate:api-client
+          else
+            echo "::notice::services/brain not present yet; OpenAPI gate is inert."
+          fi
+      - run: git diff --exit-code
+
+  migrations:
+    name: Migrations are reversible and idempotent
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: infracanvas
+          POSTGRES_PASSWORD: infracanvas
+          POSTGRES_DB: infracanvas_migrate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U infracanvas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_migrate?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Up, down, up
+        run: |
+          if [ ! -d db/migrations ]; then
+            echo "::notice::db/migrations not present yet; migration gate is inert."
+            exit 0
+          fi
+          curl -fsSL -o /usr/local/bin/dbmate \
+            https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+          chmod +x /usr/local/bin/dbmate
+          # A migration that cannot roll back is a migration that cannot be
+          # recovered from at 3am.
+          dbmate --migrations-dir db/migrations up
+          dbmate --migrations-dir db/migrations rollback
+          dbmate --migrations-dir db/migrations up
+
+  destructive-ddl:
+    name: Destructive DDL requires approval
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan added migrations
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull request; approval was enforced when the PR was gated."
+            exit 0
+          fi
+          added=$(git diff --diff-filter=A --name-only "origin/${{ github.base_ref }}...HEAD" -- 'db/migrations/*.sql' || true)
+          [ -z "$added" ] && { echo "No new migrations."; exit 0; }
+
+          # Only inspect the `migrate:up` section. A DROP inside `migrate:down`
+          # is the correct way to write a reversible migration.
+          hits=""
+          for f in $added; do
+            up=$(sed -n '/migrate:up/,/migrate:down/p' "$f")
+            if echo "$up" | grep -Eiq '(DROP[[:space:]]+(TABLE|COLUMN|SCHEMA)|TRUNCATE|ALTER[[:space:]]+TABLE[^;]*DROP[[:space:]]+COLUMN)'; then
+              hits="$hits $f"
+            fi
+          done
+
+          [ -z "$hits" ] && { echo "No destructive DDL."; exit 0; }
+          echo "::warning::Destructive DDL found in:$hits"
+          if echo "$LABELS" | tr ',' '\n' | grep -qx 'db:destructive-approved'; then
+            echo "Approved via the db:destructive-approved label."
+          else
+            echo "::error::Destructive DDL requires the 'db:destructive-approved' label."
+            exit 1
+          fi
+
+  ir-version:
+    name: IR schema changes require a version bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compare schema and version
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull request; the version bump was enforced when the PR was gated."
+            exit 0
+          fi
+          base="origin/${{ github.base_ref }}"
+          if [ ! -d packages/ir-schema/schema ]; then
+            echo "::notice::IR schema not present yet; version gate is inert."
+            exit 0
+          fi
+          if ! git diff --quiet "$base...HEAD" -- packages/ir-schema/schema; then
+            if git diff --quiet "$base...HEAD" -- packages/ir-schema/VERSION; then
+              echo "::error::The IR schema changed but packages/ir-schema/VERSION did not. Consumers pin this version."
+              exit 1
+            fi
+          fi
+          echo "IR version check passed."

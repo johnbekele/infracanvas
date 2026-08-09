@@ -1,0 +1,52 @@
+name: Bug Report
+description: Something behaves differently than specified.
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour
+      description: Cite the spec, acceptance criterion, or issue that defines the correct behaviour.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behaviour
+      description: Include exact error output and stack traces.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal, deterministic steps. A failing test is the ideal form.
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, versions, and commit SHA.
+      placeholder: |
+        macOS 15.6, Node 20.11, Python 3.12, Rust 1.83
+        Commit: 35df85c
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - 'critical - data loss, security, or unrecoverable AWS spend'
+        - 'high - core flow broken with no workaround'
+        - 'medium - broken with a workaround'
+        - 'low - cosmetic or minor'
+    validations:
+      required: true
