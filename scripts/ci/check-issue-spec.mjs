@@ -31,7 +31,7 @@ function gh(args) {
 }
 
 /** Split a GitHub issue-form body into `### Heading` sections. */
-function parseSections(body) {
+export function parseSections(body) {
   const sections = new Map();
   let heading = null;
   let buffer = [];
@@ -50,7 +50,7 @@ function parseSections(body) {
   return sections;
 }
 
-function validate(sections, body) {
+export function validate(sections, body) {
   const problems = [];
 
   for (const name of REQUIRED_SECTIONS) {
@@ -155,4 +155,8 @@ function main() {
   return 1;
 }
 
-process.exit(main());
+// Importable so an author can check a spec file before the issue exists, which
+// is cheaper than creating one and waiting for the gate to reject it.
+if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+  process.exit(main());
+}
