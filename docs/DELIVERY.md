@@ -32,6 +32,13 @@ job-level `if` reports a `skipped` conclusion, and a skipped job that a ruleset 
 pull request permanently unmergeable. Gates for components that do not exist yet log a notice and
 pass, then begin enforcing automatically once the component lands.
 
+A guard must name **the artefact the job actually consumes**, not a neighbouring directory that
+happens to appear around the same time. Guarding the OpenAPI drift check on `services/brain`
+existing, rather than on the generator script existing, turned a green gate red the moment an empty
+Python skeleton landed - for a reason that had nothing to do with the change under review. A gate
+that fails for an unrelated reason is worse than one that is switched off, because it teaches
+everyone to read a red check as noise, and that is how a real failure gets waved through.
+
 ## Writing an issue an agent can execute
 
 Use the Agent Task template. Gate 0 rejects anything incomplete. The bar is that an agent with no

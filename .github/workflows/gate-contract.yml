@@ -42,11 +42,15 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup-node
       - name: Regenerate the OpenAPI client
+        # Guarded on the generator, not on the service it would describe. The
+        # Python project exists well before anything generates a client from it,
+        # and a gate that fails for a reason unrelated to the change under review
+        # teaches everyone to read red as noise.
         run: |
-          if [ -f services/brain/pyproject.toml ]; then
+          if node -e "process.exit(require('./package.json').scripts?.['generate:api-client'] ? 0 : 1)"; then
             pnpm run generate:api-client
           else
-            echo "::notice::services/brain not present yet; OpenAPI gate is inert."
+            echo "::notice::No generate:api-client script yet; OpenAPI gate is inert."
           fi
       - run: git diff --exit-code
 
