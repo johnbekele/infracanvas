@@ -46,6 +46,19 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 <img width="3003" height="1836" alt="image" src="https://github.com/user-attachments/assets/c9fa7e3a-c6c7-443c-b26a-53efc29aee42" />
 
+### Deploying
+
+The frontend is a static bundle and the API is a separate Express service, so the two are deployed
+independently and the frontend has to be told where the API lives.
+
+Set `VITE_API_URL` on the frontend host to the API's origin, for example
+`https://infracanvas-api.onrender.com`. This is required, not optional: without it the bundle falls
+back to a relative `/api` path, which only resolves under `pnpm dev`, where Vite proxies it to the
+local server. A static host has nothing behind `/api` and every request returns the index page.
+
+The API needs `APP_URL` pointed back at the frontend so CORS and the OAuth callback agree on the
+same origin. See `apps/api/.env.example` for the full list.
+
 ## Usage
 
 ### Designing Infrastructure
