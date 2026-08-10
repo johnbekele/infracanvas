@@ -4,44 +4,37 @@
 
 const MAX_LENGTH = 4096;
 
-interface DescribedError {
-  name: string;
-  message: string;
-  stack?: string;
-}
-
-function describe(error: unknown): DescribedError | string {
+/** Unwrap an Error into something JSON can encode without losing the stack. */
+function describe(error: unknown): unknown {
   if (error instanceof Error) {
     return { name: error.name, message: error.message, stack: error.stack };
   }
-  if (typeof error === 'string') {
-    return error;
-  }
-  try {
-    return JSON.stringify(error) ?? String(error);
-  } catch {
-    return String(error);
-  }
+  return error;
 }
 
 /**
  * Flatten a value onto one log line.
  *
- * JSON encoding turns embedded line breaks into `\n` escapes so a stack trace
- * survives intact. The replacements then cover anything the encoder passed
- * through, such as a lone carriage return in a plain string. Each one takes a
- * literal rather than a character class, because that is the shape CodeQL
- * recognises as a log injection barrier.
+ * JSON encoding does the work: a line break inside the value becomes a two
+ * character `\n` escape, so a stack trace survives in full while the record
+ * stays on one line. The replaces then cover the fallback path, where a value
+ * JSON cannot encode is stringified directly. Each replaces a single character
+ * with the empty string, which is the shape CodeQL recognises as a log
+ * injection barrier.
  */
 export function sanitiseForLog(value: unknown): string {
-  const described = describe(value);
-  const text = typeof described === 'string' ? described : JSON.stringify(described);
-  const singleLine = text
-    .replaceAll('\n', ' ')
-    .replaceAll('\r', ' ')
-    .replaceAll('\u2028', ' ')
-    .replaceAll('\u2029', ' ');
-  return singleLine.slice(0, MAX_LENGTH);
+  let encoded: string;
+  try {
+    encoded = JSON.stringify(describe(value)) ?? String(value);
+  } catch {
+    encoded = String(value);
+  }
+  return encoded
+    .replace(/\n/g, '')
+    .replace(/\r/g, '')
+    .replace(/\u2028/g, '')
+    .replace(/\u2029/g, '')
+    .slice(0, MAX_LENGTH);
 }
 
 /**

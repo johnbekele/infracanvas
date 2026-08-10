@@ -38,9 +38,14 @@ export async function verifySessionToken(
 ): Promise<SessionPayload | null>;
 ```
 
-`sanitiseForLog` JSON-encodes an error so its stack survives as escaped text, then replaces any
-remaining line break with a space and truncates, so one entry cannot span lines or flood the log.
+`sanitiseForLog` JSON-encodes an error so its stack survives as escaped text, then strips any
+separator the encoder emits raw and truncates, so one entry cannot span lines or flood the log.
 `context` is a fixed string supplied by the caller and is never interpolated from a request.
+
+Both steps have to be written the way the CodeQL query models them, or the alert stays open on a
+correct fix: `JsonStringifySanitizer` treats the output of `JSON.stringify` as a barrier, and
+`StringReplaceSanitizer` matches only a replacement of a newline with the _empty_ string. Replacing
+with a space, or matching a character class, is not recognised.
 
 ### Files
 

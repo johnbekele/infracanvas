@@ -7,27 +7,26 @@ afterEach(() => {
 
 describe('sanitiseForLog', () => {
   it('keeps a forged log record on the line it was written to', () => {
-    const forged = 'boom\nERROR admin login succeeded';
+    const line = sanitiseForLog('boom\nERROR admin login succeeded');
 
-    expect(sanitiseForLog(forged)).toBe('boom ERROR admin login succeeded');
+    expect(line).not.toMatch(/[\r\n]/);
+    expect(line).toContain('boom\\nERROR admin login succeeded');
   });
 
-  it('replaces carriage returns and unicode line separators', () => {
-    expect(sanitiseForLog('a\rb\u2028c\u2029d')).toBe('a b c d');
-  });
+  // JSON escapes \r but emits U+2028 and U+2029 raw, so those are stripped.
+  it('leaves no raw line separator of any kind', () => {
+    const line = sanitiseForLog('a\rb\u2028c\u2029d');
 
-  it('replaces each character of a CRLF pair rather than the pair', () => {
-    expect(sanitiseForLog('a\r\nb')).toBe('a  b');
+    expect(line).not.toMatch(/[\r\n\u2028\u2029]/);
+    expect(line).toBe('"a\\rbcd"');
   });
 
   it('preserves an error stack as escaped text rather than dropping it', () => {
-    const error = new Error('upstream said no');
-
-    const line = sanitiseForLog(error);
+    const line = sanitiseForLog(new Error('upstream said no'));
 
     expect(line).toContain('"name":"Error"');
     expect(line).toContain('"message":"upstream said no"');
-    expect(line).toContain('\\n');
+    expect(line).toContain('"stack":"Error: upstream said no\\n');
     expect(line).not.toMatch(/[\r\n]/);
   });
 
@@ -50,6 +49,16 @@ describe('sanitiseForLog', () => {
     expect(sanitiseForLog(circular)).toBe('[object Object]');
   });
 
+  it('strips a line break the fallback path cannot escape', () => {
+    const unencodable = {
+      self: null as unknown,
+      toString: () => 'boom\nERROR forged',
+    };
+    unencodable.self = unencodable;
+
+    expect(sanitiseForLog(unencodable)).toBe('boomERROR forged');
+  });
+
   it('truncates so one entry cannot flood the log', () => {
     expect(sanitiseForLog('x'.repeat(10_000))).toHaveLength(4096);
   });
@@ -61,6 +70,6 @@ describe('logError', () => {
 
     logError('Error pushing files', 'boom\ninjected');
 
-    expect(spy).toHaveBeenCalledWith('Error pushing files: boom injected');
+    expect(spy).toHaveBeenCalledWith('Error pushing files: "boom\\ninjected"');
   });
 });
