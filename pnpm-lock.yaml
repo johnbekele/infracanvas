@@ -56,6 +56,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@infracanvas/core':
+        specifier: workspace:^
+        version: link:../../packages/core
       cookie:
         specifier: ^0.6.0
         version: 0.6.0
@@ -71,6 +74,9 @@ importers:
       pg:
         specifier: ^8.13.1
         version: 8.23.0
+      smol-toml:
+        specifier: ^1.7.1
+        version: 1.7.1
     devDependencies:
       '@types/cookie':
         specifier: ^0.6.0
@@ -215,6 +221,9 @@ importers:
       typescript:
         specifier: ^5.3.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@20.19.37)
 
 packages:
 
@@ -5538,6 +5547,11 @@ packages:
   /siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
     dev: true
+
+  /smol-toml@1.7.1:
+    resolution: {integrity: sha512-PPlsspAZ4jbMBu5DMFhfUGDQLu/vrL4SyBROVS37x8ynnVmFIs1VPBz1Co8Xks3TvpIaZXmU85y4DrQ+UyVFoQ==}
+    engines: {node: '>= 18'}
+    dev: false
 
   /source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}

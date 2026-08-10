@@ -3,6 +3,32 @@
 // Types
 export * from './types';
 
+// Repository analysis
+export {
+  PROFILE_SCHEMA_VERSION,
+  profileCapabilities,
+  hasCapability,
+  isContainerised,
+  primaryLanguage,
+  type AppProfile,
+  type Capability,
+  type Component,
+  type ComponentKind,
+  type Containerisation,
+  type DependencyCategory,
+  type DetectedDependency,
+  type Ecosystem,
+  type LanguageBreakdown,
+} from './analysis/profile';
+
+export {
+  proposeArchitecture,
+  type ArchitectureDecision,
+  type ArchitectureProposal,
+  type ProposedEdge,
+  type ProposedNode,
+} from './analysis/architecture';
+
 // AWS Services
 export {
   awsServices,

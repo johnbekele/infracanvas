@@ -3,6 +3,7 @@ import express from 'express';
 import { corsMiddleware } from './middleware/cors.js';
 import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
+import repositoryRoutes from './routes/repositories/index.js';
 import { closePool, ping } from './lib/db/client.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
 import { logError } from './lib/log.js';
@@ -34,6 +35,7 @@ app.get('/health', async (_req, res) => {
 // API routes
 app.use('/auth', authRoutes);
 app.use('/github', githubRoutes);
+app.use('/repositories', repositoryRoutes);
 
 // 404 handler
 app.use((_req, res) => {
