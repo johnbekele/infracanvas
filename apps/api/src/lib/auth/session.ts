@@ -7,11 +7,11 @@
 // path with a security fix the other never got.
 
 import { type Response } from 'express';
-import { env } from '../env.js';
-import { createSessionToken } from '../jwt.js';
+import { createSessionToken, SESSION_DURATION_MS, SESSION_MAX_AGE_MS } from '../jwt.js';
 import { findOrCreateUser } from '../db/users.js';
 import { saveGitHubToken } from '../db/tokens.js';
-import { SESSION_COOKIE_NAME } from '../../middleware/auth.js';
+import { createSession, type AuthMethodId } from '../db/sessions.js';
+import { setSessionCookie } from './cookie.js';
 
 const GITHUB_USER_URL = 'https://api.github.com/user';
 
@@ -32,6 +32,14 @@ export interface GitHubCredentials {
 
 export type SessionResult = { ok: true; username: string } | { ok: false; reason: string };
 
+export interface SessionContext {
+  /** Which sign-in path produced these credentials. */
+  authMethod: AuthMethodId;
+  /** Where the token came from under the local method, for the status endpoint. */
+  tokenOrigin?: string | null;
+  userAgent?: string | null;
+}
+
 /**
  * Identify the GitHub account behind `credentials`, persist it, and set the
  * session cookie on `res`.
@@ -42,10 +50,9 @@ export type SessionResult = { ok: true; username: string } | { ok: false; reason
  */
 export async function establishSession(
   res: Response,
-  credentials: GitHubCredentials
+  credentials: GitHubCredentials,
+  context: SessionContext
 ): Promise<SessionResult> {
-  const config = env();
-
   const userResponse = await fetch(GITHUB_USER_URL, {
     headers: {
       Authorization: `Bearer ${credentials.accessToken}`,
@@ -80,19 +87,24 @@ export async function establishSession(
     scope: credentials.scope,
   });
 
+  // Recorded before the token is signed, because the token names the row: a
+  // session that cannot be found is a session that cannot be revoked.
+  const session = await createSession({
+    userId: user.id,
+    expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
+    authMethod: context.authMethod,
+    tokenOrigin: context.tokenOrigin ?? null,
+    userAgent: context.userAgent ?? null,
+  });
+
   const sessionToken = await createSessionToken({
     userId: user.id,
     githubId: user.githubId,
     githubUsername: user.githubUsername,
+    sessionId: session.id,
   });
 
-  res.cookie(SESSION_COOKIE_NAME, sessionToken, {
-    httpOnly: true,
-    secure: config.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 1000, // Matches the JWT expiry.
-    path: '/',
-  });
+  setSessionCookie(res, sessionToken, SESSION_DURATION_MS);
 
   return { ok: true, username: user.githubUsername };
 }

@@ -267,7 +267,7 @@ export function PushToGitHubDialog({ open, onOpenChange }: PushToGitHubDialogPro
           <p className="mb-6 text-gray-500">
             Sign in with GitHub to push infrastructure code directly to your repositories.
           </p>
-          <Button onClick={login} className="gap-2">
+          <Button onClick={() => login()} className="gap-2">
             <Github className="h-4 w-4" />
             Connect GitHub
           </Button>

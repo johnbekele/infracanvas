@@ -50,11 +50,18 @@ describe('AUTH_PROVIDER', () => {
     expect(env().AUTH_PROVIDER).toBe('token');
   });
 
-  it('still refuses to start without client credentials under the oauth provider', async () => {
+  it('starts without client credentials under the oauth provider, and says so', async () => {
     process.env.AUTH_PROVIDER = 'oauth';
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
+    // Both methods now live in one process, so a missing OAuth application
+    // disables that one method rather than the whole API. Silence would be the
+    // wrong answer for a team deployment, hence the warning.
     const { env } = await loadEnv();
-    expect(() => env()).toThrowError(/GITHUB_CLIENT_ID/);
+    expect(env().AUTH_PROVIDER).toBe('oauth');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('GITHUB_CLIENT_ID'));
+
+    warn.mockRestore();
   });
 
   it('defaults to oauth when unset, so a deployment cannot fall into single-user mode', async () => {

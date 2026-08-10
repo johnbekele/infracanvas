@@ -1,15 +1,16 @@
 // Start of the login flow.
 //
-// Under the `oauth` provider this redirects to GitHub. Under `token` there is
-// nobody to redirect to: the token already exists locally, so the session is
-// established here and the browser lands on the same destination the OAuth
-// callback would have sent it to. The web app cannot tell the two apart.
+// The method is chosen per request rather than per deployment. Under `oauth`
+// this redirects to GitHub; under `token` there is nobody to redirect to,
+// because the token already exists locally, so the session is established here
+// and the browser lands on the same destination the OAuth callback would have
+// sent it to. The web app cannot tell the two apart.
 import { Router, type Request, type Response } from 'express';
 import { randomBytes } from 'crypto';
 import { env } from '../../lib/env.js';
 import { resolveGitHubToken, NO_TOKEN_GUIDANCE } from '../../lib/auth/token-source.js';
 import { establishSession } from '../../lib/auth/session.js';
-import { isLoopbackAddress } from '../../lib/auth/loopback.js';
+import { chooseMethod } from '../../lib/auth/methods.js';
 import { logError } from '../../lib/log.js';
 
 const router = Router();
@@ -17,22 +18,6 @@ const router = Router();
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
 
 const SCOPES = ['repo', 'read:user', 'user:email'];
-
-/**
- * The token provider signs the caller in as the operator's own GitHub account
- * with `repo` scope. On a laptop that is the point. Reachable from a network it
- * is an open door to every repository the operator can see, so remote callers
- * are refused unless the operator has said otherwise.
- *
- * Deliberately reads the socket address rather than `req.ip`. The two are the
- * same today, but `req.ip` follows `X-Forwarded-For` as soon as anyone enables
- * `trust proxy` -- an ordinary thing to do when deploying behind a load
- * balancer -- and at that moment this check would start believing a header the
- * caller controls. The TCP peer address cannot be forged that way.
- */
-function isLoopback(req: Request): boolean {
-  return isLoopbackAddress(req.socket.remoteAddress ?? undefined);
-}
 
 function redirectToGitHub(res: Response): void {
   const config = env();
@@ -61,16 +46,6 @@ function redirectToGitHub(res: Response): void {
 async function signInWithLocalToken(req: Request, res: Response): Promise<void> {
   const config = env();
 
-  if (!isLoopback(req) && !config.AUTH_TOKEN_ALLOW_REMOTE) {
-    res.status(403).json({
-      error:
-        'The token auth provider only accepts requests from this machine. It signs the caller ' +
-        'in as the operator, so exposing it to a network would share that account. Set ' +
-        'AUTH_TOKEN_ALLOW_REMOTE=true only if every caller is trusted with that access.',
-    });
-    return;
-  }
-
   const resolved = await resolveGitHubToken();
 
   if (!resolved) {
@@ -81,11 +56,19 @@ async function signInWithLocalToken(req: Request, res: Response): Promise<void> 
   // The scope is unknown for a token obtained this way: neither the environment
   // nor `gh` reports one, and GitHub only reveals it on an API response header.
   // Recording where it came from is more use to a later reader than a guess.
-  const result = await establishSession(res, {
-    accessToken: resolved.token,
-    tokenType: 'bearer',
-    scope: `local:${resolved.origin}`,
-  });
+  const result = await establishSession(
+    res,
+    {
+      accessToken: resolved.token,
+      tokenType: 'bearer',
+      scope: `local:${resolved.origin}`,
+    },
+    {
+      authMethod: 'token',
+      tokenOrigin: resolved.origin,
+      userAgent: req.headers['user-agent'] ?? null,
+    }
+  );
 
   if (!result.ok) {
     res.status(502).json({ error: result.reason });
@@ -96,24 +79,32 @@ async function signInWithLocalToken(req: Request, res: Response): Promise<void> 
 }
 
 /**
- * GET /auth/github
+ * GET /auth/github?method=oauth|token
+ *
+ * An unavailable method is refused with the reason rather than redirected into
+ * a flow that cannot complete.
  */
 router.get('/', async (req: Request, res: Response) => {
-  const config = env();
+  const choice = chooseMethod(req, req.query.method);
 
-  if (config.AUTH_PROVIDER === 'token') {
-    try {
-      await signInWithLocalToken(req, res);
-    } catch (error) {
-      // Deliberately not forwarding the message: it can carry the token when
-      // the failure came from a fetch that embedded the header.
-      logError('Local token sign-in failed', error);
-      res.status(500).json({ error: 'Sign-in failed. See the API logs for details.' });
-    }
+  if (!choice.ok) {
+    res.status(choice.status).json({ error: choice.error });
     return;
   }
 
-  redirectToGitHub(res);
+  if (choice.method === 'oauth') {
+    redirectToGitHub(res);
+    return;
+  }
+
+  try {
+    await signInWithLocalToken(req, res);
+  } catch (error) {
+    // Deliberately not forwarding the message: it can carry the token when
+    // the failure came from a fetch that embedded the header.
+    logError('Local token sign-in failed', error);
+    res.status(500).json({ error: 'Sign-in failed. See the API logs for details.' });
+  }
 });
 
 export default router;

@@ -20,7 +20,7 @@ export function LoginButton({
       variant={variant}
       size={size}
       className={className}
-      onClick={login}
+      onClick={() => login()}
       disabled={isLoading}
     >
       {isLoading ? (

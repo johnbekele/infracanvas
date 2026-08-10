@@ -1,6 +1,6 @@
 // Authentication store
 import { create } from 'zustand';
-import { authApi } from '../api/client';
+import { authApi, type AuthMethod, type AuthMethodId } from '../api/client';
 
 export interface User {
   id: string;
@@ -18,10 +18,17 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   hasGitHubToken: boolean;
+  /** Which sign-in path issued the current session, once one exists. */
+  authMethod: AuthMethodId | null;
+  /** Where a local token came from, so a surprising account is traceable. */
+  tokenOrigin: string | null;
+  methods: AuthMethod[];
+  defaultMethod: AuthMethodId | null;
 
   // Actions
   checkAuth: () => Promise<void>;
-  login: () => void;
+  loadMethods: () => Promise<void>;
+  login: (method?: AuthMethodId) => void;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -32,6 +39,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true, // Start loading to check auth on mount
   error: null,
   hasGitHubToken: false,
+  authMethod: null,
+  tokenOrigin: null,
+  methods: [],
+  defaultMethod: null,
 
   checkAuth: async () => {
     set({ isLoading: true, error: null });
@@ -44,6 +55,8 @@ export const useAuthStore = create<AuthState>((set) => ({
           user: status.user,
           isAuthenticated: true,
           hasGitHubToken: status.hasGitHubToken || false,
+          authMethod: status.authMethod ?? null,
+          tokenOrigin: status.tokenOrigin ?? null,
           isLoading: false,
         });
       } else {
@@ -66,9 +79,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: () => {
-    // Redirect to GitHub OAuth
-    window.location.href = authApi.getOAuthUrl();
+  loadMethods: async () => {
+    try {
+      const { methods, default: preferred } = await authApi.getMethods();
+      set({ methods, defaultMethod: preferred });
+    } catch {
+      // An older API has no /auth/methods. Leaving the list empty makes the
+      // login button fall back to a plain sign-in, which is what it did before.
+      set({ methods: [], defaultMethod: null });
+    }
+  },
+
+  login: (method) => {
+    window.location.href = authApi.getSignInUrl(method);
   },
 
   logout: async () => {
@@ -82,6 +105,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       isAuthenticated: false,
       hasGitHubToken: false,
+      authMethod: null,
+      tokenOrigin: null,
       error: null,
     });
   },

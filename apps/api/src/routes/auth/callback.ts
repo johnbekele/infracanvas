@@ -83,11 +83,15 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Identifying the account, persisting it, and issuing the cookie is shared
     // with the local token provider, so a fix to either applies to both.
-    const result = await establishSession(res, {
-      accessToken: tokenData.access_token,
-      tokenType: tokenData.token_type,
-      scope: tokenData.scope,
-    });
+    const result = await establishSession(
+      res,
+      {
+        accessToken: tokenData.access_token,
+        tokenType: tokenData.token_type,
+        scope: tokenData.scope,
+      },
+      { authMethod: 'oauth', userAgent: req.headers['user-agent'] ?? null }
+    );
 
     if (!result.ok) {
       res.redirect(`${config.APP_URL}/callback?error=${encodeURIComponent(result.reason)}`);
