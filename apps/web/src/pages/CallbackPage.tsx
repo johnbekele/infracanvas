@@ -22,19 +22,23 @@ export function CallbackPage() {
       }
 
       if (success === 'true') {
-        // OAuth completed successfully - refresh auth state
-        try {
-          await checkAuth();
-          setStatus('success');
+        // GitHub says it went through; the server is the one that knows whether
+        // a session came out of it, so ask rather than assume.
+        await checkAuth();
+        const { isAuthenticated, error: checkError } = useAuthStore.getState();
 
-          // Signing in exists to reach a repository, so that is where it lands.
-          setTimeout(() => {
-            navigate('/repositories', { replace: true });
-          }, 1500);
-        } catch (_err) {
+        if (!isAuthenticated) {
           setStatus('error');
-          setError('Failed to complete authentication');
+          setError(checkError ?? 'Signed in with GitHub, but no session was created.');
+          return;
         }
+
+        setStatus('success');
+
+        // Signing in exists to reach a repository, so that is where it lands.
+        setTimeout(() => {
+          navigate('/repositories', { replace: true });
+        }, 1500);
         return;
       }
 

@@ -28,8 +28,6 @@ import { rateLimit } from 'express-rate-limit';
  */
 export const TRUST_PROXY_HOPS = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '0', 10) || 0;
 
-const RATE_LIMITED_BODY = { error: 'Too many requests' };
-
 function limiter(windowMs: number, limit: number) {
   return rateLimit({
     windowMs,
@@ -38,7 +36,15 @@ function limiter(windowMs: number, limit: number) {
     // place of the older `X-RateLimit-*` set.
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: RATE_LIMITED_BODY,
+    // `Retry-After` carries the same number, but a browser client reads the
+    // body it already parses far more readily than a header, and a UI that can
+    // say when to come back is better than one that can only say no.
+    handler: (_req, res, _next, options) => {
+      res.status(options.statusCode).json({
+        error: 'Too many requests',
+        retryAfter: Math.ceil(options.windowMs / 1000),
+      });
+    },
     // The library refuses to start when `trust proxy` is permissive and a
     // forwarded header is present, since that combination is spoofable. The
     // app sets the hop count explicitly, so the check has nothing to catch.
@@ -46,8 +52,17 @@ function limiter(windowMs: number, limit: number) {
   });
 }
 
-/** Sign-in attempts: slow enough to make guessing pointless, generous for a person. */
-export const authRateLimit = limiter(15 * 60 * 1000, 20);
+/**
+ * Presenting a credential: sign-in and the OAuth callback.
+ *
+ * This is the only traffic where a low ceiling buys anything, because it is the
+ * only traffic where repetition is an attack. It deliberately does not cover
+ * the rest of `/auth`: reading your own status is not a guess at anyone's
+ * credential, and putting it under this limit meant that opening a handful of
+ * pages spent the budget and logged the user out of a session that was still
+ * perfectly valid.
+ */
+export const signInRateLimit = limiter(15 * 60 * 1000, 20);
 
 /** Ordinary API traffic. */
 export const apiRateLimit = limiter(60 * 1000, 100);

@@ -1,9 +1,10 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { LandingPage } from '@/pages/LandingPage';
 import { CallbackPage } from '@/pages/CallbackPage';
 import { RepositoriesPage } from '@/pages/RepositoriesPage';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 /**
  * The designer is loaded on demand. React Flow and the code generators are the
@@ -37,6 +38,15 @@ function Loading({ what }: { what: string }) {
 }
 
 function App() {
+  const ensureAuth = useAuthStore((state) => state.ensureAuth);
+
+  // Asked here rather than in each page, because who you are does not change
+  // when you navigate. Four pages each asking on mount spent the sign-in budget
+  // on a question the server had already answered.
+  useEffect(() => {
+    void ensureAuth();
+  }, [ensureAuth]);
+
   return (
     <>
       <Routes>

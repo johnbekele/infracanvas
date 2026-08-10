@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiRateLimit, authRateLimit } from './rate-limit.js';
+import { apiRateLimit, signInRateLimit } from './rate-limit.js';
 
 /** A minimal app carrying one limiter, so each test starts with a fresh counter. */
 function appWith(limiter: express.RequestHandler) {
@@ -34,7 +34,7 @@ describe('apiRateLimit', () => {
     const refused = await request(app).get('/');
 
     expect(refused.status).toBe(429);
-    expect(refused.body).toEqual({ error: 'Too many requests' });
+    expect(refused.body.error).toBe('Too many requests');
   });
 
   it('tells the caller when to retry', async () => {
@@ -47,6 +47,9 @@ describe('apiRateLimit', () => {
 
     // Without this a client has no way to back off other than by guessing.
     expect(Number(refused.headers['retry-after'])).toBeGreaterThan(0);
+    // In the body as well as the header, because that is what a browser client
+    // reads without being taught to look anywhere else.
+    expect(refused.body.retryAfter).toBe(60);
   });
 
   it('advertises the policy in the standard headers rather than the legacy ones', async () => {
@@ -57,9 +60,9 @@ describe('apiRateLimit', () => {
   });
 });
 
-describe('authRateLimit', () => {
+describe('signInRateLimit', () => {
   it('is tighter than the general API limit', async () => {
-    const app = appWith(authRateLimit);
+    const app = appWith(signInRateLimit);
 
     for (let i = 0; i < 20; i++) {
       expect((await request(app).get('/')).status).toBe(200);
