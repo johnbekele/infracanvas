@@ -109,6 +109,20 @@ same origin. See `apps/api/.env.example` for the full list.
 3. **Configure & Push** - Set the directory, IaC type, and push your code
 4. **GitHub Actions** - Optionally include a CI/CD workflow for automatic deployment
 
+### Model access
+
+Model-assisted features run on your own key rather than a shared account, configured under
+**Settings** in the user menu. OpenAI, Anthropic and Google need a key; Bedrock uses the AWS
+credentials the server already has, and Ollama is a local process, so neither asks for one.
+
+Keys are encrypted with `ENCRYPTION_KEY` before they are stored and are never sent back to the
+browser, which only ever sees the last four characters. **Test** proves a credential works with the
+cheapest call the provider offers, so a wrong key is found here rather than halfway through an
+architecture proposal.
+
+The same page sets the reasoning effort. Every provider spells this differently, so it is one choice
+here mapped to whatever each one calls it.
+
 ### Supported AWS Services
 
 | Category        | Services                                       |

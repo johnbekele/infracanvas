@@ -1,4 +1,5 @@
 import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,14 +49,18 @@ export function UserMenu() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="gap-2">
-          <User className="h-4 w-4" />
-          <span>Profile</span>
+        <DropdownMenuItem asChild className="gap-2">
+          <a href={`https://github.com/${user.githubUsername}`} target="_blank" rel="noreferrer">
+            <User className="h-4 w-4" />
+            <span>GitHub profile</span>
+          </a>
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="gap-2">
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
+        <DropdownMenuItem asChild className="gap-2">
+          <Link to="/settings">
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
