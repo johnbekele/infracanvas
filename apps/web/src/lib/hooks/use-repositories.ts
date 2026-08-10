@@ -1,5 +1,6 @@
 // Data hooks for connected repositories and their analyses.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { githubApi } from '../api/client';
 import { repositoriesApi } from '../api/repositories';
 
 const keys = {
@@ -24,7 +25,7 @@ export function useRepository(id: string | undefined) {
 export function useGitHubRepositories(enabled: boolean) {
   return useQuery({
     queryKey: ['github', 'repos'],
-    queryFn: async () => (await import('../api/client')).githubApi.listRepos(),
+    queryFn: githubApi.listRepos,
     enabled,
     // GitHub's listing changes rarely and the request is not cheap, so it is
     // not refetched every time the picker opens.
