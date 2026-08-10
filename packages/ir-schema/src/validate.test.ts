@@ -234,11 +234,22 @@ describe('performance', () => {
     }
 
     // Warm the compiled validator so the measurement is of validation rather
-    // than of the first call's lazy work.
-    expect(validateIr(document).valid).toBe(true);
+    // than of the first calls' lazy work.
+    for (let run = 0; run < 5; run += 1) {
+      expect(validateIr(document).valid).toBe(true);
+    }
 
-    const started = performance.now();
-    validateIr(document);
-    expect(performance.now() - started).toBeLessThan(10);
+    // The median over repeats rather than a single reading: a shared CI runner
+    // will occasionally deschedule any one call, and a budget that fails for
+    // that reason teaches everyone to rerun red checks.
+    const samples: number[] = [];
+    for (let run = 0; run < 21; run += 1) {
+      const started = performance.now();
+      validateIr(document);
+      samples.push(performance.now() - started);
+    }
+    samples.sort((a, b) => a - b);
+
+    expect(samples[Math.floor(samples.length / 2)]).toBeLessThan(10);
   });
 });
