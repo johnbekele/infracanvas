@@ -6,6 +6,7 @@ import { createSessionToken } from '../../lib/jwt.js';
 import { findOrCreateUser } from '../../lib/db/users.js';
 import { saveGitHubToken } from '../../lib/db/tokens.js';
 import { SESSION_COOKIE_NAME } from '../../middleware/auth.js';
+import { logError } from '../../lib/log.js';
 
 const router = Router();
 
@@ -152,7 +153,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Redirect to app with success
     res.redirect(`${config.APP_URL}/callback?success=true`);
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    logError('OAuth callback error', error);
     res.redirect(`${config.APP_URL}/callback?error=Internal%20server%20error`);
   }
 });

@@ -2,6 +2,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import { logError } from '../../lib/log.js';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const repos = await response.json();
     res.json(repos);
   } catch (error) {
-    console.error('Error fetching repos:', error);
+    logError('Error fetching repos', error);
     res.status(500).json({ error: 'Failed to fetch repositories' });
   }
 });
@@ -89,7 +90,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
     res.json(data);
   } catch (error) {
-    console.error('Error creating repo:', error);
+    logError('Error creating repo', error);
     res.status(500).json({ error: 'Failed to create repository' });
   }
 });

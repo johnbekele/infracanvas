@@ -40,9 +40,15 @@ export async function createSessionToken(payload: {
 
 /**
  * Verify and decode a session token
- * Returns null if invalid or expired
+ * Returns null if absent, invalid, or expired
  */
-export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
+export async function verifySessionToken(
+  token: string | null | undefined
+): Promise<SessionPayload | null> {
+  if (!token) {
+    return null;
+  }
+
   try {
     const secret = new TextEncoder().encode(env().JWT_SECRET);
 

@@ -2,6 +2,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import { logError } from '../../lib/log.js';
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const user = await response.json();
     res.json(user);
   } catch (error) {
-    console.error('Error fetching GitHub user:', error);
+    logError('Error fetching GitHub user', error);
     res.status(500).json({ error: 'Failed to fetch GitHub user' });
   }
 });

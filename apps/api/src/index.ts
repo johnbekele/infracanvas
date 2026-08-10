@@ -5,6 +5,7 @@ import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
 import { closePool, ping } from './lib/db/client.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
+import { logError } from './lib/log.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,7 +42,7 @@ app.use((_req, res) => {
 
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  logError('Unhandled error', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
