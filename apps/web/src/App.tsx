@@ -23,6 +23,11 @@ const RepositoryPage = lazy(() =>
   import('@/pages/RepositoryPage').then((module) => ({ default: module.RepositoryPage }))
 );
 
+/** Visited rarely, and mostly once. It should not be in the first payload either. */
+const SettingsPage = lazy(() =>
+  import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage }))
+);
+
 function Loading({ what }: { what: string }) {
   return (
     <div className="flex h-screen items-center justify-center text-sm text-gray-500">
@@ -50,6 +55,14 @@ function App() {
           element={
             <Suspense fallback={<Loading what="the designer" />}>
               <DesignerPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Suspense fallback={<Loading what="settings" />}>
+              <SettingsPage />
             </Suspense>
           }
         />

@@ -99,3 +99,19 @@ export {
 
 // ZIP Export
 export { exportTerraformZip, exportPulumiZip, downloadBlob } from './codegen/zip';
+
+// Model providers and reasoning scale
+export {
+  llmProviders,
+  getProvider,
+  isLlmProvider,
+  type LlmProvider,
+  type ProviderInfo,
+} from './llm/providers';
+
+export {
+  reasoningParams,
+  reasoningScales,
+  isReasoningScale,
+  type ReasoningScale,
+} from './llm/reasoning';
