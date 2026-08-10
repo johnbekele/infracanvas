@@ -50,6 +50,11 @@ COPY apps/api ./apps/api
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# @infracanvas/core resolves through its dist output, so the API cannot import
+# it until this has run. Only apps/api/src is bind mounted for hot reload, so a
+# change under packages/core needs an image rebuild to take effect.
+RUN pnpm --filter @infracanvas/core build
+
 EXPOSE 3001
 
 CMD ["pnpm", "--filter", "@infracanvas/api", "dev"]

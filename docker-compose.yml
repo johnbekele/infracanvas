@@ -43,7 +43,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: development
     ports:
-      - '5174:3000'
+      - '5174:5173'
     volumes:
       # Mount source code for hot reload (vite will pick up changes)
       - ./apps/web/src:/app/apps/web/src

@@ -7,6 +7,17 @@ import repositoryRoutes from './routes/repositories/index.js';
 import { closePool, ping } from './lib/db/client.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
 import { logError } from './lib/log.js';
+import { env } from './lib/env.js';
+
+// Read the configuration before binding a port. It is validated lazily, so
+// without this a misconfigured process starts, accepts traffic, and reports the
+// problem as a database failure on the first request that touches one.
+try {
+  env();
+} catch (error) {
+  logError('Refusing to start', error);
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
