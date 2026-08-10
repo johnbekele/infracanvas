@@ -1,4 +1,23 @@
-export type { ArchitectureIr, IrEdge, IrLayout, IrNode, IrPresentation } from './document.js';
+export type {
+  ArchitectureIr,
+  Edge as IrEdge,
+  EdgeKind as IrEdgeKind,
+  Layout as IrLayout,
+  NodeBase as IrNodeBase,
+  PendingContractKind,
+  PendingContractNode,
+  PendingParams,
+  Presentation as IrPresentation,
+  ResourceId,
+  ResourceKind,
+  SubnetNode,
+  SubnetParams,
+  SubnetTier,
+  Viewport as IrViewport,
+  VpcNode,
+  VpcParams,
+} from './generated/types.js';
+export type { IrNode } from './nodes.js';
 export {
   assertValidIr,
   IrValidationError,
