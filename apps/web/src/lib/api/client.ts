@@ -27,7 +27,7 @@ if (import.meta.env.PROD && !API_BASE_URL) {
 /**
  * Make an authenticated API request
  */
-async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { skipAuth: _skipAuth, ...fetchOptions } = options;
 
   // Use full URL for Render backend, or relative /api for local proxy
@@ -45,6 +45,12 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promis
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new ApiError(data.error || `API error: ${response.status}`, response.status, data);
+  }
+
+  // A 204 carries no body, so parsing it as JSON would throw on a request that
+  // in fact succeeded.
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json();

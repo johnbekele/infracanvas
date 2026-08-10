@@ -142,10 +142,9 @@ jobs:
         if: steps.guard.outputs.run == 'true'
       - if: steps.guard.outputs.run == 'true'
         run: pnpm turbo build --filter=@infracanvas/web
-      # The target is 250 KB, but the app already ships 255 KB in a single chunk.
-      # This is set as a ratchet at the current size so it blocks any further
-      # growth today; reducing it to the target is tracked as canvas work and the
-      # number here drops with it.
+      # A ratchet: set just above the current initial payload so it blocks growth
+      # rather than describing an aspiration. The designer, which is most of the
+      # weight, now loads on demand, which brought this from 260 KB to 215 KB.
       - name: Assert the gzip budget for initial JavaScript
         if: steps.guard.outputs.run == 'true'
-        run: node scripts/ci/check-bundle-size.mjs apps/web/dist 260
+        run: node scripts/ci/check-bundle-size.mjs apps/web/dist 215

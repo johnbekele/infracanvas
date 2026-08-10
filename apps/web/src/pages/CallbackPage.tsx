@@ -27,9 +27,9 @@ export function CallbackPage() {
           await checkAuth();
           setStatus('success');
 
-          // Redirect to designer after a brief delay
+          // Signing in exists to reach a repository, so that is where it lands.
           setTimeout(() => {
-            navigate('/designer', { replace: true });
+            navigate('/repositories', { replace: true });
           }, 1500);
         } catch (_err) {
           setStatus('error');
@@ -67,7 +67,7 @@ export function CallbackPage() {
             <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Successfully Connected
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">Redirecting to designer...</p>
+            <p className="text-gray-600 dark:text-gray-400">Taking you to your repositories...</p>
           </>
         )}
 
