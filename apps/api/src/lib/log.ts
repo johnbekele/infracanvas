@@ -28,15 +28,19 @@ function describe(error: unknown): DescribedError | string {
  * Flatten a value onto one log line.
  *
  * JSON encoding turns embedded line breaks into `\n` escapes so a stack trace
- * survives intact. The replaces then cover anything the encoder passed through,
- * such as a lone carriage return in a plain string. They are written as two
- * separate calls over single alternatives because that is the shape CodeQL
- * recognises as a log injection barrier; a character class is not matched.
+ * survives intact. The replacements then cover anything the encoder passed
+ * through, such as a lone carriage return in a plain string. Each one takes a
+ * literal rather than a character class, because that is the shape CodeQL
+ * recognises as a log injection barrier.
  */
 export function sanitiseForLog(value: unknown): string {
   const described = describe(value);
   const text = typeof described === 'string' ? described : JSON.stringify(described);
-  const singleLine = text.replace(/\n|\r/g, ' ').replace(/\u2028|\u2029/g, ' ');
+  const singleLine = text
+    .replaceAll('\n', ' ')
+    .replaceAll('\r', ' ')
+    .replaceAll('\u2028', ' ')
+    .replaceAll('\u2029', ' ');
   return singleLine.slice(0, MAX_LENGTH);
 }
 
