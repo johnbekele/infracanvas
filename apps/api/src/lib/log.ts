@@ -28,13 +28,16 @@ function describe(error: unknown): DescribedError | string {
  * Flatten a value onto one log line.
  *
  * JSON encoding turns embedded line breaks into `\n` escapes so a stack trace
- * survives intact, and the explicit replace covers anything the encoder passed
- * through, such as a lone carriage return in a plain string.
+ * survives intact. The replaces then cover anything the encoder passed through,
+ * such as a lone carriage return in a plain string. They are written as two
+ * separate calls over single alternatives because that is the shape CodeQL
+ * recognises as a log injection barrier; a character class is not matched.
  */
 export function sanitiseForLog(value: unknown): string {
   const described = describe(value);
   const text = typeof described === 'string' ? described : JSON.stringify(described);
-  return text.replace(/[\r\n\u2028\u2029]+/g, ' ').slice(0, MAX_LENGTH);
+  const singleLine = text.replace(/\n|\r/g, ' ').replace(/\u2028|\u2029/g, ' ');
+  return singleLine.slice(0, MAX_LENGTH);
 }
 
 /**

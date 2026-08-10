@@ -12,8 +12,12 @@ describe('sanitiseForLog', () => {
     expect(sanitiseForLog(forged)).toBe('boom ERROR admin login succeeded');
   });
 
-  it('collapses carriage returns and unicode line separators', () => {
+  it('replaces carriage returns and unicode line separators', () => {
     expect(sanitiseForLog('a\rb\u2028c\u2029d')).toBe('a b c d');
+  });
+
+  it('replaces each character of a CRLF pair rather than the pair', () => {
+    expect(sanitiseForLog('a\r\nb')).toBe('a  b');
   });
 
   it('preserves an error stack as escaped text rather than dropping it', () => {
