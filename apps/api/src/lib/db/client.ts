@@ -1,6 +1,7 @@
 // Postgres connection pool shared by every route and worker in this process.
 import pg from 'pg';
 import { env } from '../env.js';
+import { logError } from '../log.js';
 
 const { Pool } = pg;
 
@@ -41,7 +42,7 @@ export function getPool(): pg.Pool {
   // A pool-level error is emitted for idle clients dropped by the server. It is
   // not tied to any request, and an unhandled 'error' event would crash Node.
   pool.on('error', (error) => {
-    console.error('Unexpected Postgres pool error:', error);
+    logError('Unexpected Postgres pool error', error);
   });
 
   return pool;
@@ -76,7 +77,7 @@ export async function ping(): Promise<boolean> {
     await query('SELECT 1');
     return true;
   } catch (error) {
-    console.error('Postgres ping failed:', error);
+    logError('Postgres ping failed', error);
     return false;
   }
 }

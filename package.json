@@ -24,7 +24,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules",
-    "prepare": "lefthook install",
+    "prepare": "lefthook install || exit 0",
     "db:up": "docker compose up -d postgres",
     "db:migrate": "dbmate --migrations-dir db/migrations --no-dump-schema up",
     "db:rollback": "dbmate --migrations-dir db/migrations --no-dump-schema rollback",

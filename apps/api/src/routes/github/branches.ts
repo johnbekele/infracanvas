@@ -2,6 +2,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import { logError } from '../../lib/log.js';
 import {
   InvalidGitHubParamError,
   assertBranch,
@@ -48,7 +49,7 @@ router.get('/:owner/:repo', requireAuth, async (req: Request, res: Response) => 
       res.status(400).json({ error: error.message });
       return;
     }
-    console.error('Error fetching branches:', error);
+    logError('Error fetching branches', error);
     res.status(500).json({ error: 'Failed to fetch branches' });
   }
 });
@@ -122,7 +123,7 @@ router.post('/:owner/:repo', requireAuth, async (req: Request, res: Response) =>
       res.status(400).json({ error: error.message });
       return;
     }
-    console.error('Error creating branch:', error);
+    logError('Error creating branch', error);
     res.status(500).json({ error: 'Failed to create branch' });
   }
 });

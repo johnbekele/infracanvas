@@ -2,6 +2,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
+import { logError } from '../../lib/log.js';
 import {
   InvalidGitHubParamError,
   assertBranch,
@@ -229,7 +230,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       res.status(400).json({ error: error.message });
       return;
     }
-    console.error('Error pushing files:', error);
+    logError('Error pushing files', error);
     res.status(500).json({
       error: 'Failed to push files',
       message: error instanceof Error ? error.message : 'Unknown error',

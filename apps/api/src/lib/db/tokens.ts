@@ -1,6 +1,7 @@
 // GitHub access tokens. Encrypted at rest; the database never sees plaintext.
 import { query } from './client.js';
 import { decrypt, encrypt } from '../encryption.js';
+import { logError } from '../log.js';
 
 export interface SaveTokenInput {
   userId: string;
@@ -41,7 +42,7 @@ export async function getGitHubToken(userId: string): Promise<string | null> {
   try {
     return decrypt(row.access_token_encrypted);
   } catch (error) {
-    console.error('Failed to decrypt GitHub token:', error);
+    logError('Failed to decrypt GitHub token', error);
     return null;
   }
 }

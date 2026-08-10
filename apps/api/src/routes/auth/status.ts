@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { optionalAuth } from '../../middleware/auth.js';
 import { findUserById } from '../../lib/db/users.js';
 import { hasGitHubToken } from '../../lib/db/tokens.js';
+import { logError } from '../../lib/log.js';
 
 const router = Router();
 
@@ -61,7 +62,7 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
 
     res.json(response);
   } catch (error) {
-    console.error('Error fetching auth status:', error);
+    logError('Error fetching auth status', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -85,13 +85,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
  * Attaches session if available but doesn't require it
  */
 export async function optionalAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const token = extractToken(req);
+  // The absent case is handled by verifySessionToken rather than a branch here,
+  // so nothing the caller supplies decides whether the signature is checked.
+  const session = await verifySessionToken(extractToken(req));
 
-  if (token) {
-    const session = await verifySessionToken(token);
-    if (session) {
-      req.session = session;
-    }
+  if (session) {
+    req.session = session;
   }
 
   next();
