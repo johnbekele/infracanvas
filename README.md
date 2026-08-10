@@ -28,19 +28,48 @@ Design cloud infrastructure visually, export as Terraform or Pulumi code, and pu
 
 ### Run Locally
 
+You need Node 20+, pnpm, Docker, and the [GitHub CLI](https://cli.github.com) logged in
+(`gh auth login`). No GitHub OAuth application is required.
+
 ```bash
-# Clone the repository
 git clone https://github.com/johnbekele/infracanvas.git
 cd infracanvas
-
-# Install dependencies
 pnpm install
 
-# Start development server
+# Postgres 17 with pgvector, on port 5433
+pnpm db:up
+pnpm db:migrate
+
+# Generate local secrets. AUTH_PROVIDER=token is already set in the example,
+# which means the API borrows the token the gh CLI is holding.
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+sed -i '' "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$(openssl rand -hex 32)/" apps/api/.env
+sed -i '' "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" apps/api/.env
+
 pnpm dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:5173](http://localhost:5173).
+
+### How GitHub authentication works
+
+There are two providers, selected by `AUTH_PROVIDER`.
+
+**`token`** is for local development and single-user self-hosting. The API uses `GITHUB_TOKEN` if it
+is set, and otherwise asks the `gh` CLI for the token it already holds, so there is nothing to
+register and nothing to paste. Because it signs the caller in as _your_ GitHub account with `repo`
+scope, it accepts requests only from the machine it runs on. Set `AUTH_TOKEN_ALLOW_REMOTE=true` only
+if everyone who can reach the port is trusted with your repository access.
+
+**`oauth`** is for a hosted, multi-user deployment. Each person authorises the application and gets
+their own token, stored encrypted and keyed to their account. It needs `GITHUB_CLIENT_ID` and
+`GITHUB_CLIENT_SECRET` from an OAuth app whose callback URL is `${API_URL}/auth/github/callback`.
+This is the default when `AUTH_PROVIDER` is unset, so a deployment that forgets to configure it gets
+the multi-user flow rather than sharing one account.
+
+Everything after the token is obtained is identical between the two: the account is identified, the
+user is upserted, and the token is encrypted with AES-256-GCM before it touches the database.
 
 ### One-Click Deploy
 
@@ -70,7 +99,7 @@ same origin. See `apps/api/.env.example` for the full list.
 
 ### GitHub Integration
 
-1. **Connect GitHub** - Click the GitHub button and enter your Personal Access Token
+1. **Connect GitHub** - Click the GitHub button to sign in; locally this uses your `gh` CLI token
 2. **Select Repository** - Choose an existing repo or create a new one
 3. **Configure & Push** - Set the directory, IaC type, and push your code
 4. **GitHub Actions** - Optionally include a CI/CD workflow for automatic deployment
