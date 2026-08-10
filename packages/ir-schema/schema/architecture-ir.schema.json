@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infracanvas.dev/schema/architecture-ir/1.0.0.json",
+  "title": "ArchitectureIr",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["irVersion", "name", "provider", "region", "nodes", "edges"],
+  "properties": {
+    "irVersion": { "type": "string", "pattern": "^1\\.\\d+\\.\\d+$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "provider": { "const": "aws" },
+    "region": { "type": "string", "pattern": "^[a-z]{2}(-gov)?-[a-z]+-[0-9]$" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/vpcNode" },
+          { "$ref": "#/$defs/subnetNode" },
+          { "$ref": "#/$defs/pendingContractNode" }
+        ]
+      }
+    },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "presentation": { "$ref": "#/$defs/presentation" }
+  },
+  "$defs": {
+    "resourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+    "resourceKind": {
+      "enum": [
+        "vpc",
+        "subnet",
+        "internet_gateway",
+        "nat_gateway",
+        "security_group",
+        "ec2_instance",
+        "lambda_function",
+        "ecs_cluster",
+        "ecs_service",
+        "alb",
+        "nlb",
+        "api_gateway",
+        "cloudfront_distribution",
+        "route53_zone",
+        "s3_bucket",
+        "rds_instance",
+        "dynamodb_table",
+        "elasticache_cluster",
+        "sns_topic",
+        "sqs_queue",
+        "iam_role",
+        "cognito_user_pool",
+        "cloudwatch_log_group",
+        "secretsmanager_secret"
+      ]
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "nodeBase": {
+      "type": "object",
+      "required": ["id", "kind", "name", "params"],
+      "properties": {
+        "id": { "$ref": "#/$defs/resourceId" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "parent": { "oneOf": [{ "$ref": "#/$defs/resourceId" }, { "type": "null" }] },
+        "layout": { "$ref": "#/$defs/layout" }
+      }
+    },
+    "vpcNode": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "unevaluatedProperties": false,
+      "properties": {
+        "kind": { "const": "vpc" },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cidrBlock"],
+          "properties": {
+            "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
+            "enableDnsHostnames": { "type": "boolean", "default": true },
+            "enableDnsSupport": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "subnetNode": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "unevaluatedProperties": false,
+      "properties": {
+        "kind": { "const": "subnet" },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tier", "cidrBlock", "availabilityZone"],
+          "properties": {
+            "tier": { "enum": ["public", "private"] },
+            "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
+            "availabilityZone": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "pendingContractNode": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "unevaluatedProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "internet_gateway",
+            "nat_gateway",
+            "security_group",
+            "ec2_instance",
+            "lambda_function",
+            "ecs_cluster",
+            "ecs_service",
+            "alb",
+            "nlb",
+            "api_gateway",
+            "cloudfront_distribution",
+            "route53_zone",
+            "s3_bucket",
+            "rds_instance",
+            "dynamodb_table",
+            "elasticache_cluster",
+            "sns_topic",
+            "sqs_queue",
+            "iam_role",
+            "cognito_user_pool",
+            "cloudwatch_log_group",
+            "secretsmanager_secret"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "source", "target"],
+      "properties": {
+        "id": { "$ref": "#/$defs/resourceId" },
+        "kind": { "enum": ["connects", "depends_on", "routes_to"] },
+        "source": { "$ref": "#/$defs/resourceId" },
+        "target": { "$ref": "#/$defs/resourceId" },
+        "label": { "type": "string", "maxLength": 64 },
+        "sourceHandle": { "type": "string" },
+        "targetHandle": { "type": "string" }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "zoom"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "zoom": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}
