@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { LoginButton } from '@/components/auth';
+import { AuthMethodPicker } from '@/components/auth';
 import { CredentialForm } from '@/components/settings/CredentialForm';
 import { CredentialList } from '@/components/settings/CredentialList';
 import { PreferencesForm } from '@/components/settings/PreferencesForm';
@@ -47,10 +47,7 @@ export function SettingsPage() {
         {isAuthLoading || isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>
         ) : !isAuthenticated ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
-            <p className="mb-4 text-sm text-gray-500">Sign in to manage your settings.</p>
-            <LoginButton />
-          </div>
+          <AuthMethodPicker />
         ) : (
           <div className="space-y-6">
             <Section
