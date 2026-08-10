@@ -22,6 +22,24 @@ The numeric prefix is ordering, not priority; it keeps a directory listing in ro
 work lands. Real ordering lives in each issue's `Dependencies` section, which GitHub renders as a
 graph.
 
+One directory per epic, matching the `epic:` labels:
+
+| Directory           | Epic                                   |
+| ------------------- | -------------------------------------- |
+| `epic-0-delivery`   | Gates and developer tooling            |
+| `epic-1-data`       | Postgres foundation and the job queue  |
+| `epic-2-ir`         | Architecture IR and resource contracts |
+| `epic-3-engine`     | Rust ingestion engine                  |
+| `epic-4-retrieval`  | Hybrid retrieval and evaluation        |
+| `epic-5-graphrag`   | Code graph and community summaries     |
+| `epic-6-brain`      | Agent runtime and provider layer       |
+| `epic-7-prediction` | Cost, latency, scale, and availability |
+| `epic-8-codegen`    | Pulumi generation and validation       |
+| `epic-9-deploy`     | AWS connection, deployment, guardrails |
+| `epic-10-loadtest`  | Load testing and measured SLIs         |
+| `epic-11-web`       | Canvas and dashboards                  |
+| `epic-12-launch`    | Merge-back, self-hosting, and security |
+
 ## File format
 
 A `---` header followed by the issue body:
