@@ -129,6 +129,40 @@ class SubnetNode(NodeBase):
     params: SubnetParams
 
 
+class RdsInstanceParams(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    engine: Literal["postgres", "mysql", "mariadb"]
+    engine_version: Annotated[
+        str | None, Field(alias="engineVersion", max_length=32, min_length=1)
+    ] = None
+    instance_class: Annotated[
+        str, Field(alias="instanceClass", pattern="^db\\.[a-z0-9]+\\.[a-z0-9]+$")
+    ]
+    allocated_storage_gb: Annotated[int, Field(alias="allocatedStorageGb", ge=20, le=65536)]
+    storage_type: Annotated[
+        Literal["gp2", "gp3", "io1", "io2"] | None, Field(alias="storageType")
+    ] = "gp3"
+    multi_az: Annotated[bool | None, Field(alias="multiAz")] = False
+    publicly_accessible: Annotated[bool | None, Field(alias="publiclyAccessible")] = False
+    deletion_protection: Annotated[bool | None, Field(alias="deletionProtection")] = False
+    backup_retention_days: Annotated[
+        int | None, Field(alias="backupRetentionDays", ge=0, le=35)
+    ] = 7
+    storage_encrypted: Annotated[bool | None, Field(alias="storageEncrypted")] = True
+
+
+class RdsInstanceNode(NodeBase):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    kind: Literal["rds_instance"]
+    params: RdsInstanceParams
+
+
 class PendingContractNode(NodeBase):
     model_config = ConfigDict(
         extra="forbid",
@@ -149,7 +183,6 @@ class PendingContractNode(NodeBase):
             "cloudfront_distribution",
             "route53_zone",
             "s3_bucket",
-            "rds_instance",
             "dynamodb_table",
             "elasticache_cluster",
             "sns_topic",
@@ -207,6 +240,6 @@ class ArchitectureIr(BaseModel):
     name: Annotated[str, Field(max_length=128, min_length=1)]
     provider: Literal["aws"]
     region: Annotated[str, Field(pattern="^[a-z]{2}(-gov)?-[a-z]+-[0-9]$")]
-    nodes: list[VpcNode | SubnetNode | PendingContractNode]
+    nodes: list[VpcNode | SubnetNode | RdsInstanceNode | PendingContractNode]
     edges: list[Edge]
     presentation: Presentation | None = None

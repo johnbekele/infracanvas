@@ -1,5 +1,5 @@
 {
-  "irVersion": "1.0.0",
+  "irVersion": "1.1.0",
   "name": "Three tier web application",
   "provider": "aws",
   "region": "eu-west-1",
@@ -8,7 +8,12 @@
       "id": "vpc-main",
       "kind": "vpc",
       "name": "Main VPC",
-      "layout": { "x": 0, "y": 0, "width": 960, "height": 640 },
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 960,
+        "height": 640
+      },
       "params": {
         "cidrBlock": "10.0.0.0/16",
         "enableDnsHostnames": true,
@@ -20,7 +25,12 @@
       "kind": "subnet",
       "name": "Public A",
       "parent": "vpc-main",
-      "layout": { "x": 32, "y": 64, "width": 420, "height": 240 },
+      "layout": {
+        "x": 32,
+        "y": 64,
+        "width": 420,
+        "height": 240
+      },
       "params": {
         "tier": "public",
         "cidrBlock": "10.0.1.0/24",
@@ -32,7 +42,12 @@
       "kind": "subnet",
       "name": "Private A",
       "parent": "vpc-main",
-      "layout": { "x": 32, "y": 340, "width": 420, "height": 240 },
+      "layout": {
+        "x": 32,
+        "y": 340,
+        "width": 420,
+        "height": 240
+      },
       "params": {
         "tier": "private",
         "cidrBlock": "10.0.2.0/24",
@@ -44,29 +59,50 @@
       "kind": "alb",
       "name": "Public load balancer",
       "parent": "subnet-public-a",
-      "layout": { "x": 24, "y": 48 },
-      "params": { "scheme": "internet-facing", "idleTimeoutSeconds": 60 }
+      "layout": {
+        "x": 24,
+        "y": 48
+      },
+      "params": {
+        "scheme": "internet-facing",
+        "idleTimeoutSeconds": 60
+      }
     },
     {
       "id": "ecs-api",
       "kind": "ecs_service",
       "name": "API service",
       "parent": "subnet-private-a",
-      "layout": { "x": 24, "y": 48 },
-      "params": { "cpu": 512, "memory": 1024, "desiredCount": 2 }
+      "layout": {
+        "x": 24,
+        "y": 48
+      },
+      "params": {
+        "cpu": 512,
+        "memory": 1024,
+        "desiredCount": 2
+      }
     },
     {
       "id": "rds-primary",
       "kind": "rds_instance",
       "name": "Primary database",
       "parent": "subnet-private-a",
-      "layout": { "x": 232, "y": 48 },
+      "layout": {
+        "x": 232,
+        "y": 48
+      },
       "params": {
         "engine": "postgres",
+        "engineVersion": "16.4",
         "instanceClass": "db.t3.micro",
         "allocatedStorageGb": 20,
+        "storageType": "gp3",
         "multiAz": false,
-        "publiclyAccessible": false
+        "publiclyAccessible": false,
+        "deletionProtection": false,
+        "backupRetentionDays": 7,
+        "storageEncrypted": true
       }
     }
   ],
@@ -87,6 +123,10 @@
     }
   ],
   "presentation": {
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

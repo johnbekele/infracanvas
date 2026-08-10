@@ -138,3 +138,33 @@ export {
 } from './ir/kind-map';
 
 export { normaliseCanvas, normaliseIr } from './ir/normalise';
+
+// Resource contracts: cost, latency, reliability, rules and emitters per kind
+export {
+  annualDowntimeMinutes,
+  DEFAULT_USAGE,
+  EmitReferenceError,
+  getResourceContract,
+  HOURS_PER_MONTH,
+  kindsWithoutContract,
+  listResourceContracts,
+  rdsInstanceContract,
+  registerBuiltInResources,
+  registerResource,
+  resetResourceRegistry,
+  usd,
+  type CostComponent,
+  type CostEstimate,
+  type EmitContext,
+  type LatencyContribution,
+  type ParamsOf,
+  type Pillar,
+  type PulumiFragment,
+  type ReliabilityContribution,
+  type ResourceContract,
+  type RuleContext,
+  type RuleFinding,
+  type Severity,
+  type UsageAssumptions,
+  type WellArchitectedRule,
+} from './resources';

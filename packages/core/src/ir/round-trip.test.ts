@@ -138,15 +138,16 @@ describe('round trip', () => {
   });
 
   it('preserves every parameter value rather than only the ones the canvas renders', () => {
-    const rds = canvasToIr(irToCanvas(threeTier())).nodes.find((node) => node.id === 'rds-primary');
+    // Compared against the fixture rather than a literal: the canvas draws a
+    // handful of these, and the ones it does not draw are exactly the ones a
+    // lossy conversion would quietly drop.
+    const before = threeTier().nodes.find((node) => node.id === 'rds-primary');
+    const after = canvasToIr(irToCanvas(threeTier())).nodes.find(
+      (node) => node.id === 'rds-primary'
+    );
 
-    expect(rds?.params).toEqual({
-      engine: 'postgres',
-      instanceClass: 'db.t3.micro',
-      allocatedStorageGb: 20,
-      multiAz: false,
-      publiclyAccessible: false,
-    });
+    expect(Object.keys(after?.params ?? {}).length).toBeGreaterThan(5);
+    expect(after?.params).toEqual(before?.params);
   });
 
   it('converts a 500 node document in under 20ms in each direction', () => {

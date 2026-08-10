@@ -3,13 +3,13 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import schemaJson from '../schema/architecture-ir.schema.json';
 import type { ArchitectureIr } from './generated/types.js';
 import {
   assertValidIr,
   IrValidationError,
   pendingContractKinds,
   resourceKinds,
+  typedContractKinds,
   validateIr,
 } from './validate.js';
 
@@ -127,7 +127,9 @@ describe('validateIr', () => {
     for (const cidr of ['10.0.0/16', '10.0.0.0', '10.0.0.0/33', '256.0.0.0/8', '10.0.0.0/016']) {
       const result = validateIr(
         threeTierWith((document) => {
-          document.nodes[0].params.cidrBlock = cidr;
+          const vpc = document.nodes[0];
+          if (vpc.kind !== 'vpc') throw new Error('The fixture no longer starts with the VPC.');
+          vpc.params.cidrBlock = cidr;
         })
       );
       expect(result.valid, cidr).toBe(false);
@@ -190,11 +192,8 @@ describe('assertValidIr', () => {
 
 describe('resource kind coverage', () => {
   it('reports every resource kind as either contracted or pending exactly once', () => {
-    const typed = [
-      schemaJson.$defs.vpcNode.properties.kind.const,
-      schemaJson.$defs.subnetNode.properties.kind.const,
-    ] as string[];
-    const pending = pendingContractKinds();
+    const typed: string[] = typedContractKinds();
+    const pending: string[] = pendingContractKinds();
 
     for (const kind of resourceKinds()) {
       const appearances =

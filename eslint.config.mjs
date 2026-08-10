@@ -18,6 +18,10 @@ export default tseslint.config(
       '**/coverage/**',
       '**/*.d.ts',
       'pnpm-lock.yaml',
+      // Golden files are expected emitter output compared byte for byte. They
+      // reference variables their surrounding project declares, so linting or
+      // type-checking them here would be checking a fragment as a program.
+      '**/__golden__/**',
     ],
   },
 
