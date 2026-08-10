@@ -59,7 +59,8 @@ describe('the generated node union', () => {
     expect(bothWays).toEqual([true, true]);
 
     // Runtime, over the same schema the types came from.
-    const typed = resourceKinds().filter((kind) => !pendingContractKinds().includes(kind));
+    const pending = new Set<string>(pendingContractKinds());
+    const typed = resourceKinds().filter((kind) => !pending.has(kind));
     expect(typed).toEqual(['vpc', 'subnet']);
   });
 });

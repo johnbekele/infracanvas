@@ -115,3 +115,26 @@ export {
   isReasoningScale,
   type ReasoningScale,
 } from './llm/reasoning';
+
+// Architecture IR and the canvas projection of it
+export {
+  CanvasConversionError,
+  canvasToIr,
+  clusterIdFor,
+  irToCanvas,
+  type CanvasEdge,
+  type CanvasGraph,
+  type CanvasNode,
+  type CanvasNodeType,
+  type IrNodeData,
+} from './ir/canvas';
+
+export {
+  canvasTypeForNode,
+  kindToServiceId,
+  serviceIdForNode,
+  serviceIdToKind,
+  unrenderableKinds,
+} from './ir/kind-map';
+
+export { normaliseCanvas, normaliseIr } from './ir/normalise';

@@ -23,6 +23,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@infracanvas/ir-schema": "workspace:*",
     "jszip": "^3.10.1"
   },
   "devDependencies": {
