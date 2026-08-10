@@ -29,10 +29,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+      # Lob is excluded because its detector matches `test_` followed by 32 word
+      # characters, which is every Python test with a descriptive name, and its
+      # verification endpoint reports those as verified rather than rejecting
+      # them. Nothing here talks to Lob, so the detector can only produce false
+      # positives, and a gate that cries wolf on a test name teaches people to
+      # ignore it. Gitleaks and GitGuardian still scan the same diff.
       - name: TruffleHog
         uses: trufflesecurity/trufflehog@a7082b69f5bc6167bbe27ebab82bf6707f267bf6 # main
         with:
-          extra_args: --results=verified,unknown
+          extra_args: --results=verified,unknown --exclude-detectors=Lob
 
   dependencies:
     name: Dependency audit
