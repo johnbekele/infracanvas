@@ -7,6 +7,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { apiRateLimit } from '../../middleware/rate-limit.js';
+import { logError } from '../../lib/log.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 import {
   connectRepository,
@@ -44,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
     const repositories = await listRepositories(req.session!.userId);
     res.json({ repositories });
   } catch (error) {
-    console.error('Failed to list repositories:', error);
+    logError('Failed to list repositories', error);
     res.status(500).json({ error: 'Failed to list repositories' });
   }
 });
@@ -114,7 +115,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).json({ repository });
   } catch (error) {
-    console.error('Failed to connect repository:', error);
+    logError('Failed to connect repository', error);
     res.status(500).json({ error: 'Failed to connect repository' });
   }
 });
@@ -133,7 +134,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ repository });
   } catch (error) {
-    console.error('Failed to fetch repository:', error);
+    logError('Failed to fetch repository', error);
     res.status(500).json({ error: 'Failed to fetch repository' });
   }
 });
@@ -152,7 +153,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     res.status(204).end();
   } catch (error) {
-    console.error('Failed to disconnect repository:', error);
+    logError('Failed to disconnect repository', error);
     res.status(500).json({ error: 'Failed to disconnect repository' });
   }
 });

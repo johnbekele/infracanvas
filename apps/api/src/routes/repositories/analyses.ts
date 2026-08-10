@@ -13,6 +13,7 @@ import {
 import { analyzeRepository } from '../../lib/analysis/analyze.js';
 import { GitHubSourceError } from '../../lib/analysis/github-source.js';
 import { assertBranch, InvalidGitHubParamError } from '../../lib/github-params.js';
+import { logError } from '../../lib/log.js';
 
 // `mergeParams` so `:repositoryId` from the parent router is visible here.
 const router = Router({ mergeParams: true });
@@ -63,7 +64,7 @@ router.post('/', async (req: Request, res: Response) => {
       res.status(409).json({ error: error.message });
       return;
     }
-    console.error('Failed to start analysis:', error);
+    logError('Failed to start analysis', error);
     res.status(500).json({ error: 'Failed to start analysis' });
     return;
   }
@@ -84,7 +85,7 @@ router.post('/', async (req: Request, res: Response) => {
       error instanceof GitHubSourceError ? error.message : 'Analysis failed unexpectedly';
 
     if (!(error instanceof GitHubSourceError)) {
-      console.error('Analysis failed:', error);
+      logError('Analysis failed', error);
     }
 
     const failed = await failAnalysis(analysis.id, message);
@@ -106,7 +107,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({ analyses: await listAnalyses(repository.id) });
   } catch (error) {
-    console.error('Failed to list analyses:', error);
+    logError('Failed to list analyses', error);
     res.status(500).json({ error: 'Failed to list analyses' });
   }
 });
@@ -134,7 +135,7 @@ router.get('/:analysisId', async (req: Request, res: Response) => {
 
     res.json({ analysis });
   } catch (error) {
-    console.error('Failed to fetch analysis:', error);
+    logError('Failed to fetch analysis', error);
     res.status(500).json({ error: 'Failed to fetch analysis' });
   }
 });
