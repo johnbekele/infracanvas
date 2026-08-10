@@ -14,9 +14,19 @@ import { Layers, X, ArrowRight } from 'lucide-react';
 
 import { useDesignerStore, type ServiceNodeData } from '@/lib/stores/designer-store';
 import { type AWSService, canConnect } from '@infracanvas/core';
+import {
+  CONTAINER_DEFAULT_SIZE,
+  absolutePosition,
+  canNest,
+  containerAt,
+  grownSize,
+  positionWithin,
+  sizeOf,
+} from '@/lib/designer/containment';
 import { ServiceNode } from './ServiceNode';
 import { VpcEnvironmentNode } from './VpcEnvironmentNode';
 import { SubnetNode } from './SubnetNode';
+import { ClusterNode } from './ClusterNode';
 import { ServicePalette } from './ServicePalette';
 import { PropertiesPanel } from './PropertiesPanel';
 import { CodePanel } from './CodePanel';
@@ -28,6 +38,25 @@ const nodeTypes = {
   serviceNode: ServiceNode,
   vpcEnvironment: VpcEnvironmentNode,
   subnet: SubnetNode,
+  cluster: ClusterNode,
+};
+
+/** Which React Flow component draws a service. */
+function nodeTypeFor(serviceId: string): string {
+  if (serviceId === 'vpc-environment') return 'vpcEnvironment';
+  if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
+  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
+  return 'serviceNode';
+}
+
+/** Containers render behind their children, outermost furthest back. */
+const CONTAINER_Z: Record<string, number> = {
+  'vpc-environment': -4,
+  'availability-zone': -3,
+  'public-subnet': -2,
+  'private-subnet': -2,
+  'ecs-cluster': -1,
+  'eks-cluster': -1,
 };
 
 const edgeTypes = {
@@ -43,8 +72,17 @@ function DesignerCanvasInner() {
   const [isMobile, setIsMobile] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
 
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, selectNode } =
-    useDesignerStore();
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    addNode,
+    selectNode,
+    reparentNode,
+    resizeNode,
+  } = useDesignerStore();
 
   // Check for mobile screen size
   useEffect(() => {
@@ -69,106 +107,36 @@ function DesignerCanvasInner() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // Helper to determine node type based on service
-  const getNodeType = (service: AWSService): string => {
-    if (service.id === 'vpc-environment') return 'vpcEnvironment';
-    if (service.id === 'public-subnet' || service.id === 'private-subnet') return 'subnet';
-    return 'serviceNode';
-  };
+  /**
+   * Grow a container so a child that was just placed near its edge still fits.
+   *
+   * Without this a service dropped at the bottom of a VPC is clipped by
+   * `extent: 'parent'`, and the user has to resize the box by hand before the
+   * thing they dropped is visible.
+   */
+  const growAncestors = useCallback(
+    (parentId: string | undefined, current: Node<ServiceNodeData>[]) => {
+      let ancestorId = parentId;
 
-  // Helper to get absolute position of a node (accounting for parent nesting)
-  const getAbsolutePosition = useCallback(
-    (node: Node<ServiceNodeData>): { x: number; y: number } => {
-      let x = node.position.x;
-      let y = node.position.y;
+      while (ancestorId) {
+        const ancestor = current.find((node) => node.id === ancestorId);
+        if (!ancestor) break;
 
-      // If node has a parent, add parent's position recursively
-      if (node.parentNode) {
-        const parent = nodes.find((n) => n.id === node.parentNode);
-        if (parent) {
-          const parentPos = getAbsolutePosition(parent);
-          x += parentPos.x;
-          y += parentPos.y;
+        const children = current
+          .filter((node) => node.parentNode === ancestor.id)
+          .map((node) => ({ position: node.position, size: sizeOf(node) }));
+
+        const size = sizeOf(ancestor);
+        const grown = grownSize(size, children);
+        if (grown.width !== size.width || grown.height !== size.height) {
+          resizeNode(ancestor.id, grown);
         }
-      }
 
-      return { x, y };
+        ancestorId = ancestor.parentNode;
+      }
     },
-    [nodes]
+    [resizeNode]
   );
-
-  // Helper to find container node at drop position
-  const findContainerAtPosition = useCallback(
-    (flowPosition: { x: number; y: number }) => {
-      // Find container nodes (VPC or subnet) at the drop position
-      // Check from innermost (subnets) to outermost (VPCs)
-      const containerNodes = nodes.filter(
-        (n) => n.type === 'vpcEnvironment' || n.type === 'subnet'
-      );
-
-      // Sort by depth - subnets (nested) should be checked first
-      const sortedContainers = containerNodes.sort((a, b) => {
-        // Prioritize nodes with parents (nested deeper)
-        const aDepth = a.parentNode ? 1 : 0;
-        const bDepth = b.parentNode ? 1 : 0;
-        return bDepth - aDepth;
-      });
-
-      for (const container of sortedContainers) {
-        // Get the container's actual dimensions from style or defaults
-        const width =
-          (container.style?.width as number) ||
-          container.width ||
-          (container.type === 'vpcEnvironment' ? 500 : 220);
-        const height =
-          (container.style?.height as number) ||
-          container.height ||
-          (container.type === 'vpcEnvironment' ? 400 : 180);
-
-        // Get absolute position accounting for parent nesting
-        const absolutePos = getAbsolutePosition(container);
-
-        const bounds = {
-          left: absolutePos.x,
-          right: absolutePos.x + width,
-          top: absolutePos.y,
-          bottom: absolutePos.y + height,
-        };
-
-        if (
-          flowPosition.x >= bounds.left &&
-          flowPosition.x <= bounds.right &&
-          flowPosition.y >= bounds.top &&
-          flowPosition.y <= bounds.bottom
-        ) {
-          return container;
-        }
-      }
-      return null;
-    },
-    [nodes, getAbsolutePosition]
-  );
-
-  // Validate if service can be placed in container
-  const validatePlacement = (service: AWSService, container: (typeof nodes)[0] | null): boolean => {
-    // Subnets must go in VPC
-    if (service.parentRequired === 'vpc-environment') {
-      return container?.data.serviceId === 'vpc-environment';
-    }
-
-    // Check subnet placement rules
-    if (service.subnetPlacement && container) {
-      const containerServiceId = container.data.serviceId;
-      if (containerServiceId === 'public-subnet') {
-        return service.subnetPlacement.allowedInPublic;
-      }
-      if (containerServiceId === 'private-subnet') {
-        return service.subnetPlacement.allowedInPrivate;
-      }
-    }
-
-    return true;
-  };
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -179,83 +147,28 @@ function DesignerCanvasInner() {
 
       const service: AWSService = JSON.parse(data);
 
-      // Get position relative to the canvas
-      const flowPosition = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
+      const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const container = containerAt(flowPosition, nodes);
 
-      // Find container at drop position
-      const container = findContainerAtPosition(flowPosition);
+      // A rejected drop is silent on purpose: the palette item simply does not
+      // land, the same as dragging a file onto something that cannot accept it.
+      if (!canNest(service.id, container?.data.serviceId ?? null)) return;
 
-      // Validate placement
-      if (!validatePlacement(service, container)) {
-        // Show error or prevent drop
-        console.warn(`Cannot place ${service.name} in this container`, {
-          service: service.id,
-          container: container?.data?.serviceId,
-          subnetPlacement: service.subnetPlacement,
-        });
-        return;
-      }
+      const parentNode = container?.id;
+      const position = positionWithin(flowPosition, container, nodes);
 
-      // Debug: log successful placement
-      if (container) {
-        console.log(`Placing ${service.name} in ${container.data.serviceId}`, {
-          position: flowPosition,
-          containerId: container.id,
-        });
-      }
-
-      // Determine node type
-      const nodeType = getNodeType(service);
-
-      // Initialize properties with defaults
       const properties: Record<string, string | number | boolean> = {};
       service.properties.forEach((prop) => {
         properties[prop.name] = prop.default;
       });
 
-      // Calculate position relative to parent if nested
-      let position = flowPosition;
-      let parentNode: string | undefined;
-      let extent: 'parent' | undefined;
-
-      if (container) {
-        // Only set parent for appropriate nesting:
-        // - Subnets can be children of VPCs
-        // - Services can be children of Subnets
-        const isSubnetGoingIntoVpc =
-          (service.id === 'public-subnet' || service.id === 'private-subnet') &&
-          container.data.serviceId === 'vpc-environment';
-
-        const isServiceGoingIntoSubnet =
-          !service.isContainer &&
-          (container.data.serviceId === 'public-subnet' ||
-            container.data.serviceId === 'private-subnet');
-
-        if (isSubnetGoingIntoVpc || isServiceGoingIntoSubnet) {
-          parentNode = container.id;
-          extent = 'parent';
-          // Make position relative to parent's absolute position
-          const containerAbsPos = getAbsolutePosition(container);
-          position = {
-            x: flowPosition.x - containerAbsPos.x,
-            y: flowPosition.y - containerAbsPos.y,
-          };
-          // Add some padding from edges
-          position.x = Math.max(20, position.x);
-          position.y = Math.max(40, position.y); // Account for header
-        }
-      }
-
-      // Create the node
+      const nodeType = nodeTypeFor(service.id);
       const newNode: Parameters<typeof addNode>[0] = {
         id: getNodeId(),
         type: nodeType,
         position,
         parentNode,
-        extent,
+        extent: parentNode ? 'parent' : undefined,
         data: {
           serviceId: service.id,
           serviceName: service.name,
@@ -268,39 +181,51 @@ function DesignerCanvasInner() {
         },
       };
 
-      // Add default size and zIndex for container nodes
-      // zIndex: VPC = -2, Subnet = -1, Services = 0 (default)
-      if (nodeType === 'vpcEnvironment') {
-        const vpcNode = newNode as typeof newNode & {
-          style: Record<string, unknown>;
-          width: number;
-          height: number;
-          zIndex: number;
-        };
-        vpcNode.style = { width: 500, height: 400 };
-        vpcNode.width = 500;
-        vpcNode.height = 400;
-        vpcNode.zIndex = -2; // VPC at bottom layer
-      } else if (nodeType === 'subnet') {
-        const subnetNode = newNode as typeof newNode & {
-          style: Record<string, unknown>;
-          width: number;
-          height: number;
-          zIndex: number;
-        };
-        subnetNode.style = { width: 220, height: 180 };
-        subnetNode.width = 220;
-        subnetNode.height = 180;
-        subnetNode.zIndex = -1; // Subnet above VPC but below services
+      const defaultSize = CONTAINER_DEFAULT_SIZE[service.id];
+      if (defaultSize) {
+        Object.assign(newNode, {
+          style: { width: defaultSize.width, height: defaultSize.height },
+          width: defaultSize.width,
+          height: defaultSize.height,
+          zIndex: CONTAINER_Z[service.id] ?? -1,
+        });
       }
 
       addNode(newNode);
+      growAncestors(parentNode, [
+        ...nodes,
+        { ...newNode, data: newNode.data } as Node<ServiceNodeData>,
+      ]);
     },
-    // `validatePlacement` is intentionally omitted: it is recreated on every
-    // render and including it would rebuild this handler on each keystroke.
-    // Stabilising it is tracked separately as canvas work.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [screenToFlowPosition, addNode, findContainerAtPosition, getAbsolutePosition]
+    [screenToFlowPosition, addNode, nodes, growAncestors]
+  );
+
+  /**
+   * Reparent a node when it is dropped somewhere else.
+   *
+   * Nesting is not decoration: a service inside a private subnet generates
+   * different Terraform than the same service on open canvas. Until now the
+   * only way to set a parent was to drop from the palette, so an existing node
+   * could never be moved into a VPC.
+   */
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node<ServiceNodeData>) => {
+      const absolute = absolutePosition(node, nodes);
+      const container = containerAt(absolute, nodes, node.id);
+      const nextParent = container?.id ?? null;
+      const currentParent = node.parentNode ?? null;
+
+      if (nextParent === currentParent) {
+        growAncestors(node.parentNode, nodes);
+        return;
+      }
+
+      if (!canNest(node.data.serviceId, container?.data.serviceId ?? null)) return;
+
+      reparentNode(node.id, nextParent, positionWithin(absolute, container, nodes));
+      growAncestors(nextParent ?? undefined, nodes);
+    },
+    [nodes, reparentNode, growAncestors]
   );
 
   const onConnectValidate = useCallback(
@@ -310,47 +235,26 @@ function DesignerCanvasInner() {
       sourceHandle: string | null;
       targetHandle: string | null;
     }) => {
-      console.log('Connection attempt:', connection);
-
-      if (!connection.source || !connection.target) {
-        console.log('Rejected: missing source or target');
-        return false;
-      }
-
-      // Prevent self-connections
-      if (connection.source === connection.target) {
-        console.log('Rejected: self-connection');
-        return false;
-      }
+      if (!connection.source || !connection.target) return false;
+      if (connection.source === connection.target) return false;
 
       const sourceNode = nodes.find((n) => n.id === connection.source);
       const targetNode = nodes.find((n) => n.id === connection.target);
+      if (!sourceNode || !targetNode) return false;
 
-      if (!sourceNode || !targetNode) {
-        console.log('Rejected: node not found');
-        return false;
-      }
-
-      console.log('Connecting:', sourceNode.data.serviceId, '→', targetNode.data.serviceId);
-
-      // Check if connection already exists (in either direction)
-      const existingConnection = edges.find(
+      const alreadyConnected = edges.some(
         (e) =>
           (e.source === connection.source && e.target === connection.target) ||
           (e.source === connection.target && e.target === connection.source)
       );
-      if (existingConnection) {
-        console.log('Rejected: connection already exists');
-        return false;
-      }
+      if (alreadyConnected) return false;
 
-      // Check if services can connect (either direction is valid)
-      const canConnectForward = canConnect(sourceNode.data.serviceId, targetNode.data.serviceId);
-      const canConnectBackward = canConnect(targetNode.data.serviceId, sourceNode.data.serviceId);
-
-      console.log('canConnect:', { forward: canConnectForward, backward: canConnectBackward });
-
-      return canConnectForward || canConnectBackward;
+      // Either direction counts: the user drew a relationship, and which end
+      // they started from says nothing about which way traffic flows.
+      return (
+        canConnect(sourceNode.data.serviceId, targetNode.data.serviceId) ||
+        canConnect(targetNode.data.serviceId, sourceNode.data.serviceId)
+      );
     },
     [nodes, edges]
   );
@@ -430,6 +334,7 @@ function DesignerCanvasInner() {
             onConnect={handleConnect}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            onNodeDragStop={onNodeDragStop}
             onPaneClick={() => selectNode(null)}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}

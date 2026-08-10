@@ -1,4 +1,4 @@
-import { AlertCircle, Box, FileCode, Layers, Package } from 'lucide-react';
+import { AlertCircle, Box, Container, FileCode, Layers, Package } from 'lucide-react';
 import type { AppProfile } from '@infracanvas/core';
 
 interface ProfileSummaryProps {
@@ -10,6 +10,18 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+const KIND_LABELS: Record<string, string> = {
+  api: 'API',
+  worker: 'Worker',
+  frontend: 'Frontend',
+  'ml-service': 'ML service',
+  cron: 'Scheduled job',
+  library: 'Library',
+  test: 'Tests',
+  example: 'Example',
+  unknown: 'Unclassified',
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   'web-framework': 'Web',
@@ -46,6 +58,8 @@ function Section({
 
 export function ProfileSummary({ profile }: ProfileSummaryProps) {
   const topLanguages = profile.languages.slice(0, 6);
+  const deployable = profile.components.filter((component) => component.deployable);
+  const supporting = profile.components.filter((component) => !component.deployable);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -75,20 +89,68 @@ export function ProfileSummary({ profile }: ProfileSummaryProps) {
         </p>
       </Section>
 
-      <Section icon={<Layers className="h-4 w-4 text-violet-500" />} title="Components">
+      <Section
+        icon={<Layers className="h-4 w-4 text-violet-500" />}
+        title={`Components (${deployable.length} deployable of ${profile.components.length})`}
+      >
         {profile.components.length === 0 ? (
           <p className="text-sm text-gray-500">No dependency manifests were found.</p>
         ) : (
           <ul className="space-y-2">
-            {profile.components.map((component) => (
-              <li key={component.manifestPath} className="text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">{component.name}</span>
-                <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                  {component.ecosystem}
-                </span>
-                <p className="text-xs text-gray-500">
-                  {component.manifestPath} · {component.dependencyCount} dependencies
+            {/* Deployables first: they are what becomes infrastructure. */}
+            {[...deployable, ...supporting].map((component) => (
+              <li key={component.path || component.name} className="text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {component.name}
+                  </span>
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-xs ${
+                      component.deployable
+                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}
+                  >
+                    {KIND_LABELS[component.kind] ?? component.kind}
+                  </span>
+                  {component.exposedPorts.map((port) => (
+                    <span key={port} className="font-mono text-[11px] text-gray-500">
+                      :{port}
+                    </span>
+                  ))}
+                </div>
+                <p className="font-mono text-[11px] text-gray-400">
+                  {component.path || 'repository root'} · {component.ecosystems.join(', ')} ·{' '}
+                  {component.dependencyCount} dependencies
                 </p>
+                {component.capabilities.length > 0 && (
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {component.capabilities.join(' · ')}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section icon={<Container className="h-4 w-4 text-violet-500" />} title="Compose topology">
+        {profile.composeServices.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No compose file was found, so service wiring is inferred from dependencies alone.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {profile.composeServices.map((service) => (
+              <li key={`${service.file}:${service.name}`} className="text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">{service.name}</span>
+                <span className="ml-2 text-xs text-gray-500">
+                  {/* An image means managed infrastructure; a build context means our code. */}
+                  {service.image ?? service.buildContext ?? 'no image or build'}
+                </span>
+                {service.dependsOn.length > 0 && (
+                  <p className="text-xs text-gray-500">depends on {service.dependsOn.join(', ')}</p>
+                )}
               </li>
             ))}
           </ul>

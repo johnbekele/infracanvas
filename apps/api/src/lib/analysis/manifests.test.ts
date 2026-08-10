@@ -139,7 +139,7 @@ criterion = "0.5"
     const content = '[workspace]\nmembers = ["crates/*"]\n';
     const manifest = parseManifest('Cargo.toml', content, 'infracanvas');
 
-    expect(manifest?.kind).toBe('library');
+    expect(manifest?.libraryHint).toBe(true);
     expect(manifest?.name).toBe('infracanvas');
   });
 });

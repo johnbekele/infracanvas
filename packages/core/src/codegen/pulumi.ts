@@ -1,6 +1,8 @@
 // Pulumi Code Generator for InfraCanvas
 
 import type { ServiceNodeData, PulumiLanguage } from '../types';
+import { emitPulumi, type ParentContext } from './emit';
+import { containersFirst, parentLinks, placementOf } from './hierarchy';
 
 export interface PulumiFile {
   path: string;
@@ -30,6 +32,56 @@ function sanitizeName(name: string): string {
 
 function toCamelCase(str: string): string {
   return str.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+}
+
+/**
+ * A distinct variable per node.
+ *
+ * Names came from `serviceName`, which every node of the same service shares,
+ * so two ECS services produced two `const ecsService = ...` declarations in one
+ * file. Pulumi never got as far as rejecting it; the TypeScript did.
+ */
+function variableNames(nodes: Node<ServiceNodeData>[], camel: boolean): Map<string, string> {
+  const used = new Map<string, number>();
+  const names = new Map<string, string>();
+
+  for (const node of nodes) {
+    const base = sanitizeName(node.data.serviceName) || sanitizeName(node.data.serviceId);
+    const seen = used.get(base) ?? 0;
+    used.set(base, seen + 1);
+    const unique = seen === 0 ? base : `${base}_${seen + 1}`;
+    names.set(node.id, camel ? toCamelCase(unique) : unique);
+  }
+
+  return names;
+}
+
+/**
+ * The container a node takes arguments from, if the catalog says it takes any.
+ *
+ * Only the container matching a declared link is returned, so a service sitting
+ * in a subnet inside a VPC picks up the subnet when that is what it asked for.
+ */
+function parentContextFor(
+  node: Node<ServiceNodeData>,
+  nodes: Node<ServiceNodeData>[],
+  names: Map<string, string>
+): ParentContext | undefined {
+  const links = parentLinks(node.data.serviceId);
+  if (links.length === 0) return undefined;
+
+  const placement = placementOf(node, nodes);
+
+  for (const link of links) {
+    const containerId = placement[link.from];
+    const container = containerId && nodes.find((candidate) => candidate.id === containerId);
+    const resourceName = containerId && names.get(containerId);
+    if (!container || !resourceName) continue;
+
+    return { serviceId: container.data.serviceId, resourceName };
+  }
+
+  return undefined;
 }
 
 export function generatePulumiProject(
@@ -99,21 +151,29 @@ const tags = {
 
 `;
 
-  nodes.forEach((node) => {
-    const varName = toCamelCase(sanitizeName(node.data.serviceName));
-    content += generateTypeScriptResource(node, varName);
+  const names = variableNames(nodes, true);
+
+  // Containers first: a subnet referenced before it is declared is a runtime
+  // error in TypeScript, not merely untidy.
+  containersFirst(nodes).forEach((node) => {
+    const varName = names.get(node.id) as string;
+    content += generateTypeScriptResource(node, varName, parentContextFor(node, nodes, names));
   });
 
   content += `\n// Exports\n`;
   nodes.forEach((node) => {
-    const varName = toCamelCase(sanitizeName(node.data.serviceName));
+    const varName = names.get(node.id) as string;
     content += `export const ${varName}Id = ${varName}.id;\n`;
   });
 
   return content;
 }
 
-function generateTypeScriptResource(node: Node<ServiceNodeData>, varName: string): string {
+function generateTypeScriptResource(
+  node: Node<ServiceNodeData>,
+  varName: string,
+  parent?: ParentContext
+): string {
   const serviceId = node.data.serviceId;
   const props = node.data.properties;
 
@@ -339,7 +399,14 @@ const ${varName} = new aws.cloudfront.Distribution("${varName}", {
 `;
 
     default:
-      return `// TODO: Add ${serviceId} resource\n`;
+      // Emitted from the catalog entry rather than skipped. A design holding a
+      // service this switch predates used to export a comment where the
+      // resource should have been.
+      return `\n// ${node.data.serviceName}\n${emitPulumi(
+        { id: node.id, serviceId, properties: props, name: varName },
+        'typescript',
+        { parent }
+      )}`;
   }
 }
 
@@ -360,21 +427,27 @@ tags = {
 
 `;
 
-  nodes.forEach((node) => {
-    const varName = sanitizeName(node.data.serviceName);
-    content += generatePythonResource(node, varName);
+  const names = variableNames(nodes, false);
+
+  containersFirst(nodes).forEach((node) => {
+    const varName = names.get(node.id) as string;
+    content += generatePythonResource(node, varName, parentContextFor(node, nodes, names));
   });
 
   content += `\n# Exports\n`;
   nodes.forEach((node) => {
-    const varName = sanitizeName(node.data.serviceName);
+    const varName = names.get(node.id) as string;
     content += `pulumi.export("${varName}_id", ${varName}.id)\n`;
   });
 
   return content;
 }
 
-function generatePythonResource(node: Node<ServiceNodeData>, varName: string): string {
+function generatePythonResource(
+  node: Node<ServiceNodeData>,
+  varName: string,
+  parent?: ParentContext
+): string {
   const serviceId = node.data.serviceId;
   const props = node.data.properties;
 
@@ -497,7 +570,11 @@ ${varName} = aws.sns.Topic("${varName}",
 `;
 
     default:
-      return `# TODO: Add ${serviceId} resource\n`;
+      return `\n# ${node.data.serviceName}\n${emitPulumi(
+        { id: node.id, serviceId, properties: props, name: varName },
+        'python',
+        { parent }
+      )}`;
   }
 }
 

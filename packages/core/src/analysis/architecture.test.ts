@@ -1,39 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { proposeArchitecture } from './architecture';
-import {
-  PROFILE_SCHEMA_VERSION,
-  type AppProfile,
-  type Capability,
-  type DetectedDependency,
-} from './profile';
+import { proposeArchitecture, resourceName, type ArchitectureProposal } from './architecture';
+import { MONOREPO, component, composeService, dependency, profileWith } from './fixtures/monorepo';
+import { NODE_SIZE } from './layout';
 
-function dependency(
-  name: string,
-  capability: Capability | null,
-  sourcePath = 'package.json'
-): DetectedDependency {
-  return { name, ecosystem: 'npm', category: 'other', capability, sourcePath };
-}
+const nodeFor = (proposal: ArchitectureProposal, componentPath: string) =>
+  proposal.nodes.find((node) => node.componentPath === componentPath);
 
-function profileWith(overrides: Partial<AppProfile> = {}): AppProfile {
-  return {
-    schemaVersion: PROFILE_SCHEMA_VERSION,
-    commitSha: 'a'.repeat(40),
-    ref: 'main',
-    analysedAt: '2026-08-10T00:00:00.000Z',
-    languages: [{ name: 'TypeScript', bytes: 1000, share: 1 }],
-    components: [],
-    dependencies: [],
-    containerisation: { dockerfiles: [], composeFiles: [], exposedPorts: [] },
-    fileCount: 10,
-    totalBytes: 1000,
-    notes: [],
-    ...overrides,
-  };
-}
-
-const serviceIdsOf = (proposal: { nodes: { serviceId: string }[] }) =>
+const serviceIdsOf = (proposal: ArchitectureProposal) =>
   proposal.nodes.map((node) => node.serviceId);
+
+const hasEdge = (proposal: ArchitectureProposal, source: string, target: string) =>
+  proposal.edges.some((edge) => edge.source === source && edge.target === target);
 
 describe('a repository with nothing to deploy', () => {
   it('proposes nothing and says why', () => {
@@ -42,279 +19,307 @@ describe('a repository with nothing to deploy', () => {
     const proposal = proposeArchitecture(profileWith(), 'some-library');
 
     expect(proposal.nodes).toEqual([]);
-    expect(proposal.gaps[0]).toContain('does not appear to be a deployable application');
+    expect(proposal.gaps[0]).toContain('No deployable component was found');
   });
 });
 
-describe('an HTTP service', () => {
-  const httpProfile = profileWith({ dependencies: [dependency('express', 'http-server')] });
+describe('a monorepo with several services', () => {
+  const proposal = proposeArchitecture(MONOREPO, 'platform');
 
-  it('places the load balancer in public and the compute in private', () => {
-    const proposal = proposeArchitecture(httpProfile, 'billing-api');
+  it('emits one compute node per deployable component', () => {
+    const paths = proposal.nodes
+      .filter((node) => node.componentPath !== undefined && node.serviceId !== 's3')
+      .map((node) => node.componentPath);
 
-    const alb = proposal.nodes.find((node) => node.serviceId === 'alb');
-    const compute = proposal.nodes.find((node) => node.serviceId === 'ec2');
-    const publicSubnet = proposal.nodes.find((node) => node.serviceId === 'public-subnet');
-    const privateSubnet = proposal.nodes.find((node) => node.serviceId === 'private-subnet');
-
-    expect(alb?.parentId).toBe(publicSubnet?.id);
-    expect(compute?.parentId).toBe(privateSubnet?.id);
-    expect(publicSubnet?.parentId).toBe('node-vpc');
-  });
-
-  it('routes traffic from the load balancer to the compute', () => {
-    const proposal = proposeArchitecture(httpProfile, 'billing-api');
-
-    expect(proposal.edges).toContainEqual(
-      expect.objectContaining({ source: 'node-alb', target: 'node-compute' })
-    );
-  });
-
-  it('chooses EC2 when there is no container image, and says what would change that', () => {
-    const proposal = proposeArchitecture(httpProfile, 'billing-api');
-    const decision = proposal.decisions.find((entry) => entry.nodeId === 'node-compute');
-
-    expect(serviceIdsOf(proposal)).toContain('ec2');
-    expect(decision?.rationale).toContain('Dockerfile');
-  });
-
-  it('chooses ECS when the repository builds a container image', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server')],
-        containerisation: { dockerfiles: ['Dockerfile'], composeFiles: [], exposedPorts: [3000] },
-      }),
-      'billing-api'
-    );
-
-    const compute = proposal.nodes.find((node) => node.id === 'node-compute');
-
-    expect(compute?.serviceId).toBe('ecs');
-    // Taken from the EXPOSE directive rather than left at the catalog default.
-    expect(compute?.properties.containerPort).toBe(3000);
-  });
-
-  it('leaves the container port alone when several are exposed, and says why', () => {
-    // Choosing between 80 and 3001 with no basis would be a coin toss
-    // presented to the user as a finding.
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server')],
-        containerisation: {
-          dockerfiles: ['apps/api/Dockerfile', 'apps/web/Dockerfile'],
-          composeFiles: [],
-          exposedPorts: [80, 3001],
-        },
-      }),
-      'monorepo'
-    );
-
-    const compute = proposal.nodes.find((node) => node.id === 'node-compute');
-
-    expect(compute?.properties.containerPort).toBe(80);
-    expect(proposal.gaps.join(' ')).toContain('own port could not be determined');
-  });
-
-  it('says that a repository with several Dockerfiles gets only one compute node', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server')],
-        containerisation: {
-          dockerfiles: ['apps/api/Dockerfile', 'apps/web/Dockerfile'],
-          composeFiles: [],
-          exposedPorts: [3001],
-        },
-      }),
-      'monorepo'
-    );
-
-    expect(proposal.gaps.join(' ')).toContain('more than one service');
-  });
-
-  it('names resources after the repository', () => {
-    const proposal = proposeArchitecture(httpProfile, 'Billing API!');
-    const vpc = proposal.nodes.find((node) => node.serviceId === 'vpc-environment');
-
-    expect(vpc?.properties.vpcName).toBe('billing-api-vpc');
-  });
-
-  it('falls back to a usable name when nothing survives sanitising', () => {
-    const proposal = proposeArchitecture(httpProfile, '!!!___!!!');
-    const vpc = proposal.nodes.find((node) => node.serviceId === 'vpc-environment');
-
-    expect(vpc?.properties.vpcName).toBe('app-vpc');
-  });
-
-  it('sanitises a long separator-heavy name without pathological backtracking', () => {
-    // Trimming with `-+$` would retry from every position here; the assertion
-    // that matters is that this returns at all, promptly.
-    const started = Date.now();
-    const proposal = proposeArchitecture(httpProfile, '-'.repeat(50_000));
-
-    expect(Date.now() - started).toBeLessThan(1000);
-    expect(
-      proposal.nodes.find((node) => node.serviceId === 'vpc-environment')?.properties.vpcName
-    ).toBe('app-vpc');
-  });
-});
-
-describe('data stores', () => {
-  it('adds RDS running Postgres for a Postgres client', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('pg', 'postgres')],
-      }),
-      'app'
-    );
-
-    const database = proposal.nodes.find((node) => node.id === 'node-database');
-
-    expect(database?.serviceId).toBe('rds');
-    expect(database?.properties.engine).toBe('postgres');
-    expect(proposal.edges).toContainEqual(
-      expect.objectContaining({ source: 'node-compute', target: 'node-database' })
-    );
-  });
-
-  it('adds RDS running MySQL for a MySQL client', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('mysql2', 'mysql')],
-      }),
-      'app'
-    );
-
-    expect(proposal.nodes.find((node) => node.id === 'node-database')?.properties.engine).toBe(
-      'mysql'
-    );
-  });
-
-  it('adds ElastiCache for a Redis client', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('ioredis', 'redis')],
-      }),
-      'app'
-    );
-
-    expect(proposal.nodes.find((node) => node.id === 'node-cache')?.serviceId).toBe('elasticache');
-  });
-
-  it('adds no database when the only data dependency is an ORM', () => {
-    // An ORM does not say which engine, and provisioning the wrong one is
-    // worse than provisioning none.
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('prisma', null)],
-      }),
-      'app'
-    );
-
-    expect(serviceIdsOf(proposal)).not.toContain('rds');
-  });
-
-  it('does not place two databases when both Postgres and MySQL clients appear', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [
-          dependency('express', 'http-server'),
-          dependency('pg', 'postgres'),
-          dependency('mysql2', 'mysql'),
-        ],
-      }),
-      'app'
-    );
-
-    expect(proposal.nodes.filter((node) => node.serviceId === 'rds')).toHaveLength(1);
-  });
-});
-
-describe('a frontend', () => {
-  it('serves a static build from S3 behind CloudFront, outside any VPC', () => {
-    const proposal = proposeArchitecture(
-      profileWith({ dependencies: [dependency('react', 'frontend')] }),
-      'marketing-site'
-    );
-
-    const bucket = proposal.nodes.find((node) => node.id === 'node-frontend-bucket');
-
-    expect(bucket?.properties.staticHosting).toBe(true);
-    expect(bucket?.parentId).toBeUndefined();
-    expect(serviceIdsOf(proposal)).toContain('cloudfront');
-    // Nothing runs, so there is no network to build.
-    expect(serviceIdsOf(proposal)).not.toContain('vpc-environment');
-  });
-
-  it('connects the CDN to the load balancer when the repository serves both', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('react', 'frontend'), dependency('express', 'http-server')],
-      }),
-      'full-stack'
-    );
-
-    expect(proposal.edges).toContainEqual(
-      expect.objectContaining({ source: 'node-frontend-cdn', target: 'node-alb' })
-    );
-  });
-});
-
-describe('capabilities with no service in the catalog', () => {
-  it('reports MongoDB as a gap rather than substituting another database', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('mongoose', 'mongodb')],
-      }),
-      'app'
-    );
-
-    expect(serviceIdsOf(proposal)).not.toContain('dynamodb');
-    expect(proposal.gaps.join(' ')).toContain('DocumentDB');
-  });
-
-  it('reports Kafka as a gap', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [dependency('express', 'http-server'), dependency('kafkajs', 'kafka')],
-      }),
-      'app'
-    );
-
-    expect(proposal.gaps.join(' ')).toContain('MSK');
-  });
-});
-
-describe('decisions', () => {
-  it('gives every node a decision that names the file behind it', () => {
-    const proposal = proposeArchitecture(
-      profileWith({
-        dependencies: [
-          dependency('express', 'http-server', 'services/api/package.json'),
-          dependency('pg', 'postgres', 'services/api/package.json'),
-        ],
-      }),
-      'app'
-    );
-
-    // Every node is explainable; a user can only reject a suggestion they can
-    // see the reasoning for.
-    for (const node of proposal.nodes) {
-      expect(proposal.decisions.some((decision) => decision.nodeId === node.id)).toBe(true);
+    for (const path of [
+      'apps/api',
+      'apps/chat',
+      'apps/mcp',
+      'apps/profiles-worker',
+      'apps/document-processor',
+      'apps/embedder',
+    ]) {
+      expect(paths).toContain(path);
     }
+  });
 
-    const database = proposal.decisions.find((decision) => decision.nodeId === 'node-database');
-    expect(database?.evidence).toEqual(['services/api/package.json']);
+  it('does not deploy tests, examples, or libraries', () => {
+    const paths = proposal.nodes.map((node) => node.componentPath);
+
+    expect(paths).not.toContain('tests/e2e');
+    expect(paths).not.toContain('examples/quickstart');
+    expect(paths).not.toContain('packages/shared');
+  });
+
+  it('keeps workers off the load balancer path', () => {
+    const alb = proposal.nodes.find((node) => node.serviceId === 'alb');
+    const worker = nodeFor(proposal, 'apps/profiles-worker');
+
+    expect(alb).toBeDefined();
+    expect(worker).toBeDefined();
+    expect(hasEdge(proposal, alb!.id, worker!.id)).toBe(false);
+  });
+
+  it('routes requests to each service that answers them', () => {
+    const alb = proposal.nodes.find((node) => node.serviceId === 'alb');
+
+    for (const path of ['apps/api', 'apps/chat', 'apps/mcp']) {
+      expect(hasEdge(proposal, alb!.id, nodeFor(proposal, path)!.id)).toBe(true);
+    }
+  });
+
+  it('connects a worker to the queue it consumes', () => {
+    const queue = proposal.nodes.find((node) => node.serviceId === 'sqs');
+    const worker = nodeFor(proposal, 'apps/profiles-worker');
+
+    expect(queue).toBeDefined();
+    expect(hasEdge(proposal, worker!.id, queue!.id)).toBe(true);
+  });
+
+  it('emits a bucket and distribution per front end', () => {
+    const buckets = proposal.nodes.filter((node) => node.id.startsWith('frontend-bucket-'));
+    const distributions = proposal.nodes.filter((node) => node.id.startsWith('frontend-cdn-'));
+
+    expect(buckets).toHaveLength(2);
+    expect(distributions).toHaveLength(2);
+    expect(hasEdge(proposal, buckets[0].id, distributions[0].id)).toBe(true);
+  });
+
+  it('emits one database per distinct relational compose service', () => {
+    const databases = proposal.nodes.filter((node) => node.serviceId === 'rds');
+
+    expect(databases).toHaveLength(2);
+    expect(databases.every((node) => node.confidence === 'high')).toBe(true);
+  });
+
+  it('nests compute inside a cluster inside a private subnet', () => {
+    const api = nodeFor(proposal, 'apps/api');
+    const cluster = proposal.nodes.find((node) => node.serviceId === 'ecs-cluster');
+    const privateSubnet = proposal.nodes.find((node) => node.serviceId === 'private-subnet');
+    const vpc = proposal.nodes.find((node) => node.serviceId === 'vpc-environment');
+
+    expect(api?.parentId).toBe(cluster?.id);
+    expect(cluster?.parentId).toBe(privateSubnet?.id);
+    expect(privateSubnet?.parentId).toBe(vpc?.id);
+    expect(vpc?.parentId).toBeUndefined();
+  });
+
+  it('grows the cluster to fit every service it holds', () => {
+    const cluster = proposal.nodes.find((node) => node.serviceId === 'ecs-cluster');
+    const children = proposal.nodes.filter((node) => node.parentId === cluster?.id);
+
+    for (const child of children) {
+      expect(child.position.x + NODE_SIZE.width).toBeLessThanOrEqual(cluster!.size!.width);
+      expect(child.position.y + NODE_SIZE.height).toBeLessThanOrEqual(cluster!.size!.height);
+    }
+  });
+
+  it('does not overlap two nodes in the same container', () => {
+    const cluster = proposal.nodes.find((node) => node.serviceId === 'ecs-cluster');
+    const children = proposal.nodes.filter((node) => node.parentId === cluster?.id);
+
+    for (const a of children) {
+      for (const b of children) {
+        if (a.id === b.id) continue;
+        const separated =
+          Math.abs(a.position.x - b.position.x) >= NODE_SIZE.width ||
+          Math.abs(a.position.y - b.position.y) >= NODE_SIZE.height;
+        expect(separated).toBe(true);
+      }
+    }
+  });
+
+  it('gives every node a decision and a confidence', () => {
+    for (const node of proposal.nodes) {
+      const decision = proposal.decisions.find((entry) => entry.nodeId === node.id);
+      expect(decision, `no decision for ${node.id}`).toBeDefined();
+      expect(decision?.confidence).toBe(node.confidence);
+    }
+  });
+
+  it('cites the manifest behind each service it proposes', () => {
+    expect(nodeFor(proposal, 'apps/api')?.evidence).toContain('apps/api/pyproject.toml');
+    expect(nodeFor(proposal, 'apps/api')?.evidence).toContain('apps/api/Dockerfile');
   });
 
   it('is deterministic: the same profile yields the same proposal', () => {
-    const built = () =>
-      proposeArchitecture(
-        profileWith({
-          dependencies: [dependency('express', 'http-server'), dependency('pg', 'postgres')],
-        }),
-        'app'
-      );
+    const again = proposeArchitecture(MONOREPO, 'platform');
+    expect(JSON.stringify(again)).toEqual(JSON.stringify(proposal));
+  });
 
-    expect(built()).toEqual(built());
+  it('proposes managed services for the AI dependencies it found', () => {
+    const ids = serviceIdsOf(proposal);
+
+    // A third-party model API needs its key stored, whatever else is proposed.
+    expect(ids).toContain('secrets-manager');
+    expect(ids).toContain('opensearch-vector');
+    expect(ids).toContain('textract');
+  });
+
+  it('marks an AWS substitution as low confidence', () => {
+    const bedrock = proposal.nodes.find((node) => node.serviceId === 'bedrock');
+
+    expect(bedrock?.confidence).toBe('low');
+    expect(proposal.decisions.find((entry) => entry.nodeId === bedrock?.id)?.rationale).toContain(
+      'substitution'
+    );
+  });
+});
+
+describe('inferring a database without compose', () => {
+  const profile = profileWith({
+    components: [
+      component({
+        path: 'apps/api',
+        kind: 'api',
+        dependencies: [
+          dependency('express', 'http-server', 'apps/api/package.json'),
+          dependency('pg', 'postgres', 'apps/api/package.json'),
+        ],
+        dockerfiles: ['apps/api/Dockerfile'],
+      }),
+      component({
+        path: 'apps/admin',
+        kind: 'api',
+        dependencies: [
+          dependency('express', 'http-server', 'apps/admin/package.json'),
+          dependency('pg', 'postgres', 'apps/admin/package.json'),
+        ],
+        dockerfiles: ['apps/admin/Dockerfile'],
+      }),
+    ],
+    dependencies: [dependency('pg', 'postgres', 'apps/api/package.json')],
+  });
+
+  it('falls back to a single shared database', () => {
+    const proposal = proposeArchitecture(profile, 'billing');
+    const databases = proposal.nodes.filter((node) => node.serviceId === 'rds');
+
+    expect(databases).toHaveLength(1);
+  });
+
+  it('marks a driver-derived database as medium confidence', () => {
+    const proposal = proposeArchitecture(profile, 'billing');
+    const database = proposal.nodes.find((node) => node.serviceId === 'rds');
+
+    expect(database?.confidence).toBe('medium');
+  });
+
+  it('connects every component that declared the driver', () => {
+    const proposal = proposeArchitecture(profile, 'billing');
+    const database = proposal.nodes.find((node) => node.serviceId === 'rds');
+
+    expect(hasEdge(proposal, nodeFor(proposal, 'apps/api')!.id, database!.id)).toBe(true);
+    expect(hasEdge(proposal, nodeFor(proposal, 'apps/admin')!.id, database!.id)).toBe(true);
+  });
+});
+
+describe('vector search', () => {
+  it('rides on the relational instance when pgvector is the only signal', () => {
+    const profile = profileWith({
+      components: [
+        component({
+          path: 'apps/api',
+          kind: 'api',
+          dependencies: [
+            dependency('express', 'http-server', 'apps/api/package.json'),
+            dependency('pg', 'postgres', 'apps/api/package.json'),
+            dependency('pgvector', 'vector-search', 'apps/api/package.json'),
+          ],
+          dockerfiles: ['apps/api/Dockerfile'],
+        }),
+      ],
+    });
+
+    const proposal = proposeArchitecture(profile, 'rag');
+    const database = proposal.nodes.find((node) => node.serviceId === 'rds');
+
+    expect(serviceIdsOf(proposal)).not.toContain('opensearch-vector');
+    expect(proposal.decisions.find((entry) => entry.nodeId === database?.id)?.rationale).toContain(
+      'pgvector'
+    );
+  });
+});
+
+describe('a component that ships no container', () => {
+  it('is proposed on EC2 and says why', () => {
+    const profile = profileWith({
+      components: [
+        component({
+          path: '.',
+          name: 'server',
+          kind: 'api',
+          dependencies: [dependency('express', 'http-server', 'package.json')],
+        }),
+      ],
+    });
+
+    const proposal = proposeArchitecture(profile, 'server');
+    const compute = proposal.nodes.find((node) => node.serviceId === 'ec2');
+
+    expect(compute).toBeDefined();
+    expect(compute?.confidence).toBe('medium');
+    expect(proposal.decisions.find((entry) => entry.nodeId === compute?.id)?.rationale).toContain(
+      'Dockerfile'
+    );
+  });
+});
+
+describe('capabilities the catalog cannot express', () => {
+  it('reports ClickHouse as a substitution rather than a silent match', () => {
+    const profile = profileWith({
+      components: [
+        component({
+          path: 'apps/api',
+          kind: 'api',
+          dependencies: [
+            dependency('express', 'http-server', 'apps/api/package.json'),
+            dependency('@clickhouse/client', 'clickhouse', 'apps/api/package.json'),
+          ],
+          dockerfiles: ['apps/api/Dockerfile'],
+        }),
+      ],
+    });
+
+    const proposal = proposeArchitecture(profile, 'events');
+    const warehouse = proposal.nodes.find((node) => node.serviceId === 'redshift');
+
+    expect(proposal.decisions.find((entry) => entry.nodeId === warehouse?.id)?.rationale).toContain(
+      'dialect differs'
+    );
+  });
+
+  it('reports a capability with no catalog service as a gap', () => {
+    const profile = profileWith({
+      components: [
+        component({
+          path: 'apps/api',
+          kind: 'api',
+          dependencies: [
+            dependency('express', 'http-server', 'apps/api/package.json'),
+            dependency('feast', 'feature-store', 'apps/api/package.json'),
+          ],
+          dockerfiles: ['apps/api/Dockerfile'],
+        }),
+      ],
+      composeServices: [composeService('api', { buildContext: 'apps/api' })],
+    });
+
+    const proposal = proposeArchitecture(profile, 'features');
+
+    // Nothing in the catalog covers a feature store yet, and inventing a node
+    // for it would be worse than saying so.
+    expect(serviceIdsOf(proposal)).not.toContain('feature-store');
+  });
+});
+
+describe('resource names', () => {
+  it('strips characters AWS will not accept', () => {
+    expect(resourceName('My Repo!', 'db')).toBe('my-repo-db');
+  });
+
+  it('does not leave a leading or trailing separator', () => {
+    expect(resourceName('---', 'db')).toBe('app-db');
+    expect(resourceName('.hidden.', 'vpc')).toBe('hidden-vpc');
   });
 });

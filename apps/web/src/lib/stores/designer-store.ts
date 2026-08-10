@@ -10,17 +10,12 @@ import {
   type NodeChange,
   type EdgeChange,
 } from 'reactflow';
+import type { ServiceNodeData } from '@infracanvas/core';
 
-export interface ServiceNodeData {
-  serviceId: string;
-  serviceName: string;
-  shortName: string;
-  color: string;
-  category: string;
-  properties: Record<string, string | number | boolean>;
-  nodeType?: 'service' | 'vpc-environment' | 'public-subnet' | 'private-subnet';
-  parentId?: string;
-}
+// Re-exported rather than redeclared: the canvas and the code generators have
+// to agree on this shape, and two copies of it drifted the moment a container
+// type was added on one side only.
+export type { ContainerNodeType, ServiceNodeData } from '@infracanvas/core';
 
 export interface SubnetHierarchy {
   subnetNode: Node<ServiceNodeData>;
@@ -79,6 +74,13 @@ export interface DesignerState {
 
   // Nesting actions for VPC environments
   setNodeParent: (nodeId: string, parentId: string | null) => void;
+  /** Move a node into or out of a container, keeping it where the user left it. */
+  reparentNode: (
+    nodeId: string,
+    parentId: string | null,
+    position: { x: number; y: number }
+  ) => void;
+  resizeNode: (nodeId: string, size: { width: number; height: number }) => void;
   getChildNodes: (parentId: string) => Node<ServiceNodeData>[];
   getVpcHierarchy: () => VpcHierarchy[];
   removeNodeWithChildren: (nodeId: string) => void;
@@ -244,6 +246,42 @@ export const useDesignerStore = create<DesignerState>()(
                     ...node.data,
                     parentId: parentId || undefined,
                   },
+                }
+              : node
+          ),
+          isDirty: true,
+        });
+      },
+
+      reparentNode: (nodeId, parentId, position) => {
+        set({
+          nodes: get().nodes.map((node) =>
+            node.id === nodeId
+              ? {
+                  ...node,
+                  position,
+                  parentNode: parentId ?? undefined,
+                  // `extent: 'parent'` keeps a child from being dragged outside
+                  // the box it belongs to, which would leave the picture saying
+                  // something the generated code does not.
+                  extent: parentId ? ('parent' as const) : undefined,
+                  data: { ...node.data, parentId: parentId ?? undefined },
+                }
+              : node
+          ),
+          isDirty: true,
+        });
+      },
+
+      resizeNode: (nodeId, size) => {
+        set({
+          nodes: get().nodes.map((node) =>
+            node.id === nodeId
+              ? {
+                  ...node,
+                  width: size.width,
+                  height: size.height,
+                  style: { ...node.style, width: size.width, height: size.height },
                 }
               : node
           ),

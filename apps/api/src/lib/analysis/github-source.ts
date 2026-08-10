@@ -15,9 +15,14 @@ const GITHUB_API = 'https://api.github.com';
 export const LIMITS = {
   /** A manifest larger than this is not a manifest anyone wrote by hand. */
   maxManifestBytes: 512 * 1024,
-  /** Enough for a large monorepo; beyond it the extra components add nothing. */
-  maxManifests: 40,
-  maxDockerfiles: 20,
+  /**
+   * Enough for a large monorepo. The previous cap of 40 was reached by real
+   * repositories, and a component dropped by the cap is invisible rather than
+   * approximate: nothing is proposed for it at all.
+   */
+  maxManifests: 120,
+  maxDockerfiles: 40,
+  maxComposeFiles: 10,
 } as const;
 
 export class GitHubSourceError extends Error {
