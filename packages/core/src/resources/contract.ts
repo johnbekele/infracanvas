@@ -21,6 +21,10 @@ export interface UsageAssumptions {
   requestsPerMonth: number;
   averageRequestKb: number;
   storageGb: number;
+  /** Data leaving AWS for the public internet, which several services bill for and one meters. */
+  internetEgressGb: number;
+  /** Instances, tasks or replicas, where the resource does not state a count of its own. */
+  instanceCount: number;
   region: string;
 }
 
@@ -32,6 +36,8 @@ export const DEFAULT_USAGE: UsageAssumptions = {
   requestsPerMonth: 1_000_000,
   averageRequestKb: 8,
   storageGb: 20,
+  internetEgressGb: 100,
+  instanceCount: 2,
   // Not a client pointed at a region, which is what the rule protects against,
   // but the starting value of an assumption the user is shown and can change.
   // Pricing has to begin somewhere, and beginning in the region with the widest
