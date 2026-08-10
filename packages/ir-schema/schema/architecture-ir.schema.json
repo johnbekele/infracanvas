@@ -53,6 +53,33 @@
         "secretsmanager_secret"
       ]
     },
+    "pendingContractKind": {
+      "description": "Kinds whose parameters are not typed yet, awaiting a resource contract.",
+      "enum": [
+        "internet_gateway",
+        "nat_gateway",
+        "security_group",
+        "ec2_instance",
+        "lambda_function",
+        "ecs_cluster",
+        "ecs_service",
+        "alb",
+        "nlb",
+        "api_gateway",
+        "cloudfront_distribution",
+        "route53_zone",
+        "s3_bucket",
+        "rds_instance",
+        "dynamodb_table",
+        "elasticache_cluster",
+        "sns_topic",
+        "sqs_queue",
+        "iam_role",
+        "cognito_user_pool",
+        "cloudwatch_log_group",
+        "secretsmanager_secret"
+      ]
+    },
     "layout": {
       "type": "object",
       "additionalProperties": false,
@@ -66,7 +93,7 @@
     },
     "nodeBase": {
       "type": "object",
-      "required": ["id", "kind", "name", "params"],
+      "required": ["id", "name"],
       "properties": {
         "id": { "$ref": "#/$defs/resourceId" },
         "name": { "type": "string", "minLength": 1, "maxLength": 128 },
@@ -74,86 +101,70 @@
         "layout": { "$ref": "#/$defs/layout" }
       }
     },
+    "vpcParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cidrBlock"],
+      "properties": {
+        "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
+        "enableDnsHostnames": { "type": "boolean", "default": true },
+        "enableDnsSupport": { "type": "boolean", "default": true }
+      }
+    },
     "vpcNode": {
       "type": "object",
       "allOf": [{ "$ref": "#/$defs/nodeBase" }],
       "unevaluatedProperties": false,
+      "required": ["kind", "params"],
       "properties": {
         "kind": { "const": "vpc" },
-        "params": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["cidrBlock"],
-          "properties": {
-            "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
-            "enableDnsHostnames": { "type": "boolean", "default": true },
-            "enableDnsSupport": { "type": "boolean", "default": true }
-          }
-        }
+        "params": { "$ref": "#/$defs/vpcParams" }
+      }
+    },
+    "subnetTier": { "enum": ["public", "private"] },
+    "subnetParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "cidrBlock", "availabilityZone"],
+      "properties": {
+        "tier": { "$ref": "#/$defs/subnetTier" },
+        "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
+        "availabilityZone": { "type": "string", "minLength": 1 }
       }
     },
     "subnetNode": {
       "type": "object",
       "allOf": [{ "$ref": "#/$defs/nodeBase" }],
       "unevaluatedProperties": false,
+      "required": ["kind", "params"],
       "properties": {
         "kind": { "const": "subnet" },
-        "params": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["tier", "cidrBlock", "availabilityZone"],
-          "properties": {
-            "tier": { "enum": ["public", "private"] },
-            "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
-            "availabilityZone": { "type": "string", "minLength": 1 }
-          }
-        }
+        "params": { "$ref": "#/$defs/subnetParams" }
       }
+    },
+    "pendingParams": {
+      "description": "An untyped parameter bag, replaced by typed parameters when the kind gains a contract.",
+      "type": "object",
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
     },
     "pendingContractNode": {
       "type": "object",
       "allOf": [{ "$ref": "#/$defs/nodeBase" }],
       "unevaluatedProperties": false,
+      "required": ["kind", "params"],
       "properties": {
-        "kind": {
-          "enum": [
-            "internet_gateway",
-            "nat_gateway",
-            "security_group",
-            "ec2_instance",
-            "lambda_function",
-            "ecs_cluster",
-            "ecs_service",
-            "alb",
-            "nlb",
-            "api_gateway",
-            "cloudfront_distribution",
-            "route53_zone",
-            "s3_bucket",
-            "rds_instance",
-            "dynamodb_table",
-            "elasticache_cluster",
-            "sns_topic",
-            "sqs_queue",
-            "iam_role",
-            "cognito_user_pool",
-            "cloudwatch_log_group",
-            "secretsmanager_secret"
-          ]
-        },
-        "params": {
-          "type": "object",
-          "additionalProperties": { "type": ["string", "number", "boolean"] }
-        }
+        "kind": { "$ref": "#/$defs/pendingContractKind" },
+        "params": { "$ref": "#/$defs/pendingParams" }
       }
     },
+    "edgeKind": { "enum": ["connects", "depends_on", "routes_to"] },
     "edge": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "kind", "source", "target"],
       "properties": {
         "id": { "$ref": "#/$defs/resourceId" },
-        "kind": { "enum": ["connects", "depends_on", "routes_to"] },
+        "kind": { "$ref": "#/$defs/edgeKind" },
         "source": { "$ref": "#/$defs/resourceId" },
         "target": { "$ref": "#/$defs/resourceId" },
         "label": { "type": "string", "maxLength": 64 },
@@ -161,20 +172,21 @@
         "targetHandle": { "type": "string" }
       }
     },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "zoom"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "zoom": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
     "presentation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "viewport": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["x", "y", "zoom"],
-          "properties": {
-            "x": { "type": "number" },
-            "y": { "type": "number" },
-            "zoom": { "type": "number", "exclusiveMinimum": 0 }
-          }
-        }
+        "viewport": { "$ref": "#/$defs/viewport" }
       }
     }
   }

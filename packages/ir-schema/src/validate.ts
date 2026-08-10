@@ -60,10 +60,6 @@ const ajv = new Ajv2020({
   // The pending-contract parameter bag is genuinely a union of scalars.
   allowUnionTypes: true,
   strict: true,
-  // `nodeBase` requires `kind` and `params` but declares neither, because each
-  // `oneOf` branch types them for its own kind. That split is the point of the
-  // union, so the check that objects to it is the one that has to give.
-  strictRequired: false,
 });
 ajv.addFormat('ipv4-cidr', { type: 'string', validate: isIpv4Cidr });
 
@@ -89,8 +85,7 @@ for (const [def, kinds] of [
 }
 
 function pendingKinds(): string[] {
-  const pending = schemaJson.$defs.pendingContractNode.properties.kind.enum;
-  return [...pending];
+  return [...schemaJson.$defs.pendingContractKind.enum];
 }
 
 /** Every kind the schema knows, whether or not its parameters are typed yet. */

@@ -41,7 +41,7 @@ exists to consume it — the cost model, the latency contribution, the rules and
 specified in `docs/issues/epic-2-ir/040-resource-contract-registry.md`. Typing all two dozen kinds
 before any of them is priced would be several thousand lines of JSON asserting things nothing reads.
 
-Landing a contract therefore moves one string from `pendingContractNode` to a typed branch of its
+Landing a contract therefore moves one string from `pendingContractKind` to a typed branch of its
 own, and a test asserts that every kind appears in exactly one of the two lists, so they cannot
 drift apart.
 

@@ -93,6 +93,20 @@ describe('validateIr', () => {
     );
   });
 
+  it('rejects a node that declares no parameters at all', () => {
+    const result = validateIr(
+      threeTierWith((document) => {
+        delete (document.nodes[0] as Partial<(typeof document.nodes)[0]>).params;
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.problems).toContainEqual(
+      expect.objectContaining({ pointer: '/nodes/0', source: 'schema' })
+    );
+  });
+
   it('rejects a subnet whose parent is not a vpc', () => {
     const result = validateIr(
       threeTierWith((document) => {
