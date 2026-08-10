@@ -2,35 +2,48 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { env } from './env.js';
 
-// Session duration: 1 hour
-const SESSION_DURATION = '1h';
-// Refresh threshold: 15 minutes before expiry
-const REFRESH_THRESHOLD = 15 * 60 * 1000; // 15 minutes in ms
+/**
+ * How long a token is good for, and how long a sign-in lasts.
+ *
+ * The token is short so that revoking a session takes effect quickly without
+ * checking the database on every request; the session is long so that analysing
+ * a large repository does not end with being logged out. The refresh window is
+ * where the two meet: inside it, the row is consulted and both are extended.
+ */
+export const SESSION_DURATION_MS = 60 * 60 * 1000;
+export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 15 * 60 * 1000;
 
 export interface SessionPayload extends JWTPayload {
   userId: string;
   githubId: number;
   githubUsername: string;
+  /** The `sessions` row backing this token. Absent in tokens issued before it existed. */
+  sessionId?: string;
+}
+
+export interface SessionClaims {
+  userId: string;
+  githubId: number;
+  githubUsername: string;
+  sessionId?: string;
 }
 
 /**
  * Create a signed JWT session token
  */
-export async function createSessionToken(payload: {
-  userId: string;
-  githubId: number;
-  githubUsername: string;
-}): Promise<string> {
+export async function createSessionToken(payload: SessionClaims): Promise<string> {
   const secret = new TextEncoder().encode(env().JWT_SECRET);
 
   const token = await new SignJWT({
     userId: payload.userId,
     githubId: payload.githubId,
     githubUsername: payload.githubUsername,
+    ...(payload.sessionId ? { sessionId: payload.sessionId } : {}),
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(SESSION_DURATION)
+    .setExpirationTime(new Date(Date.now() + SESSION_DURATION_MS))
     .setIssuer('infracanvas')
     .setAudience('infracanvas-web')
     .sign(secret);
@@ -66,27 +79,29 @@ export async function verifySessionToken(
       return null;
     }
 
+    if (payload.sessionId !== undefined && typeof payload.sessionId !== 'string') {
+      return null;
+    }
+
     return payload as SessionPayload;
   } catch {
     return null;
   }
 }
 
+/** Whether a verified token is close enough to expiry to be worth renewing. */
+export function isCloseToExpiry(payload: SessionPayload): boolean {
+  if (!payload.exp) return false;
+  return payload.exp * 1000 - Date.now() < REFRESH_THRESHOLD_MS;
+}
+
 /**
  * Check if a token should be refreshed
- * Returns true if token expires within REFRESH_THRESHOLD
+ * Returns true if token expires within the refresh threshold
  */
 export async function shouldRefreshToken(token: string): Promise<boolean> {
   const payload = await verifySessionToken(token);
-
-  if (!payload || !payload.exp) {
-    return false;
-  }
-
-  const expiresAt = payload.exp * 1000; // Convert to milliseconds
-  const now = Date.now();
-
-  return expiresAt - now < REFRESH_THRESHOLD;
+  return payload ? isCloseToExpiry(payload) : false;
 }
 
 /**
@@ -100,10 +115,10 @@ export async function refreshSessionToken(token: string): Promise<string | null>
     return null;
   }
 
-  // Create a new token with the same payload
   return createSessionToken({
     userId: payload.userId,
     githubId: payload.githubId,
     githubUsername: payload.githubUsername,
+    sessionId: payload.sessionId,
   });
 }

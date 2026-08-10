@@ -8,10 +8,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
+const ORIGIN_COPY: Record<string, string> = {
+  env: 'token from GITHUB_TOKEN',
+  'gh-cli': 'token from the gh CLI',
+};
+
 export function UserMenu() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, authMethod, tokenOrigin } = useAuthStore();
 
   if (!user) return null;
+
+  // The local method is otherwise silent about who it signed you in as. When
+  // the gh CLI holds a different account than expected, the only symptom was
+  // repositories missing from the list.
+  const origin = tokenOrigin ? ORIGIN_COPY[tokenOrigin] : null;
 
   return (
     <DropdownMenu>
@@ -29,6 +39,11 @@ export function UserMenu() {
             {user.name || user.githubUsername}
           </p>
           <p className="text-xs text-gray-500">@{user.githubUsername}</p>
+          {authMethod && (
+            <p className="mt-1 text-[11px] text-gray-400">
+              Signed in via {authMethod === 'oauth' ? 'GitHub OAuth' : (origin ?? 'a local token')}
+            </p>
+          )}
         </div>
 
         <DropdownMenuSeparator />

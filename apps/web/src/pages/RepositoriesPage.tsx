@@ -4,7 +4,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { ConnectRepositoryDialog } from '@/components/repositories/ConnectRepositoryDialog';
 import { RepositoryCard } from '@/components/repositories/RepositoryCard';
 import { Button } from '@/components/ui/button';
-import { LoginButton } from '@/components/auth';
+import { AuthMethodPicker } from '@/components/auth';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useConnectedRepositories, useDisconnectRepository } from '@/lib/hooks/use-repositories';
 
@@ -47,11 +47,11 @@ export function RepositoriesPage() {
         </div>
 
         {!isAuthLoading && !isAuthenticated && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900">
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="mx-auto max-w-md rounded-xl border border-dashed border-gray-300 bg-white p-10 dark:border-gray-700 dark:bg-gray-900">
+            <p className="mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
               Sign in with GitHub to connect a repository.
             </p>
-            <LoginButton />
+            <AuthMethodPicker />
           </div>
         )}
 

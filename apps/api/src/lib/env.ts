@@ -66,13 +66,6 @@ function getEnv(): EnvConfig {
 
   const requiredVars = ['DATABASE_URL', 'ENCRYPTION_KEY', 'JWT_SECRET', 'APP_URL', 'API_URL'];
 
-  // Only the OAuth provider ever reads these, and demanding them under the
-  // token provider is what made a fresh clone unrunnable without first
-  // registering a GitHub application.
-  if (authProvider === 'oauth') {
-    requiredVars.push('GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET');
-  }
-
   const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
@@ -88,6 +81,18 @@ function getEnv(): EnvConfig {
     throw new Error(
       'ENCRYPTION_KEY must be a 64-character hex string (32 bytes).\n' +
         'Generate with: openssl rand -hex 32'
+    );
+  }
+
+  // A missing OAuth application is reported by GET /auth/methods rather than
+  // refused here, because one process now offers both sign-in methods: an
+  // operator running locally should not have to register a GitHub application
+  // to start, and one deploying for a team should hear about it before a user
+  // clicks the button.
+  if (authProvider === 'oauth' && !process.env.GITHUB_CLIENT_ID) {
+    console.warn(
+      'AUTH_PROVIDER is "oauth" but GITHUB_CLIENT_ID is not set. The OAuth sign-in will be ' +
+        'offered as unavailable until it is configured.'
     );
   }
 

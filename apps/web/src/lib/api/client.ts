@@ -56,13 +56,31 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   return response.json();
 }
 
+export type AuthMethodId = 'oauth' | 'token';
+
+export interface AuthMethod {
+  id: AuthMethodId;
+  available: boolean;
+  reason?: string;
+  description: string;
+}
+
 // Auth API
 export const authApi = {
   /**
-   * Get the GitHub OAuth URL to redirect to
+   * Where to send the browser to sign in.
+   *
+   * Sign-in is a redirect rather than a fetch because the OAuth path leaves the
+   * application entirely, so the method travels as a query parameter.
    */
-  getOAuthUrl(): string {
-    return API_BASE_URL ? `${API_BASE_URL}/auth/github` : '/api/auth/github';
+  getSignInUrl(method?: AuthMethodId): string {
+    const base = API_BASE_URL ? `${API_BASE_URL}/auth/github` : '/api/auth/github';
+    return method ? `${base}?method=${method}` : base;
+  },
+
+  /** What this caller can actually use. Availability depends on where they are. */
+  async getMethods(): Promise<{ methods: AuthMethod[]; default: AuthMethodId }> {
+    return apiFetch('/auth/methods');
   },
 
   /**
@@ -79,6 +97,8 @@ export const authApi = {
       email?: string;
     };
     hasGitHubToken?: boolean;
+    authMethod?: AuthMethodId;
+    tokenOrigin?: string;
   }> {
     return apiFetch('/auth/status');
   },

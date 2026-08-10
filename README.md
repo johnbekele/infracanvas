@@ -54,7 +54,9 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ### How GitHub authentication works
 
-There are two providers, selected by `AUTH_PROVIDER`.
+There are two sign-in methods, and one process offers both. `AUTH_PROVIDER` decides which is
+offered first; the login screen lets you pick the other. `GET /auth/methods` reports what a given
+caller can actually use, and a method that cannot work says why rather than failing halfway.
 
 **`token`** is for local development and single-user self-hosting. The API uses `GITHUB_TOKEN` if it
 is set, and otherwise asks the `gh` CLI for the token it already holds, so there is nothing to
@@ -66,10 +68,13 @@ if everyone who can reach the port is trusted with your repository access.
 their own token, stored encrypted and keyed to their account. It needs `GITHUB_CLIENT_ID` and
 `GITHUB_CLIENT_SECRET` from an OAuth app whose callback URL is `${API_URL}/auth/github/callback`.
 This is the default when `AUTH_PROVIDER` is unset, so a deployment that forgets to configure it gets
-the multi-user flow rather than sharing one account.
+the multi-user flow rather than sharing one account. Missing credentials no longer stop the API from
+starting: OAuth is simply reported as unavailable until they are set.
 
 Everything after the token is obtained is identical between the two: the account is identified, the
-user is upserted, and the token is encrypted with AES-256-GCM before it touches the database.
+user is upserted, and the token is encrypted with AES-256-GCM before it touches the database. A row
+in `sessions` records which method signed you in and where a local token came from, which is what
+the user menu reports and what makes signing out revoke the session rather than just forget it.
 
 ### One-Click Deploy
 
