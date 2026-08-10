@@ -89,11 +89,20 @@ function slot(index: number, columns: number): { x: number; y: number } {
 
 /** Sanitises a repository name into something AWS accepts as a resource name. */
 function resourceName(repositoryName: string, suffix: string): string {
-  const base = repositoryName
+  const slug = repositoryName
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
     .slice(0, 32);
+
+  // Trimmed by index rather than with a pattern. An unanchored `-+$` is retried
+  // from every position, so a name that is mostly separators costs quadratic
+  // time, and the name comes from outside this system.
+  let start = 0;
+  let end = slug.length;
+  while (start < end && slug[start] === '-') start += 1;
+  while (end > start && slug[end - 1] === '-') end -= 1;
+
+  const base = slug.slice(start, end);
 
   return `${base || 'app'}-${suffix}`;
 }

@@ -137,6 +137,25 @@ describe('an HTTP service', () => {
 
     expect(vpc?.properties.vpcName).toBe('billing-api-vpc');
   });
+
+  it('falls back to a usable name when nothing survives sanitising', () => {
+    const proposal = proposeArchitecture(httpProfile, '!!!___!!!');
+    const vpc = proposal.nodes.find((node) => node.serviceId === 'vpc-environment');
+
+    expect(vpc?.properties.vpcName).toBe('app-vpc');
+  });
+
+  it('sanitises a long separator-heavy name without pathological backtracking', () => {
+    // Trimming with `-+$` would retry from every position here; the assertion
+    // that matters is that this returns at all, promptly.
+    const started = Date.now();
+    const proposal = proposeArchitecture(httpProfile, '-'.repeat(50_000));
+
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(
+      proposal.nodes.find((node) => node.serviceId === 'vpc-environment')?.properties.vpcName
+    ).toBe('app-vpc');
+  });
 });
 
 describe('data stores', () => {
