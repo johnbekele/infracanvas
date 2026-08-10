@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ConnectRepositoryDialog } from '@/components/repositories/ConnectRepositoryDialog';
@@ -9,12 +9,8 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useConnectedRepositories, useDisconnectRepository } from '@/lib/hooks/use-repositories';
 
 export function RepositoriesPage() {
-  const { isAuthenticated, isLoading: isAuthLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
   const [isPickerOpen, setPickerOpen] = useState(false);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   const { data: repositories, isLoading } = useConnectedRepositories();
   const disconnect = useDisconnectRepository();

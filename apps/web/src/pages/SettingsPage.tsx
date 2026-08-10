@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AuthMethodPicker } from '@/components/auth';
 import { CredentialForm } from '@/components/settings/CredentialForm';
@@ -26,12 +25,7 @@ function Section({
 }
 
 export function SettingsPage() {
-  const { isAuthenticated, isLoading: isAuthLoading, checkAuth } = useAuthStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
   const { data, isLoading } = useSettings();
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, GitBranch, Loader2, Play } from 'lucide-react';
 import { proposeArchitecture } from '@infracanvas/core';
@@ -6,16 +6,10 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { ProfileSummary } from '@/components/analysis/ProfileSummary';
 import { ArchitectureProposalPanel } from '@/components/analysis/ArchitectureProposalPanel';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/stores/auth-store';
 import { useAnalyses, useRepository, useRunAnalysis } from '@/lib/hooks/use-repositories';
 
 export function RepositoryPage() {
   const { id } = useParams<{ id: string }>();
-  const { checkAuth } = useAuthStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   const { data: repository, isLoading, error } = useRepository(id);
   const { data: analyses } = useAnalyses(id);
