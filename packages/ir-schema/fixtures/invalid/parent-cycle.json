@@ -1,0 +1,23 @@
+{
+  "irVersion": "1.0.0",
+  "name": "Two clusters contained in each other",
+  "provider": "aws",
+  "region": "eu-west-1",
+  "nodes": [
+    {
+      "id": "cluster-a",
+      "kind": "ecs_cluster",
+      "name": "Cluster A",
+      "parent": "cluster-b",
+      "params": {}
+    },
+    {
+      "id": "cluster-b",
+      "kind": "ecs_cluster",
+      "name": "Cluster B",
+      "parent": "cluster-a",
+      "params": {}
+    }
+  ],
+  "edges": []
+}
