@@ -12,13 +12,19 @@
  * nobody asked for.
  */
 import { parse as parseToml } from 'smol-toml';
-import type { ComponentKind, Ecosystem } from '@infracanvas/core';
+import type { Ecosystem } from '@infracanvas/core';
 
 export interface ParsedManifest {
   ecosystem: Ecosystem;
   /** Falls back to the containing directory when the manifest declares no name. */
   name: string;
-  kind: ComponentKind;
+  /**
+   * The manifest describes something importable rather than something run: a
+   * published package, or a workspace root that only lists members. Only a hint,
+   * because the deciding evidence -- a Dockerfile, a compose service -- lives
+   * outside the manifest.
+   */
+  libraryHint: boolean;
   dependencies: string[];
 }
 
@@ -71,13 +77,14 @@ function parsePackageJson(content: string, fallbackName: string): ParsedManifest
     ...keysOf(manifest.devDependencies),
   ];
 
-  const kind: ComponentKind =
-    manifest.private === true || isRecord(manifest.scripts) ? 'service' : 'library';
+  // A manifest listing workspaces is the root of one, whatever else it declares.
+  const isWorkspaceRoot = manifest.workspaces !== undefined;
+  const runsSomething = manifest.private === true || isRecord(manifest.scripts);
 
   return {
     ecosystem: 'npm',
     name: typeof manifest.name === 'string' ? manifest.name : fallbackName,
-    kind,
+    libraryHint: isWorkspaceRoot || !runsSomething,
     dependencies,
   };
 }
@@ -88,7 +95,7 @@ function parseRequirementsTxt(content: string, fallbackName: string): ParsedMani
     .map(requirementName)
     .filter((name): name is string => name !== null);
 
-  return { ecosystem: 'pypi', name: fallbackName, kind: 'service', dependencies };
+  return { ecosystem: 'pypi', name: fallbackName, libraryHint: false, dependencies };
 }
 
 function parsePyprojectToml(content: string, fallbackName: string): ParsedManifest {
@@ -120,7 +127,7 @@ function parsePyprojectToml(content: string, fallbackName: string): ParsedManife
         ? poetry.name
         : fallbackName;
 
-  return { ecosystem: 'pypi', name, kind: 'service', dependencies };
+  return { ecosystem: 'pypi', name, libraryHint: false, dependencies };
 }
 
 /**
@@ -163,7 +170,7 @@ function parseGoMod(content: string, fallbackName: string): ParsedManifest {
     }
   }
 
-  return { ecosystem: 'go', name: moduleName, kind: 'service', dependencies };
+  return { ecosystem: 'go', name: moduleName, libraryHint: false, dependencies };
 }
 
 function parseCargoToml(content: string, fallbackName: string): ParsedManifest {
@@ -178,7 +185,7 @@ function parseCargoToml(content: string, fallbackName: string): ParsedManifest {
   return {
     ecosystem: 'cargo',
     name: typeof pkg.name === 'string' ? pkg.name : fallbackName,
-    kind: isWorkspaceRoot ? 'library' : 'service',
+    libraryHint: isWorkspaceRoot,
     dependencies,
   };
 }
@@ -206,7 +213,7 @@ function parseMavenLike(content: string, fallbackName: string): ParsedManifest {
   return {
     ecosystem: 'maven',
     name: fallbackName,
-    kind: 'service',
+    libraryHint: false,
     dependencies: [...dependencies],
   };
 }
@@ -219,7 +226,7 @@ function parseGemfile(content: string, fallbackName: string): ParsedManifest {
     dependencies.push(match[1]);
   }
 
-  return { ecosystem: 'rubygems', name: fallbackName, kind: 'service', dependencies };
+  return { ecosystem: 'rubygems', name: fallbackName, libraryHint: false, dependencies };
 }
 
 function parseComposerJson(content: string, fallbackName: string): ParsedManifest {
@@ -234,7 +241,7 @@ function parseComposerJson(content: string, fallbackName: string): ParsedManifes
   return {
     ecosystem: 'composer',
     name: typeof manifest.name === 'string' ? manifest.name : fallbackName,
-    kind: 'service',
+    libraryHint: false,
     dependencies,
   };
 }

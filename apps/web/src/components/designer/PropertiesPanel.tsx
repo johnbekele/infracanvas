@@ -4,6 +4,7 @@ import { X, Settings, Trash2, Info } from 'lucide-react';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 import { getServiceById } from '@infracanvas/core';
 import { Button } from '@/components/ui/button';
+import { NodeEvidence } from './NodeEvidence';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -89,6 +90,8 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
 
       {/* Properties - Scrollable */}
       <div className="flex-1 space-y-4 overflow-y-auto p-3 md:p-4">
+        <NodeEvidence data={selectedNode.data} />
+
         <div>
           <h4 className="mb-2 text-xs font-medium text-gray-700 md:mb-3 md:text-sm dark:text-gray-300">
             Configuration

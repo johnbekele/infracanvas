@@ -1,39 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Server,
-  Database,
-  Globe,
-  Shield,
-  Zap,
-  Bell,
-  Inbox,
-  GitBranch,
-  Users,
-  Table,
-  Network,
-  Box,
-  ChevronDown,
-  Search,
-  GripVertical,
-} from 'lucide-react';
+import { ChevronDown, Search, GripVertical } from 'lucide-react';
 import { awsServices, serviceCategories, type AWSService } from '@infracanvas/core';
 import { Input } from '@/components/ui/input';
-
-const iconMap: Record<string, React.ElementType> = {
-  server: Server,
-  database: Database,
-  globe: Globe,
-  shield: Shield,
-  zap: Zap,
-  bell: Bell,
-  inbox: Inbox,
-  'git-branch': GitBranch,
-  users: Users,
-  table: Table,
-  network: Network,
-  container: Box,
-};
+import { iconFor } from './service-icons';
 
 interface ServicePaletteProps {
   onDragStart: (event: React.DragEvent, service: AWSService) => void;
@@ -122,7 +92,7 @@ export function ServicePalette({ onDragStart }: ServicePaletteProps) {
                   >
                     <div className="space-y-1 py-1 pl-4">
                       {services.map((service) => {
-                        const Icon = iconMap[service.icon] || Server;
+                        const Icon = iconFor(service.icon);
                         return (
                           <div
                             key={service.id}

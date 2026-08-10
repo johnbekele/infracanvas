@@ -38,6 +38,15 @@ export interface GeneratedCode {
 
 export type CodeLanguage = 'terraform' | 'pulumi';
 
+/** Container services that hold other nodes on the canvas. */
+export type ContainerNodeType =
+  | 'vpc-environment'
+  | 'public-subnet'
+  | 'private-subnet'
+  | 'availability-zone'
+  | 'ecs-cluster'
+  | 'eks-cluster';
+
 // Service node data used in the designer
 export interface ServiceNodeData {
   serviceId: string;
@@ -46,8 +55,13 @@ export interface ServiceNodeData {
   color: string;
   category: string;
   properties: Record<string, string | number | boolean>;
-  nodeType?: 'service' | 'vpc-environment' | 'public-subnet' | 'private-subnet';
+  nodeType?: 'service' | ContainerNodeType;
   parentId?: string;
+  /** Repository paths a proposed node was inferred from. Absent when hand-placed. */
+  evidence?: string[];
+  confidence?: 'high' | 'medium' | 'low';
+  /** The repository component this node deploys, for proposed nodes. */
+  componentPath?: string;
 }
 
 // Hierarchy types for code generation

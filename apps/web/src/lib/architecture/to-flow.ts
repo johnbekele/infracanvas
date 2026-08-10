@@ -2,13 +2,22 @@
 import type { Edge, Node } from 'reactflow';
 import { getServiceById, type ArchitectureProposal, type ProposedNode } from '@infracanvas/core';
 import type { ServiceNodeData } from '@/lib/stores/designer-store';
+import { CONTAINER_DEFAULT_SIZE } from '@/lib/designer/containment';
 
-/** Container nodes render behind their children, deepest container in front. */
-const Z_INDEX = { vpc: -2, subnet: -1 } as const;
+/** Container nodes render behind their children, outermost furthest back. */
+const Z_INDEX: Record<string, number> = {
+  'vpc-environment': -4,
+  'availability-zone': -3,
+  'public-subnet': -2,
+  'private-subnet': -2,
+  'ecs-cluster': -1,
+  'eks-cluster': -1,
+};
 
 function flowTypeFor(serviceId: string): string {
   if (serviceId === 'vpc-environment') return 'vpcEnvironment';
   if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
+  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
   return 'serviceNode';
 }
 
@@ -38,6 +47,12 @@ function toFlowNode(proposed: ProposedNode): Node<ServiceNodeData> | null {
         ? (service.id as ServiceNodeData['nodeType'])
         : ('service' as const),
       parentId: proposed.parentId,
+      // Carried onto the node so the properties panel can show why the engine
+      // proposed it. A suggestion a platform engineer cannot check is a
+      // suggestion they have no reason to accept.
+      evidence: proposed.evidence,
+      confidence: proposed.confidence,
+      componentPath: proposed.componentPath,
     },
   };
 
@@ -46,7 +61,7 @@ function toFlowNode(proposed: ProposedNode): Node<ServiceNodeData> | null {
       style: { width: proposed.size.width, height: proposed.size.height },
       width: proposed.size.width,
       height: proposed.size.height,
-      zIndex: type === 'vpcEnvironment' ? Z_INDEX.vpc : Z_INDEX.subnet,
+      zIndex: Z_INDEX[proposed.serviceId] ?? -1,
     });
   }
 

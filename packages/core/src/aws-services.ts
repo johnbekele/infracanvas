@@ -1,4 +1,14 @@
 // AWS Service definitions for InfraCanvas Architecture Designer
+//
+// The catalog is data, and code generation reads it rather than carrying a
+// branch per service. A hand-written emitter per service was why the catalog
+// stopped at 21 entries and why Pulumi Python covered six of them: adding a
+// service meant three parallel edits, so it did not happen, and the export
+// silently degraded to a comment for anything missing.
+import { aiServices } from './services/ai';
+import { dataServices } from './services/data-stores';
+import { integrationServices } from './services/integration';
+import { platformServices } from './services/platform';
 
 export interface ServiceProperty {
   name: string;
@@ -16,20 +26,59 @@ export interface SubnetPlacement {
   requiresSubnet: boolean;
 }
 
+/** The argument names a property takes in each target, when they are unusual. */
+export interface IacArgument {
+  terraform: string;
+  pulumi: string;
+}
+
+/**
+ * How a service becomes infrastructure code.
+ *
+ * Argument names are derived from property names by convention -- Terraform and
+ * Pulumi Python take `snake_case`, Pulumi TypeScript takes `camelCase` -- so a
+ * service usually declares only its resource type. `overrides` covers the cases
+ * where the provider disagrees with the convention, and a `null` override marks
+ * a property that configures the canvas rather than the resource.
+ */
+export interface IacMapping {
+  terraformResource: string;
+  /** Pulumi uses the same class path in every language; only arguments differ. */
+  pulumiClass: string;
+  overrides?: Record<string, IacArgument | null>;
+  /** Arguments taken from the container this node sits in. */
+  fromParent?: { argument: string; from: 'subnet' | 'vpc' | 'cluster' }[];
+}
+
+export type ServiceCategory =
+  | 'compute'
+  | 'storage'
+  | 'database'
+  | 'networking'
+  | 'security'
+  | 'integration'
+  | 'ai-ml'
+  | 'analytics'
+  | 'observability';
+
 export interface AWSService {
   id: string;
   name: string;
   shortName: string;
-  category: 'compute' | 'storage' | 'database' | 'networking' | 'security' | 'integration';
+  category: ServiceCategory;
   description: string;
   color: string;
   icon: string;
   allowedConnections: string[];
   properties: ServiceProperty[];
-  terraformResource: string;
-  pulumiClass: string;
+  iac: IacMapping;
   isContainer?: boolean;
   parentRequired?: string;
+  /**
+   * Containers this may be placed in, innermost first. Absent means it may sit
+   * anywhere, including on open canvas.
+   */
+  allowedParents?: string[];
   subnetPlacement?: SubnetPlacement;
 }
 
@@ -37,12 +86,15 @@ export const serviceCategories = [
   { id: 'compute', name: 'Compute', color: '#FF9900' },
   { id: 'storage', name: 'Storage', color: '#569A31' },
   { id: 'database', name: 'Database', color: '#4053D6' },
+  { id: 'ai-ml', name: 'AI & ML', color: '#01A88D' },
+  { id: 'analytics', name: 'Analytics', color: '#8C4FFF' },
   { id: 'networking', name: 'Networking', color: '#8C4FFF' },
   { id: 'security', name: 'Security', color: '#DD344C' },
   { id: 'integration', name: 'Integration', color: '#FF4F8B' },
+  { id: 'observability', name: 'Observability', color: '#E7157B' },
 ] as const;
 
-export const awsServices: AWSService[] = [
+const coreServices: AWSService[] = [
   // Compute
   {
     id: 'ec2',
@@ -107,8 +159,11 @@ export const awsServices: AWSService[] = [
       { name: 'keyPair', label: 'Key Pair Name', type: 'text', default: '' },
       { name: 'monitoring', label: 'Detailed Monitoring', type: 'boolean', default: false },
     ],
-    terraformResource: 'aws_instance',
-    pulumiClass: 'aws.ec2.Instance',
+    iac: {
+      terraformResource: 'aws_instance',
+      pulumiClass: 'aws.ec2.Instance',
+      fromParent: [{ argument: 'subnetId', from: 'subnet' }],
+    },
     subnetPlacement: { allowedInPublic: true, allowedInPrivate: true, requiresSubnet: false },
   },
   {
@@ -183,8 +238,7 @@ export const awsServices: AWSService[] = [
       { name: 'envVars', label: 'Environment Variables', type: 'textarea', default: '' },
       { name: 'enableTracing', label: 'X-Ray Tracing', type: 'boolean', default: false },
     ],
-    terraformResource: 'aws_lambda_function',
-    pulumiClass: 'aws.lambda.Function',
+    iac: { terraformResource: 'aws_lambda_function', pulumiClass: 'aws.lambda.Function' },
     subnetPlacement: { allowedInPublic: true, allowedInPrivate: true, requiresSubnet: false },
   },
   {
@@ -249,8 +303,11 @@ export const awsServices: AWSService[] = [
       { name: 'containerPort', label: 'Container Port', type: 'number', default: 80 },
       { name: 'enableAutoScaling', label: 'Enable Auto Scaling', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_ecs_service',
-    pulumiClass: 'aws.ecs.Service',
+    iac: {
+      terraformResource: 'aws_ecs_service',
+      pulumiClass: 'aws.ecs.Service',
+      fromParent: [{ argument: 'cluster', from: 'cluster' }],
+    },
     subnetPlacement: { allowedInPublic: true, allowedInPrivate: true, requiresSubnet: false },
   },
 
@@ -289,8 +346,7 @@ export const awsServices: AWSService[] = [
       { name: 'indexDocument', label: 'Index Document', type: 'text', default: 'index.html' },
       { name: 'enableCors', label: 'Enable CORS', type: 'boolean', default: false },
     ],
-    terraformResource: 'aws_s3_bucket',
-    pulumiClass: 'aws.s3.Bucket',
+    iac: { terraformResource: 'aws_s3_bucket', pulumiClass: 'aws.s3.Bucket' },
   },
 
   // Database
@@ -340,8 +396,7 @@ export const awsServices: AWSService[] = [
       { name: 'publiclyAccessible', label: 'Publicly Accessible', type: 'boolean', default: false },
       { name: 'deletionProtection', label: 'Deletion Protection', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_db_instance',
-    pulumiClass: 'aws.rds.Instance',
+    iac: { terraformResource: 'aws_db_instance', pulumiClass: 'aws.rds.Instance' },
     subnetPlacement: { allowedInPublic: false, allowedInPrivate: true, requiresSubnet: false },
   },
   {
@@ -385,8 +440,7 @@ export const awsServices: AWSService[] = [
         default: false,
       },
     ],
-    terraformResource: 'aws_dynamodb_table',
-    pulumiClass: 'aws.dynamodb.Table',
+    iac: { terraformResource: 'aws_dynamodb_table', pulumiClass: 'aws.dynamodb.Table' },
   },
   {
     id: 'elasticache',
@@ -423,8 +477,7 @@ export const awsServices: AWSService[] = [
       { name: 'numCacheNodes', label: 'Number of Nodes', type: 'number', default: 1 },
       { name: 'port', label: 'Port', type: 'number', default: 6379 },
     ],
-    terraformResource: 'aws_elasticache_cluster',
-    pulumiClass: 'aws.elasticache.Cluster',
+    iac: { terraformResource: 'aws_elasticache_cluster', pulumiClass: 'aws.elasticache.Cluster' },
     subnetPlacement: { allowedInPublic: false, allowedInPrivate: true, requiresSubnet: false },
   },
 
@@ -470,8 +523,10 @@ export const awsServices: AWSService[] = [
       },
       { name: 'enableCompression', label: 'Enable Compression', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_cloudfront_distribution',
-    pulumiClass: 'aws.cloudfront.Distribution',
+    iac: {
+      terraformResource: 'aws_cloudfront_distribution',
+      pulumiClass: 'aws.cloudfront.Distribution',
+    },
   },
   {
     id: 'route53',
@@ -501,8 +556,7 @@ export const awsServices: AWSService[] = [
         ],
       },
     ],
-    terraformResource: 'aws_route53_zone',
-    pulumiClass: 'aws.route53.Zone',
+    iac: { terraformResource: 'aws_route53_zone', pulumiClass: 'aws.route53.Zone' },
   },
   {
     id: 'vpc',
@@ -528,8 +582,7 @@ export const awsServices: AWSService[] = [
       { name: 'privateSubnets', label: 'Private Subnets', type: 'number', default: 2 },
       { name: 'enableNatGateway', label: 'NAT Gateway', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_vpc',
-    pulumiClass: 'aws.ec2.Vpc',
+    iac: { terraformResource: 'aws_vpc', pulumiClass: 'aws.ec2.Vpc' },
   },
   {
     id: 'api-gateway',
@@ -558,8 +611,7 @@ export const awsServices: AWSService[] = [
       { name: 'corsOrigins', label: 'CORS Origins', type: 'text', default: '*' },
       { name: 'enableAccessLogs', label: 'Enable Access Logs', type: 'boolean', default: false },
     ],
-    terraformResource: 'aws_apigatewayv2_api',
-    pulumiClass: 'aws.apigatewayv2.Api',
+    iac: { terraformResource: 'aws_apigatewayv2_api', pulumiClass: 'aws.apigatewayv2.Api' },
   },
 
   // Security
@@ -593,8 +645,7 @@ export const awsServices: AWSService[] = [
         default: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
       },
     ],
-    terraformResource: 'aws_iam_role',
-    pulumiClass: 'aws.iam.Role',
+    iac: { terraformResource: 'aws_iam_role', pulumiClass: 'aws.iam.Role' },
   },
   {
     id: 'cognito',
@@ -636,8 +687,7 @@ export const awsServices: AWSService[] = [
       },
       { name: 'passwordMinLength', label: 'Min Password Length', type: 'number', default: 8 },
     ],
-    terraformResource: 'aws_cognito_user_pool',
-    pulumiClass: 'aws.cognito.UserPool',
+    iac: { terraformResource: 'aws_cognito_user_pool', pulumiClass: 'aws.cognito.UserPool' },
   },
 
   // Integration
@@ -655,8 +705,7 @@ export const awsServices: AWSService[] = [
       { name: 'displayName', label: 'Display Name', type: 'text', default: '' },
       { name: 'fifoTopic', label: 'FIFO Topic', type: 'boolean', default: false },
     ],
-    terraformResource: 'aws_sns_topic',
-    pulumiClass: 'aws.sns.Topic',
+    iac: { terraformResource: 'aws_sns_topic', pulumiClass: 'aws.sns.Topic' },
   },
   {
     id: 'sqs',
@@ -685,8 +734,7 @@ export const awsServices: AWSService[] = [
       { name: 'enableDlq', label: 'Enable Dead Letter Queue', type: 'boolean', default: false },
       { name: 'enableEncryption', label: 'Enable Encryption', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_sqs_queue',
-    pulumiClass: 'aws.sqs.Queue',
+    iac: { terraformResource: 'aws_sqs_queue', pulumiClass: 'aws.sqs.Queue' },
   },
 
   // VPC Environment Components
@@ -712,8 +760,7 @@ export const awsServices: AWSService[] = [
       { name: 'enableDnsHostnames', label: 'DNS Hostnames', type: 'boolean', default: true },
       { name: 'enableDnsSupport', label: 'DNS Support', type: 'boolean', default: true },
     ],
-    terraformResource: 'aws_vpc',
-    pulumiClass: 'aws.ec2.Vpc',
+    iac: { terraformResource: 'aws_vpc', pulumiClass: 'aws.ec2.Vpc' },
   },
   {
     id: 'public-subnet',
@@ -748,8 +795,11 @@ export const awsServices: AWSService[] = [
         ],
       },
     ],
-    terraformResource: 'aws_subnet',
-    pulumiClass: 'aws.ec2.Subnet',
+    iac: {
+      terraformResource: 'aws_subnet',
+      pulumiClass: 'aws.ec2.Subnet',
+      fromParent: [{ argument: 'vpcId', from: 'vpc' }],
+    },
   },
   {
     id: 'private-subnet',
@@ -784,8 +834,11 @@ export const awsServices: AWSService[] = [
         ],
       },
     ],
-    terraformResource: 'aws_subnet',
-    pulumiClass: 'aws.ec2.Subnet',
+    iac: {
+      terraformResource: 'aws_subnet',
+      pulumiClass: 'aws.ec2.Subnet',
+      fromParent: [{ argument: 'vpcId', from: 'vpc' }],
+    },
   },
   {
     id: 'alb',
@@ -805,8 +858,7 @@ export const awsServices: AWSService[] = [
       { name: 'listenerPort', label: 'Listener Port', type: 'number', default: 80 },
       { name: 'healthCheckPath', label: 'Health Check Path', type: 'text', default: '/' },
     ],
-    terraformResource: 'aws_lb',
-    pulumiClass: 'aws.lb.LoadBalancer',
+    iac: { terraformResource: 'aws_lb', pulumiClass: 'aws.lb.LoadBalancer' },
   },
   {
     id: 'nlb',
@@ -829,8 +881,7 @@ export const awsServices: AWSService[] = [
       },
       { name: 'listenerPort', label: 'Listener Port', type: 'number', default: 80 },
     ],
-    terraformResource: 'aws_lb',
-    pulumiClass: 'aws.lb.LoadBalancer',
+    iac: { terraformResource: 'aws_lb', pulumiClass: 'aws.lb.LoadBalancer' },
   },
   {
     id: 'nat-gateway',
@@ -855,9 +906,20 @@ export const awsServices: AWSService[] = [
         ],
       },
     ],
-    terraformResource: 'aws_nat_gateway',
-    pulumiClass: 'aws.ec2.NatGateway',
+    iac: {
+      terraformResource: 'aws_nat_gateway',
+      pulumiClass: 'aws.ec2.NatGateway',
+      fromParent: [{ argument: 'subnetId', from: 'subnet' }],
+    },
   },
+];
+
+export const awsServices: AWSService[] = [
+  ...coreServices,
+  ...dataServices,
+  ...aiServices,
+  ...integrationServices,
+  ...platformServices,
 ];
 
 export function getServiceById(id: string): AWSService | undefined {

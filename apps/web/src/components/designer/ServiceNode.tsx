@@ -1,41 +1,17 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { motion } from 'framer-motion';
-import {
-  Server,
-  Database,
-  Globe,
-  Shield,
-  Zap,
-  Bell,
-  Inbox,
-  GitBranch,
-  Users,
-  Table,
-  Network,
-  Box,
-} from 'lucide-react';
-import { type ServiceNodeData } from '@/lib/stores/designer-store';
-import { useDesignerStore } from '@/lib/stores/designer-store';
 
-const iconMap: Record<string, React.ElementType> = {
-  server: Server,
-  database: Database,
-  globe: Globe,
-  shield: Shield,
-  zap: Zap,
-  bell: Bell,
-  inbox: Inbox,
-  'git-branch': GitBranch,
-  users: Users,
-  table: Table,
-  network: Network,
-  container: Box,
-};
+import { getServiceById } from '@infracanvas/core';
+import { type ServiceNodeData } from '@/lib/stores/designer-store';
+import { iconFor } from './service-icons';
+import { useDesignerStore } from '@/lib/stores/designer-store';
 
 function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>) {
   const { selectNode, selectedNodeId } = useDesignerStore();
-  const Icon = iconMap[data.serviceId] || iconMap.server;
+  // Indexed by the icon the catalog declares. Indexing by `serviceId`
+  // silently gave every node the same fallback glyph.
+  const Icon = iconFor(getServiceById(data.serviceId)?.icon);
 
   const isSelected = selected || selectedNodeId === id;
 
