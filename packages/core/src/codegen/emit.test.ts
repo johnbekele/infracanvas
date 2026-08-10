@@ -122,4 +122,22 @@ describe('identifiers', () => {
       'r_3rd_party'
     );
   });
+
+  it('drops separators at both ends rather than emitting a leading underscore', () => {
+    expect(identifierFor({ id: '--api--', serviceId: 'ecs', properties: {} })).toBe('api');
+  });
+
+  it('falls back to a name when the id has nothing usable in it', () => {
+    expect(identifierFor({ id: '///', serviceId: 'ecs', properties: {} })).toBe('resource');
+  });
+
+  it('stays fast on an id that is almost all separators', () => {
+    // A trailing-run trim backtracks quadratically here, which is a denial of
+    // service on an id that arrives from a repository path.
+    const id = `${'-'.repeat(50_000)}a${'-'.repeat(50_000)}`;
+    const started = performance.now();
+
+    expect(identifierFor({ id, serviceId: 'ecs', properties: {} })).toBe('a');
+    expect(performance.now() - started).toBeLessThan(100);
+  });
 });

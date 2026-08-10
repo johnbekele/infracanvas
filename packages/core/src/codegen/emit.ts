@@ -5,8 +5,8 @@
  * once for Terraform, once for Pulumi TypeScript, once for Pulumi Python. That
  * is why the catalog stopped at 21 services and why Pulumi Python covered six of
  * them: adding a service meant three edits in three files, so what actually
- * happened was that the export quietly fell through to `# TODO` for anything
- * newer. A design that punishes adding a service will end up with few services.
+ * happened was that the export quietly fell through to a placeholder comment for
+ * anything newer. A design that punishes adding a service ends up with few.
  *
  * Argument names come from a convention rather than a per-property declaration,
  * because the convention holds almost everywhere: a property named
@@ -61,10 +61,17 @@ export function snakeCase(name: string): string {
 
 /** A node id becomes a valid identifier in every target language. */
 export function identifierFor(node: EmitNode): string {
-  const cleaned = (node.name ?? node.id).replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase();
-  const trimmed = cleaned.replace(/^_+/, '').replace(/_+$/, '');
+  // Split on the separators rather than substituting then trimming them. It
+  // drops leading and trailing runs by construction, where trimming with `_+$`
+  // backtracks quadratically on an id that is mostly underscores.
+  const words = (node.name ?? node.id)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  const identifier = words.join('_');
+
   // A leading digit is legal in a Terraform resource name and not in Python.
-  return /^[0-9]/.test(trimmed) ? `r_${trimmed}` : trimmed || 'resource';
+  return /^[0-9]/.test(identifier) ? `r_${identifier}` : identifier || 'resource';
 }
 
 /** The argument name a property takes in one target, or null when it is not one. */
