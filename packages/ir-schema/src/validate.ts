@@ -1,7 +1,8 @@
 import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
 
 import schemaJson from '../schema/architecture-ir.schema.json';
-import type { ArchitectureIr, IrNode } from './document.js';
+import type { ArchitectureIr } from './generated/types.js';
+import type { IrNode } from './nodes.js';
 import { IR_SCHEMA_ID } from './generated/ir-version.js';
 
 export interface IrProblem {

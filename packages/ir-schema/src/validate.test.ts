@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import schemaJson from '../schema/architecture-ir.schema.json';
-import type { ArchitectureIr } from './document.js';
+import type { ArchitectureIr } from './generated/types.js';
 import {
   assertValidIr,
   IrValidationError,
