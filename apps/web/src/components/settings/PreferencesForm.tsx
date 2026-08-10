@@ -7,23 +7,6 @@ import { ReasoningControl } from './ReasoningControl';
 import type { UserSettings } from '@/lib/api/settings';
 import { useUpdateSettings } from '@/lib/hooks/use-settings';
 
-/**
- * Regions worth offering by name. The field stays free text underneath, because
- * AWS adds regions faster than this list will be updated and refusing a valid
- * one would be worse than showing a short list.
- */
-const COMMON_REGIONS = [
-  'us-east-1',
-  'us-east-2',
-  'us-west-2',
-  'eu-west-1',
-  'eu-central-1',
-  'eu-north-1',
-  'ap-south-1',
-  'ap-southeast-1',
-  'ap-northeast-1',
-];
-
 const CURRENCIES = ['USD', 'EUR', 'GBP'];
 
 export function PreferencesForm({ settings }: { settings: UserSettings }) {
@@ -53,18 +36,15 @@ export function PreferencesForm({ settings }: { settings: UserSettings }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="region">Default region</Label>
+          {/* Free text rather than a list: AWS adds regions faster than a
+              hard-coded list would be updated, and the real one arrives with the
+              price snapshot, which has to enumerate regions anyway. */}
           <Input
             id="region"
             value={region}
             onChange={(event) => setRegion(event.target.value)}
-            list="region-suggestions"
             required
           />
-          <datalist id="region-suggestions">
-            {COMMON_REGIONS.map((entry) => (
-              <option key={entry} value={entry} />
-            ))}
-          </datalist>
           <p className="text-xs text-gray-500">Prices and latency estimates are taken here.</p>
         </div>
 

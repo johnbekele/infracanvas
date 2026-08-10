@@ -34,7 +34,7 @@ function readPatch(body: Record<string, unknown>): SettingsPatch {
   if ('defaultRegion' in body) {
     const region = body.defaultRegion;
     if (typeof region !== 'string' || !REGION_PATTERN.test(region)) {
-      throw new InvalidSettingError('defaultRegion must be an AWS region such as "eu-west-1".');
+      throw new InvalidSettingError('defaultRegion must look like an AWS region name.');
     }
     patch.defaultRegion = region;
   }

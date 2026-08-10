@@ -24,7 +24,7 @@ interface SettingsRow {
  * opened it and changed nothing behave identically.
  */
 export const DEFAULT_SETTINGS: UserSettings = {
-  defaultRegion: 'us-east-1',
+  defaultRegion: 'us-east-1', // infracanvas-allow: no-hardcoded-region -- this is the setting
   currency: 'USD',
   reasoningScale: 'balanced',
   monthlyTokenBudget: null,
