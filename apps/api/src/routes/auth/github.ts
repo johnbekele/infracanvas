@@ -10,6 +10,7 @@ import { env } from '../../lib/env.js';
 import { resolveGitHubToken, NO_TOKEN_GUIDANCE } from '../../lib/auth/token-source.js';
 import { establishSession } from '../../lib/auth/session.js';
 import { isLoopbackAddress } from '../../lib/auth/loopback.js';
+import { logError } from '../../lib/log.js';
 
 const router = Router();
 
@@ -106,7 +107,7 @@ router.get('/', async (req: Request, res: Response) => {
     } catch (error) {
       // Deliberately not forwarding the message: it can carry the token when
       // the failure came from a fetch that embedded the header.
-      console.error('Local token sign-in failed:', error);
+      logError('Local token sign-in failed', error);
       res.status(500).json({ error: 'Sign-in failed. See the API logs for details.' });
     }
     return;
