@@ -15,6 +15,11 @@ services:
         value: production
       - key: PORT
         value: 3001
+      # Render terminates TLS at its own router and forwards one hop, so the
+      # client address is the last entry in X-Forwarded-For. Rate limiting keys
+      # off it; a larger number here would let a caller spoof their bucket.
+      - key: TRUST_PROXY_HOPS
+        value: 1
       - key: APP_URL
         sync: false # Set this to your Vercel frontend URL
       - key: API_URL
