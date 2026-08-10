@@ -1,5 +1,7 @@
-// API client for backend communication
-// Uses VITE_API_URL env var for Render backend, falls back to relative URLs for local dev
+// API client for backend communication.
+// A hosted build must set VITE_API_URL to the deployed apps/api origin. The
+// relative fallback only works under `pnpm dev`, where Vite proxies /api to the
+// local server; nothing serves /api in a static deployment.
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
@@ -16,8 +18,11 @@ class ApiError extends Error {
   }
 }
 
-// Get API base URL - use env var for production (Render), relative for local dev
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+if (import.meta.env.PROD && !API_BASE_URL) {
+  console.warn('VITE_API_URL is unset; API requests will fail against a static deployment.');
+}
 
 /**
  * Make an authenticated API request
