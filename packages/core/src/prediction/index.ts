@@ -23,3 +23,25 @@ export {
   type ResourceCost,
   type Revision,
 } from './cost';
+
+export {
+  availability,
+  availabilityContext,
+  DEFAULT_AZ_CORRELATION,
+  MINUTES_PER_MONTH,
+  parallelAvailability,
+  seriesAvailability,
+  SLO_LADDER,
+  type AvailabilityContext,
+  type AvailabilityNode,
+  type AvailabilityReport,
+} from './availability';
+
+export { AWS_SLAS, findSla, type ServiceSla } from './availability/slas';
+
+export {
+  proposeSlos,
+  type PathLatencySummary,
+  type SliDefinition,
+  type SloProposal,
+} from './availability/slo';
