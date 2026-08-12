@@ -78,6 +78,15 @@ export const DEFAULT_ASSUMPTIONS = [
     rationale:
       'Data leaving AWS to the public internet. The line most often forgotten in a hand-built estimate and the one most likely to surprise.',
   },
+  {
+    id: 'availability.azCorrelation',
+    label: 'Correlated availability zone failure',
+    value: 0.1,
+    unit: 'fraction',
+    source: 'default',
+    rationale:
+      'The share of failures that take every replica at once, through a control plane problem or a region-wide event. Treating replicas as independent gives a three-zone deployment about eight nines, a figure nobody has ever observed; a tenth is a guess, but it is a guess anyone can change and watch the result move.',
+  },
 ] as const satisfies readonly Assumption[];
 
 /** Assumption ids, so a typo in a dependency reference fails to compile. */

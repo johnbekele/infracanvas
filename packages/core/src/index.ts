@@ -196,3 +196,24 @@ export {
   type ResourceCost,
   type Revision,
 } from './prediction';
+
+// Availability composed from published SLAs, and the objectives it can support
+export {
+  availability,
+  availabilityContext,
+  AWS_SLAS,
+  DEFAULT_AZ_CORRELATION,
+  findSla,
+  MINUTES_PER_MONTH,
+  parallelAvailability,
+  proposeSlos,
+  seriesAvailability,
+  SLO_LADDER,
+  type AvailabilityContext,
+  type AvailabilityNode,
+  type AvailabilityReport,
+  type PathLatencySummary,
+  type ServiceSla,
+  type SliDefinition,
+  type SloProposal,
+} from './prediction';

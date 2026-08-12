@@ -2,11 +2,10 @@ import { annualDowntimeMinutes, type ParamsOf, type ReliabilityContribution } fr
 
 /**
  * The numbers are the Amazon RDS service level agreement, not a measurement:
- * 99.95% monthly uptime for a Multi-AZ instance. AWS publishes no SLA for a
- * Single-AZ instance, so 99.5% is a modelling assumption, chosen because a
- * single instance's planned maintenance and instance replacement alone exceed
- * the Multi-AZ figure. It is stated here so a reader can disagree with it,
- * which is the entire point of putting assumptions in one place.
+ * 99.95% monthly uptime for a Multi-AZ DB Instance and 99.5% for a Single-DB
+ * Instance, the two commitments AWS makes. They are transcribed again in
+ * `prediction/availability/slas.ts` with their source and retrieval date, and
+ * a test holds the two statements of them equal.
  */
 const MULTI_AZ_AVAILABILITY = 0.9995;
 const SINGLE_AZ_AVAILABILITY = 0.995;
