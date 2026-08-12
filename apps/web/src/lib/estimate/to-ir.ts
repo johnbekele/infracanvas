@@ -1,4 +1,5 @@
 import {
+  DEFAULT_USAGE,
   IR_VERSION,
   serviceIdToKind,
   type ArchitectureIr,
@@ -156,7 +157,7 @@ export function canvasStoreToIr(
     irVersion: IR_VERSION,
     name: options.name ?? 'Untitled architecture',
     provider: 'aws',
-    region: options.region ?? 'us-east-1',
+    region: options.region ?? DEFAULT_USAGE.region,
     nodes: irNodes,
     edges: edges
       .filter((edge) => present.has(edge.source) && present.has(edge.target))
