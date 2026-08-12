@@ -43,6 +43,23 @@ interface EnvConfig {
   AWS_SECRET_ACCESS_KEY?: string;
   AWS_REGION?: string;
 
+  /**
+   * Run the job queue's worker in this process.
+   *
+   * On by default, so one process is a complete installation. Setting it false is
+   * how a deployment separates serving traffic from running jobs, without a
+   * second build or a code change.
+   */
+  WORKER_ENABLED: boolean;
+
+  /**
+   * How many jobs this worker runs at once.
+   *
+   * An analysis is dozens of GitHub requests against one user's rate limit, so
+   * beyond a couple this mostly buys 429s rather than throughput.
+   */
+  WORKER_CONCURRENCY: number;
+
   // Optional
   GITHUB_WEBHOOK_SECRET?: string;
   NODE_ENV: 'development' | 'production' | 'test';
@@ -59,6 +76,24 @@ function parseAuthProvider(raw: string | undefined): AuthProvider {
       'Use "oauth" for a hosted multi-user deployment, or "token" for local development ' +
       'and single-user self-hosting.'
   );
+}
+
+/**
+ * A worker concurrency that will not silently disable the worker.
+ *
+ * `Number('two')` is `NaN`, and a `NaN` concurrency claims nothing forever: the
+ * queue would fill and nothing would say why. A bad value is refused at startup
+ * instead, where it is one line in the log rather than a mystery.
+ */
+function parseConcurrency(raw: string | undefined): number {
+  if (raw === undefined || raw === '') return 2;
+
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`WORKER_CONCURRENCY must be a positive integer, got "${raw}".`);
+  }
+
+  return parsed;
 }
 
 function getEnv(): EnvConfig {
@@ -109,6 +144,8 @@ function getEnv(): EnvConfig {
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
+    WORKER_ENABLED: process.env.WORKER_ENABLED !== 'false',
+    WORKER_CONCURRENCY: parseConcurrency(process.env.WORKER_CONCURRENCY),
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   };
@@ -139,6 +176,7 @@ export function envSafe(): Partial<EnvConfig> {
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
+    WORKER_ENABLED: process.env.WORKER_ENABLED !== 'false',
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   };

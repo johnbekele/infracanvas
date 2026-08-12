@@ -6,7 +6,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const execFileMock = vi.hoisted(() => vi.fn());
 vi.mock('node:child_process', () => ({ execFile: execFileMock }));
 
-const { resolveGitHubToken, NO_TOKEN_GUIDANCE } = await import('./token-source.js');
+const { resolveGitHubToken, InvalidAccountError, NO_TOKEN_GUIDANCE } =
+  await import('./token-source.js');
 
 /** Drive the execFile callback the way a successful `gh auth token` would. */
 function ghReturns(stdout: string): void {
@@ -24,18 +25,17 @@ function ghFails(message: string): void {
 
 describe('resolveGitHubToken', () => {
   const originalToken = process.env.GITHUB_TOKEN;
+  const originalAccount = process.env.GITHUB_ACCOUNT;
 
   beforeEach(() => {
     execFileMock.mockReset();
     delete process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_ACCOUNT;
   });
 
   afterEach(() => {
-    if (originalToken === undefined) {
-      delete process.env.GITHUB_TOKEN;
-    } else {
-      process.env.GITHUB_TOKEN = originalToken;
-    }
+    restore('GITHUB_TOKEN', originalToken);
+    restore('GITHUB_ACCOUNT', originalAccount);
   });
 
   it('prefers the environment token over the gh cli', async () => {
@@ -103,11 +103,61 @@ describe('resolveGitHubToken', () => {
     expect(await resolveGitHubToken()).toEqual({ token: 'ghp_from_cli', origin: 'gh-cli' });
   });
 
+  it('asks gh for the named account when the machine has more than one', () => {
+    // Without this, gh answers with whichever account its config calls active,
+    // and on a work laptop that is reliably the wrong one. The failure is
+    // silent: the token is valid and the session it creates is real, so a
+    // repository gets connected as an identity nobody chose.
+    process.env.GITHUB_ACCOUNT = 'johnbekele';
+    ghReturns('ghp_personal');
+
+    return resolveGitHubToken().then((resolved) => {
+      expect(resolved).toEqual({ token: 'ghp_personal', origin: 'gh-cli' });
+      expect(execFileMock.mock.calls[0][1]).toEqual(['auth', 'token', '--user', 'johnbekele']);
+    });
+  });
+
+  it('leaves the account to gh when none is named', async () => {
+    ghReturns('ghp_from_cli');
+
+    await resolveGitHubToken();
+
+    expect(execFileMock.mock.calls[0][1]).toEqual(['auth', 'token']);
+  });
+
+  it('treats a blank account as none rather than asking for an empty login', async () => {
+    process.env.GITHUB_ACCOUNT = '  ';
+    ghReturns('ghp_from_cli');
+
+    await resolveGitHubToken();
+
+    expect(execFileMock.mock.calls[0][1]).toEqual(['auth', 'token']);
+  });
+
+  it('refuses an account that is not a GitHub login', async () => {
+    // A typo here should name the variable that is wrong. Silently falling back
+    // to the active account would reintroduce exactly the bug this prevents.
+    process.env.GITHUB_ACCOUNT = 'john bekele; rm -rf /';
+    ghReturns('ghp_from_cli');
+
+    await expect(resolveGitHubToken()).rejects.toBeInstanceOf(InvalidAccountError);
+    expect(execFileMock).not.toHaveBeenCalled();
+  });
+
   it('names both sources in the guidance it gives when there is no token', () => {
     // The message and the resolution order have to agree; one listing the wrong
     // sources is worse than none.
     expect(NO_TOKEN_GUIDANCE).toContain('GITHUB_TOKEN');
     expect(NO_TOKEN_GUIDANCE).toContain('gh auth login');
     expect(NO_TOKEN_GUIDANCE).toContain('AUTH_PROVIDER=oauth');
+    expect(NO_TOKEN_GUIDANCE).toContain('GITHUB_ACCOUNT');
   });
 });
+
+function restore(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+  } else {
+    process.env[name] = value;
+  }
+}

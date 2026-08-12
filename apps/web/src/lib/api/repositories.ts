@@ -1,6 +1,6 @@
 // Connected repositories and their analyses.
 import type { AppProfile, ArchitectureProposal } from '@infracanvas/core';
-import { apiFetch } from './client';
+import { apiFetch, apiUrl } from './client';
 
 export interface ConnectedRepository {
   id: string;
@@ -74,11 +74,23 @@ export const repositoriesApi = {
     return analyses;
   },
 
+  /**
+   * Ask for an analysis. Returns the queued run, which has no profile yet.
+   *
+   * The result arrives on the progress stream rather than from this call, so a
+   * repository large enough to take a minute is no longer a request racing a
+   * proxy timeout.
+   */
   async analyse(repositoryId: string, ref?: string) {
-    const { analysis } = await apiFetch<{ analysis: Analysis }>(
+    const { analysis } = await apiFetch<{ analysis: Analysis; jobId?: string }>(
       `/repositories/${repositoryId}/analyses`,
       { method: 'POST', body: JSON.stringify(ref ? { ref } : {}) }
     );
     return analysis;
+  },
+
+  /** Where to point an `EventSource` for a run's progress. */
+  progressUrl(repositoryId: string, analysisId: string) {
+    return apiUrl(`/repositories/${repositoryId}/analyses/${analysisId}/events`);
   },
 };

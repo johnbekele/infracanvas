@@ -1,18 +1,17 @@
 // Analysis runs for a connected repository.
 import { Router, type Request, type Response } from 'express';
-import { proposeArchitecture } from '@infracanvas/core';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 import { findRepository } from '../../lib/db/repositories.js';
 import {
   AnalysisInProgressError,
-  completeAnalysis,
   failAnalysis,
   findAnalysis,
   listAnalyses,
-  startAnalysis,
+  queueAnalysis,
 } from '../../lib/db/analyses.js';
-import { analyzeRepository } from '../../lib/analysis/analyze.js';
-import { GitHubSourceError } from '../../lib/analysis/github-source.js';
+import { enqueue } from '../../lib/jobs/queue.js';
+import { ANALYZE_REPOSITORY } from '../../lib/jobs/handlers/analyze-repository.js';
+import { streamAnalysisProgress } from '../../lib/jobs/progress-stream.js';
 import { assertBranch, InvalidGitHubParamError } from '../../lib/github-params.js';
 import { logError } from '../../lib/log.js';
 
@@ -21,12 +20,14 @@ const router = Router({ mergeParams: true });
 
 /**
  * POST /repositories/:repositoryId/analyses
- * Analyse the repository and return the finished run.
+ * Queue an analysis and return the run that will carry its result.
  *
- * Runs inline rather than on a queue. The profile is built from about a dozen
- * GitHub requests and no cloning, so it finishes in seconds, and a queue would
- * add a worker, a polling endpoint, and a class of stuck-job bugs for no gain
- * at this size. Deep ingestion does need a worker, and will bring one.
+ * 202 rather than 201: nothing has been analysed yet. The work used to run
+ * inside this request, which was fine for a small repository and a race against
+ * the proxy's timeout for a large one -- and losing that race left the run stuck
+ * in flight, holding the one-active-run index against every later attempt.
+ * Failure on the queue is recorded on the row instead, so the user is told what
+ * happened rather than left with a request that ended.
  */
 router.post('/', async (req: Request, res: Response) => {
   const userId = req.session!.userId;
@@ -51,6 +52,10 @@ router.post('/', async (req: Request, res: Response) => {
     throw error;
   }
 
+  // Checked before queueing, even though the worker looks the token up again
+  // when it runs. A user who has not connected GitHub should be told so now,
+  // rather than by a job that fails a second later for a reason they have to go
+  // and find.
   const token = await getGitHubToken(userId);
   if (!token) {
     res.status(401).json({ error: 'GitHub token not found. Please reconnect.' });
@@ -59,45 +64,62 @@ router.post('/', async (req: Request, res: Response) => {
 
   let analysis;
   try {
-    analysis = await startAnalysis(repository.id, ref);
+    analysis = await queueAnalysis(repository.id, ref);
   } catch (error) {
     if (error instanceof AnalysisInProgressError) {
       res.status(409).json({ error: error.message });
       return;
     }
-    logError('Failed to start analysis', error);
-    res.status(500).json({ error: 'Failed to start analysis' });
+    logError('Failed to queue analysis', error);
+    res.status(500).json({ error: 'Failed to queue analysis' });
     return;
   }
 
   try {
-    const profile = await analyzeRepository({
-      token,
-      owner: repository.githubOwner,
-      repo: repository.githubName,
-      ref,
+    const job = await enqueue({
+      kind: ANALYZE_REPOSITORY,
+      analysisId: analysis.id,
+      payload: { analysisId: analysis.id, repositoryId: repository.id, userId, ref },
     });
 
-    // Synthesised here rather than in the browser. The proposal is the record of
-    // what was decided about this commit -- each decision with its rationale and
-    // the files it rests on -- and recomputing it on every page load threw that
-    // record away as soon as the user navigated.
-    const architecture = proposeArchitecture(profile, repository.githubName);
-
-    res.status(201).json({ analysis: await completeAnalysis(analysis.id, profile, architecture) });
+    res.status(202).json({ analysis, jobId: job.id });
   } catch (error) {
-    // Recorded as a failed run before responding. A run left in `running`
-    // would hold the one-active-run index and block every later attempt.
-    const message =
-      error instanceof GitHubSourceError ? error.message : 'Analysis failed unexpectedly';
-
-    if (!(error instanceof GitHubSourceError)) {
-      logError('Analysis failed', error);
-    }
-
-    const failed = await failAnalysis(analysis.id, message);
-    res.status(error instanceof GitHubSourceError ? 502 : 500).json({ analysis: failed });
+    // The run exists but nothing will ever pick it up. Left pending it would
+    // block every later attempt on the one-active-run index, so it is failed
+    // here rather than becoming a repository nobody can analyse again.
+    logError('Failed to enqueue analysis job', error);
+    const failed = await failAnalysis(analysis.id, 'Could not be queued. Please try again.');
+    res.status(500).json({ analysis: failed });
   }
+});
+
+/**
+ * GET /repositories/:repositoryId/analyses/:analysisId/events
+ * Progress for a run, as server-sent events.
+ *
+ * SSE rather than polling or a WebSocket: the traffic is one-way and bursty, an
+ * EventSource reconnects on its own, and `Last-Event-ID` makes that reconnect
+ * resume rather than replay. A WebSocket would add a second protocol to operate
+ * for a stream that never carries a client message.
+ *
+ * Events are read from the job's log rather than pushed from the worker, so the
+ * API process serving the stream does not have to be the one running the job.
+ */
+router.get('/:analysisId/events', async (req: Request, res: Response) => {
+  const repository = await findRepository(req.session!.userId, req.params.repositoryId);
+
+  if (!repository) {
+    res.status(404).json({ error: 'Repository not found' });
+    return;
+  }
+
+  const analysis = await findAnalysis(req.params.analysisId);
+  if (!analysis || analysis.repositoryId !== repository.id) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+
+  await streamAnalysisProgress(req, res, analysis.id);
 });
 
 /**

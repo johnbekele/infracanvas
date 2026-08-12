@@ -1,7 +1,7 @@
 // Data hooks for connected repositories and their analyses.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { githubApi } from '../api/client';
-import { repositoriesApi } from '../api/repositories';
+import { repositoriesApi, type Analysis } from '../api/repositories';
 
 const keys = {
   all: ['repositories'] as const,
@@ -52,11 +52,24 @@ export function useDisconnectRepository() {
   });
 }
 
+/** A run that is queued or in flight, and so has an outcome still to come. */
+export function activeAnalysis(analyses: Analysis[] | undefined): Analysis | null {
+  return (
+    analyses?.find((analysis) => analysis.status === 'pending' || analysis.status === 'running') ??
+    null
+  );
+}
+
 export function useAnalyses(repositoryId: string | undefined) {
   return useQuery({
     queryKey: keys.analyses(repositoryId ?? ''),
     queryFn: () => repositoriesApi.listAnalyses(repositoryId!),
     enabled: Boolean(repositoryId),
+    // The progress stream normally settles a run, and this poll is the safety
+    // net for when it cannot: a proxy that will not pass an event stream, a
+    // browser that dropped it. Slow, because it exists to be wrong rarely rather
+    // than to be the mechanism.
+    refetchInterval: (query) => (activeAnalysis(query.state.data) ? 10_000 : false),
   });
 }
 

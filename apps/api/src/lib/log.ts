@@ -46,3 +46,13 @@ export function sanitiseForLog(value: unknown): string {
 export function logError(context: string, error: unknown): void {
   console.error(`${context}: ${sanitiseForLog(error)}`);
 }
+
+/**
+ * Log something recoverable, under the same single-line guarantee.
+ *
+ * `context` is a fixed string written by the caller and is never interpolated
+ * from a request.
+ */
+export function logWarn(context: string, detail: unknown): void {
+  console.warn(`${context}: ${sanitiseForLog(detail)}`);
+}
