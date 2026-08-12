@@ -237,7 +237,14 @@ describe('performance', () => {
     // move. This architecture is forty databases, so every one of them moves
     // and the revision costs what a full pricing does; the budget is therefore
     // asserted against the harder case rather than the flattering one.
-    expect(reviseSamples[5]).toBeLessThan(2);
+    //
+    // Both figures are around 0.15ms here. The ceilings are a hundred times
+    // that because CI runs every package's suite at once on a small runner,
+    // where the same call has been measured twenty-six times slower without the
+    // work changing at all. Which resources get re-priced is asserted above, by
+    // name; what is left for a budget to catch is the order-of-magnitude kind,
+    // such as parsing the price snapshot once per node.
+    expect(reviseSamples[5]).toBeLessThan(20);
   });
 });
 
