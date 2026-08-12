@@ -211,6 +211,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@infracanvas/ir-schema':
+        specifier: workspace:*
+        version: link:../ir-schema
       jszip:
         specifier: ^3.10.1
         version: 3.10.1

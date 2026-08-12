@@ -1,7 +1,7 @@
 import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
 
 import schemaJson from '../schema/architecture-ir.schema.json';
-import type { ArchitectureIr } from './generated/types.js';
+import type { ArchitectureIr, PendingContractKind, ResourceKind } from './generated/types.js';
 import type { IrNode } from './nodes.js';
 import { IR_SCHEMA_ID } from './generated/ir-version.js';
 
@@ -90,13 +90,13 @@ function pendingKinds(): string[] {
 }
 
 /** Every kind the schema knows, whether or not its parameters are typed yet. */
-export function resourceKinds(): string[] {
-  return [...schemaJson.$defs.resourceKind.enum];
+export function resourceKinds(): ResourceKind[] {
+  return [...schemaJson.$defs.resourceKind.enum] as ResourceKind[];
 }
 
 /** Kinds whose parameters are still an untyped bag, awaiting a resource contract. */
-export function pendingContractKinds(): string[] {
-  return pendingKinds();
+export function pendingContractKinds(): PendingContractKind[] {
+  return pendingKinds() as PendingContractKind[];
 }
 
 function toProblem(error: ErrorObject, prefix = ''): IrProblem {
