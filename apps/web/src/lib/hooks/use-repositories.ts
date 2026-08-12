@@ -78,6 +78,30 @@ export function useRunAnalysis(repositoryId: string | undefined) {
 
   return useMutation({
     mutationFn: (ref?: string) => repositoriesApi.analyse(repositoryId!, ref),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.analyses(repositoryId ?? '') }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.analyses(repositoryId ?? '') });
+      // The list carries each repository's newest run, so starting one from a
+      // card has to refresh the list too, or the card it was started from goes
+      // on reading "never analysed" until something else happens to reload it.
+      void queryClient.invalidateQueries({ queryKey: keys.all });
+    },
+  });
+}
+
+/**
+ * Start an analysis from a list, where the repository is chosen per call rather
+ * than fixed by the page. Separate from `useRunAnalysis` because a hook cannot
+ * be called per row, and pushing the id into the mutation is the whole
+ * difference.
+ */
+export function useRunAnalysisFor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (repositoryId: string) => repositoriesApi.analyse(repositoryId),
+    onSuccess: (_result, repositoryId) => {
+      void queryClient.invalidateQueries({ queryKey: keys.analyses(repositoryId) });
+      void queryClient.invalidateQueries({ queryKey: keys.all });
+    },
   });
 }

@@ -16,6 +16,30 @@ export interface ConnectedRepository {
 
 export type AnalysisStatus = 'pending' | 'running' | 'succeeded' | 'failed';
 
+/** The part of a run a card needs, without the profile, which is far larger. */
+export interface RunSummary {
+  id: string;
+  ref: string;
+  status: AnalysisStatus;
+  commitSha: string | null;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  architecture: ArchitectureProposal | null;
+}
+
+/**
+ * A connected repository with the state the home page shows.
+ *
+ * `latest` and `succeeded` are often different runs, and both are needed: a
+ * failure this morning should be visible without blanking the architecture from
+ * yesterday.
+ */
+export interface RepositoryWithState extends ConnectedRepository {
+  latest: RunSummary | null;
+  succeeded: RunSummary | null;
+}
+
 export interface Analysis {
   id: string;
   repositoryId: string;
@@ -38,7 +62,7 @@ export interface Analysis {
 
 export const repositoriesApi = {
   async list() {
-    const { repositories } = await apiFetch<{ repositories: ConnectedRepository[] }>(
+    const { repositories } = await apiFetch<{ repositories: RepositoryWithState[] }>(
       '/repositories'
     );
     return repositories;
