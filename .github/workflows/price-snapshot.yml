@@ -1,0 +1,94 @@
+name: Price snapshot
+
+on:
+  schedule:
+    # Monthly. AWS republishes offer files far more often than that, but only a
+    # price change moves a number in the product, and a daily rebuild would
+    # trade a lot of runner minutes for a diff nobody reads.
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: price-snapshot
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    name: Rebuild the AWS price snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup-node
+
+      - name: Rebuild from the AWS Price List endpoints
+        run: |
+          /usr/bin/time -v node scripts/ci/build-price-snapshot.mjs 2> time.txt || {
+            cat time.txt
+            exit 1
+          }
+          cat time.txt
+
+      - name: Assert the rebuild budget
+        run: |
+          # Both numbers are product requirements: the rebuild has to fit in a
+          # scheduled job on a standard runner, and it has to stream rather
+          # than accumulate. Reported here so a regression is visible in the
+          # log even before it breaks the ceiling.
+          elapsed=$(grep 'Elapsed (wall clock)' time.txt | awk '{print $NF}')
+          peak_kb=$(grep 'Maximum resident set size' time.txt | grep -oE '[0-9]+')
+          seconds=$(echo "$elapsed" | awk -F: '{ s = 0; for (i = 1; i <= NF; i++) s = s * 60 + $i; print int(s) }')
+          echo "Rebuild took ${seconds}s with peak RSS ${peak_kb} KB"
+          if [ "${seconds:-0}" -gt 600 ]; then
+            echo "::error::Rebuild took ${seconds}s, over the 10 minute budget."
+            exit 1
+          fi
+          if [ "${peak_kb:-0}" -gt 1048576 ]; then
+            echo "::error::Peak RSS ${peak_kb} KB exceeds the 1 GB budget. The build must stream, not accumulate."
+            exit 1
+          fi
+
+      - name: Verify the snapshot still loads
+        run: pnpm --filter @infracanvas/core test
+
+      - name: Open a pull request when prices moved
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The payload carries no timestamp and its keys are sorted, so an
+          # unchanged price list rebuilds byte for byte and this is a no-op.
+          if git diff --quiet -- data/pricing; then
+            echo "::notice::Prices are unchanged; nothing to open."
+            exit 0
+          fi
+
+          branch="chore/price-snapshot-$(date -u +%Y%m)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$branch"
+          git add data/pricing
+          git commit -m 'chore(pricing): refresh the AWS price snapshot'
+          git push --force origin "$branch"
+
+          # A pull request opened with the default token does not itself start
+          # the gate workflows. Pushing any commit to the branch starts them,
+          # which is the price of not holding a personal token in a secret.
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title 'chore(pricing): refresh the AWS price snapshot' \
+            --body "$(printf '%s\n' \
+              'Rebuilt by the scheduled price snapshot job from the AWS Price List bulk endpoints.' \
+              '' \
+              'Closes nothing on its own: it exists so a price change is reviewed rather than' \
+              'silently applied. Check the diff in `data/pricing/MANIFEST.json` for which offers' \
+              'republished, then confirm a spot rate or two against the AWS Pricing Calculator.' \
+              '' \
+              'Push an empty commit to this branch to start the gates.')" \
+            || echo "::notice::A pull request for $branch is already open."
