@@ -29,6 +29,19 @@ export type SubnetNode = NodeBase & {
 export type SubnetTier = 'public' | 'private';
 /**
  * This interface was referenced by `ArchitectureIr`'s JSON-Schema
+ * via the `definition` "rdsInstanceNode".
+ */
+export type RdsInstanceNode = NodeBase & {
+  kind: 'rds_instance';
+  params: RdsInstanceParams;
+};
+/**
+ * This interface was referenced by `ArchitectureIr`'s JSON-Schema
+ * via the `definition` "rdsEngine".
+ */
+export type RdsEngine = 'postgres' | 'mysql' | 'mariadb';
+/**
+ * This interface was referenced by `ArchitectureIr`'s JSON-Schema
  * via the `definition` "pendingContractNode".
  */
 export type PendingContractNode = NodeBase & {
@@ -55,7 +68,6 @@ export type PendingContractKind =
   | 'cloudfront_distribution'
   | 'route53_zone'
   | 's3_bucket'
-  | 'rds_instance'
   | 'dynamodb_table'
   | 'elasticache_cluster'
   | 'sns_topic'
@@ -104,7 +116,7 @@ export interface ArchitectureIr {
   name: string;
   provider: 'aws';
   region: string;
-  nodes: (VpcNode | SubnetNode | PendingContractNode)[];
+  nodes: (VpcNode | SubnetNode | RdsInstanceNode | PendingContractNode)[];
   edges: Edge[];
   presentation?: Presentation;
 }
@@ -145,6 +157,22 @@ export interface SubnetParams {
   tier: SubnetTier;
   cidrBlock: string;
   availabilityZone: string;
+}
+/**
+ * This interface was referenced by `ArchitectureIr`'s JSON-Schema
+ * via the `definition` "rdsInstanceParams".
+ */
+export interface RdsInstanceParams {
+  engine: RdsEngine;
+  engineVersion?: string;
+  instanceClass: string;
+  allocatedStorageGb: number;
+  storageType?: 'gp2' | 'gp3' | 'io1' | 'io2';
+  multiAz?: boolean;
+  publiclyAccessible?: boolean;
+  deletionProtection?: boolean;
+  backupRetentionDays?: number;
+  storageEncrypted?: boolean;
 }
 /**
  * An untyped parameter bag, replaced by typed parameters when the kind gains a contract.

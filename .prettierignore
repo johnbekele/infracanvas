@@ -19,3 +19,6 @@ Cargo.lock
 packages/ir-schema/generated
 services/brain/src/brain/ir/generated
 tests/fixtures/generated
+
+# Golden emitter output, compared byte for byte
+**/__golden__/**

@@ -23,6 +23,7 @@ export {
   IrValidationError,
   pendingContractKinds,
   resourceKinds,
+  typedContractKinds,
   validateIr,
   type IrProblem,
   type IrValidationResult,

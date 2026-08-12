@@ -99,6 +99,24 @@ export function pendingContractKinds(): PendingContractKind[] {
   return pendingKinds() as PendingContractKind[];
 }
 
+/**
+ * Kinds whose parameters this schema version types, read off the node branches
+ * rather than listed. Typing a kind is a schema edit in three places - the
+ * branch, the `oneOf`, the pending enum - and a list here would be a fourth
+ * that nobody remembers until a resource silently prices as an untyped bag.
+ */
+export function typedContractKinds(): ResourceKind[] {
+  const defs = schemaJson.$defs as Record<string, { properties?: { kind?: { const?: string } } }>;
+  const kinds: ResourceKind[] = [];
+
+  for (const branch of schemaJson.properties.nodes.items.oneOf) {
+    const name = branch.$ref.replace('#/$defs/', '');
+    const constant = defs[name]?.properties?.kind?.const;
+    if (constant !== undefined) kinds.push(constant as ResourceKind);
+  }
+  return kinds;
+}
+
 function toProblem(error: ErrorObject, prefix = ''): IrProblem {
   const property =
     error.keyword === 'additionalProperties' || error.keyword === 'unevaluatedProperties'
