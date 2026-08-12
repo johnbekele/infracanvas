@@ -32,7 +32,11 @@ export const DEFAULT_USAGE: UsageAssumptions = {
   requestsPerMonth: 1_000_000,
   averageRequestKb: 8,
   storageGb: 20,
-  region: 'us-east-1',
+  // Not a client pointed at a region, which is what the rule protects against,
+  // but the starting value of an assumption the user is shown and can change.
+  // Pricing has to begin somewhere, and beginning in the region with the widest
+  // published price coverage is the choice least likely to read as unpriced.
+  region: 'us-east-1', // infracanvas-allow: no-hardcoded-region
 };
 
 export interface CostComponent {
