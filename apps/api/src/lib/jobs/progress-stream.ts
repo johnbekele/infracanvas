@@ -2,10 +2,10 @@
  * Streaming a job's progress to the browser.
  *
  * The stream is served by reading the job's event log, not by subscribing to the
- * worker. That decoupling is the point: any API process can serve the stream for
- * a job running in any worker, the log is the same whether it is read live or an
- * hour later, and a reconnecting client resumes from an id rather than from
- * whatever the worker happens to still hold in memory.
+ * worker. That decoupling is the point. Every API process can serve the stream
+ * for a job running in whichever worker claimed it, the log reads the same live
+ * or an hour later, and a reconnecting client resumes from an id rather than
+ * from whatever the worker happens to still hold in memory.
  *
  * Polling the log is the deliberately boring choice. `LISTEN`/`NOTIFY` would
  * remove the poll, at the cost of a dedicated connection per stream held outside
