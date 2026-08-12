@@ -21,6 +21,30 @@
 - Do NOT add any AI or assistant co-author attribution to commits. Gate 2 rejects commits carrying
   `Co-Authored-By: Claude`, `Generated with`, or similar trailers.
 
+### Commit identity
+
+This is a personal project. Every commit must be authored by the personal account **johnbekele**:
+
+```
+user.name  = John Bekele
+user.email = 164889902+johnbekele@users.noreply.github.com
+```
+
+- These are set in this repository's local git config, which every worktree shares. **Do not remove
+  or "correct" them**, and never fall back to the global config, which carries the Thomson Reuters
+  work address `yohans.bekele@thomsonreuters.com`. That address resolves on GitHub to the work
+  account `johnbekele6130593`, so a commit made with it attributes personal work to an employer.
+- Check before your first commit in a session, and after any `git clone`:
+  ```bash
+  git config --get user.email   # must be the noreply address above
+  ```
+- If commits have already been made with the wrong address and are not yet merged, rewrite them
+  before the pull request is reviewed:
+  ```bash
+  git rebase --exec 'git commit --amend --no-edit --reset-author' origin/main
+  ```
+  Verify with `git log origin/main..HEAD --format='%an <%ae>'`.
+
 ## Quality Gates
 
 This repository is governed by a ten-gate system. Details live in `docs/DELIVERY.md`.

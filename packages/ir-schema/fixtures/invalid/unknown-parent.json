@@ -1,0 +1,20 @@
+{
+  "irVersion": "1.0.0",
+  "name": "Subnet in a VPC that does not exist",
+  "provider": "aws",
+  "region": "eu-west-1",
+  "nodes": [
+    {
+      "id": "subnet-orphan",
+      "kind": "subnet",
+      "name": "Orphan",
+      "parent": "vpc-missing",
+      "params": {
+        "tier": "private",
+        "cidrBlock": "10.0.2.0/24",
+        "availabilityZone": "eu-west-1a"
+      }
+    }
+  ],
+  "edges": []
+}

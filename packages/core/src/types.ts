@@ -14,6 +14,11 @@ export interface DesignNode {
   id: string;
   serviceId: string;
   position: { x: number; y: number };
+  /**
+   * Superseded by `IrNodeData.params` in `./ir/canvas`, which is typed per
+   * resource kind rather than being a bag of scalars. Kept because `apps/web`
+   * still reads it; the designer moves across in the web epic.
+   */
   properties: Record<string, string | number | boolean>;
 }
 
@@ -54,6 +59,12 @@ export interface ServiceNodeData {
   shortName: string;
   color: string;
   category: string;
+  /**
+   * Superseded by `IrNodeData.params` in `./ir/canvas`. A cost model cannot
+   * read `Record<string, string | number | boolean>` and know that `memory` is
+   * mebibytes, which is the whole reason the IR exists. Kept because
+   * `apps/web` still reads it.
+   */
   properties: Record<string, string | number | boolean>;
   nodeType?: 'service' | ContainerNodeType;
   parentId?: string;

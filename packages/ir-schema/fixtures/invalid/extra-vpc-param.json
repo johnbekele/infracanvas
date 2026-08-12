@@ -1,0 +1,15 @@
+{
+  "irVersion": "1.0.0",
+  "name": "VPC carrying a parameter the schema does not declare",
+  "provider": "aws",
+  "region": "eu-west-1",
+  "nodes": [
+    {
+      "id": "vpc-main",
+      "kind": "vpc",
+      "name": "Main VPC",
+      "params": { "cidrBlock": "10.0.0.0/16", "instanceTenancy": "dedicated" }
+    }
+  ],
+  "edges": []
+}

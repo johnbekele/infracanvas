@@ -29,6 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup-node
+      # The IR generator emits TypeScript and Pydantic from one schema, and its
+      # idempotency test runs the whole generator rather than half of it, so this
+      # job needs the Python toolchain even though it runs no Python tests.
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          enable-cache: true
+      - run: uv sync --directory services/brain --all-extras
       - run: pnpm turbo build --filter=@infracanvas/core
       - run: pnpm turbo test
 
