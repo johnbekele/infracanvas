@@ -36,9 +36,7 @@ app.use(express.json({ limit: '10mb' }));
 // Mounted before CORS, and only when a service token is configured. Nothing in
 // a browser calls the internal plane, so it is kept off the surface that exists
 // for one.
-if (mountInternalRoutes(app)) {
-  console.log('Internal plane mounted at /internal');
-}
+mountInternalRoutes(app);
 
 app.use(corsMiddleware);
 
