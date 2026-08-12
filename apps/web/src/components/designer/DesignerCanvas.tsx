@@ -29,6 +29,7 @@ import { SubnetNode } from './SubnetNode';
 import { ClusterNode } from './ClusterNode';
 import { ServicePalette } from './ServicePalette';
 import { PropertiesPanel } from './PropertiesPanel';
+import { EstimatePanel } from './estimate/EstimatePanel';
 import { CodePanel } from './CodePanel';
 import { DesignerToolbar } from './DesignerToolbar';
 import { DeletableEdge } from './DeletableEdge';
@@ -438,6 +439,9 @@ function DesignerCanvasInner() {
 
       {/* Properties Panel */}
       <PropertiesPanel isMobile={isMobile} />
+
+      {/* Estimate Panel */}
+      <EstimatePanel isMobile={isMobile} />
     </div>
   );
 }

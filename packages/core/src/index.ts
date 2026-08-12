@@ -129,6 +129,11 @@ export {
   type IrNodeData,
 } from './ir/canvas';
 
+// Re-exported so a consumer can hold an IR document without depending on the
+// schema package, which carries a JSON Schema validator no browser needs.
+export { IR_VERSION } from '@infracanvas/ir-schema';
+export type { ArchitectureIr, IrEdge, IrNode, ResourceKind } from '@infracanvas/ir-schema';
+
 export {
   canvasTypeForNode,
   kindToServiceId,
@@ -144,6 +149,7 @@ export {
   annualDowntimeMinutes,
   DEFAULT_USAGE,
   EmitReferenceError,
+  evaluateArchitecture,
   getResourceContract,
   HOURS_PER_MONTH,
   kindsWithoutContract,
@@ -153,6 +159,7 @@ export {
   registerResource,
   resetResourceRegistry,
   usd,
+  type ArchitectureFindings,
   type CostComponent,
   type CostEstimate,
   type EmitContext,

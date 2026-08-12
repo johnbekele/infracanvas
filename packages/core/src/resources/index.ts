@@ -12,5 +12,6 @@ export function registerBuiltInResources(): void {
 }
 
 export * from './contract';
+export { evaluateArchitecture, type ArchitectureFindings } from './evaluate';
 export * from './registry';
 export { rdsInstanceContract } from './rds-instance';
