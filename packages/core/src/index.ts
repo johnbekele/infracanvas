@@ -148,6 +148,22 @@ export {
 
 export { normaliseCanvas, normaliseIr } from './ir/normalise';
 
+// The typed patch: how anything other than the canvas proposes a change
+export {
+  applyPatch,
+  invertPatch,
+  IR_PATCH_VERSION,
+  IrPatchError,
+  MAX_OPS_PER_PATCH,
+  type IrParamValue,
+  type IrPatch,
+  type IrPatchOp,
+  type PatchProblem,
+  type PatchResult,
+} from './ir/patch';
+
+export { canonicalJson, irDigest, patchDigest, semanticEncoding } from './ir/digest';
+
 // Resource contracts: cost, latency, reliability, rules and emitters per kind
 export {
   annualDowntimeMinutes,
