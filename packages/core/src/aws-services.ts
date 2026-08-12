@@ -748,6 +748,9 @@ const coreServices: AWSService[] = [
     icon: 'network',
     allowedConnections: [],
     isContainer: true,
+    // A zone is the only thing a VPC is drawn inside, and it stays optional: a
+    // design that says nothing about failure domains is still a valid design.
+    allowedParents: ['availability-zone'],
     properties: [
       { name: 'vpcName', label: 'VPC Name', type: 'text', default: 'my-vpc', required: true },
       {

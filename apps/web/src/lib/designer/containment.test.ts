@@ -103,6 +103,36 @@ describe('canNest', () => {
     expect(canNest('private-subnet', null)).toBe(false);
   });
 
+  it('starts a zone on open canvas, since nothing encloses a failure domain', () => {
+    expect(canNest('availability-zone', null)).toBe(true);
+    expect(canNest('availability-zone', 'vpc-environment')).toBe(false);
+    expect(canNest('availability-zone', 'private-subnet')).toBe(false);
+  });
+
+  it('draws a VPC inside a zone or on its own, and nowhere else', () => {
+    expect(canNest('vpc-environment', 'availability-zone')).toBe(true);
+    expect(canNest('vpc-environment', null)).toBe(true);
+    expect(canNest('vpc-environment', 'private-subnet')).toBe(false);
+  });
+
+  it('accepts a VPC dropped on the zone, the way the canvas asks', () => {
+    const nodes = [node('zone', 'availability-zone', { x: 0, y: 0 }, { width: 580, height: 520 })];
+    const container = containerAt({ x: 100, y: 100 }, nodes);
+
+    expect(container?.id).toBe('zone');
+    expect(canNest('vpc-environment', container?.data.serviceId ?? null)).toBe(true);
+  });
+
+  it('refuses a subnet dropped in the zone but outside the VPC', () => {
+    expect(canNest('public-subnet', 'availability-zone')).toBe(false);
+  });
+
+  it('keeps a cluster in a subnet rather than loose in a zone', () => {
+    expect(canNest('ecs-cluster', 'private-subnet')).toBe(true);
+    expect(canNest('ecs-cluster', 'availability-zone')).toBe(false);
+    expect(canNest('eks-cluster', 'availability-zone')).toBe(false);
+  });
+
   it('keeps a database out of a public subnet', () => {
     expect(canNest('rds', 'private-subnet')).toBe(true);
     expect(canNest('rds', 'public-subnet')).toBe(false);
@@ -116,11 +146,6 @@ describe('canNest', () => {
   it('honours the explicit parent list a service declares', () => {
     expect(canNest('fargate', 'ecs-cluster')).toBe(true);
     expect(canNest('fargate', 'vpc-environment')).toBe(false);
-  });
-
-  it('does not nest a VPC inside anything', () => {
-    expect(canNest('vpc-environment', 'private-subnet')).toBe(false);
-    expect(canNest('vpc-environment', null)).toBe(true);
   });
 
   it('rejects a service the catalog has never heard of', () => {

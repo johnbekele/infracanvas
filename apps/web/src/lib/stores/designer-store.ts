@@ -11,6 +11,8 @@ import {
   type EdgeChange,
 } from 'reactflow';
 import type { ServiceNodeData } from '@infracanvas/core';
+import { CONTAINER_DEFAULT_SIZE, containerZIndex } from '@/lib/designer/containment';
+import { detachIllegalParents } from '@/lib/designer/migrate';
 
 // Re-exported rather than redeclared: the canvas and the code generators have
 // to agree on this shape, and two copies of it drifted the moment a container
@@ -396,34 +398,27 @@ export const useDesignerStore = create<DesignerState>()(
             return node;
           });
 
+          state.nodes = detachIllegalParents(state.nodes);
+
+          // Every container, not only VPCs and subnets: a zone or a cluster used
+          // to come back unsized and out of order, because this list was written
+          // before those existed and nothing kept the two in step.
           state.nodes = state.nodes.map((node) => {
-            if (node.type === 'vpcEnvironment') {
-              return {
-                ...node,
-                width: (node.style?.width as number) || (node.width as number) || 500,
-                height: (node.style?.height as number) || (node.height as number) || 400,
-                zIndex: -2,
-                style: {
-                  ...node.style,
-                  width: (node.style?.width as number) || (node.width as number) || 500,
-                  height: (node.style?.height as number) || (node.height as number) || 400,
-                },
-              };
-            }
-            if (node.type === 'subnet') {
-              return {
-                ...node,
-                width: (node.style?.width as number) || (node.width as number) || 220,
-                height: (node.style?.height as number) || (node.height as number) || 180,
-                zIndex: -1,
-                style: {
-                  ...node.style,
-                  width: (node.style?.width as number) || (node.width as number) || 220,
-                  height: (node.style?.height as number) || (node.height as number) || 180,
-                },
-              };
-            }
-            return node;
+            const defaultSize = CONTAINER_DEFAULT_SIZE[node.data.serviceId];
+            if (!defaultSize) return node;
+
+            const width =
+              (node.style?.width as number) || (node.width as number) || defaultSize.width;
+            const height =
+              (node.style?.height as number) || (node.height as number) || defaultSize.height;
+
+            return {
+              ...node,
+              width,
+              height,
+              zIndex: containerZIndex(node.data.serviceId),
+              style: { ...node.style, width, height },
+            };
           });
         }
 

@@ -2,7 +2,7 @@
 
 import type { ServiceNodeData, PulumiLanguage } from '../types';
 import { emitPulumi, type ParentContext } from './emit';
-import { containersFirst, parentLinks, placementOf } from './hierarchy';
+import { containersFirst, parentLinks, placedProperties, placementOf } from './hierarchy';
 
 export interface PulumiFile {
   path: string;
@@ -84,6 +84,14 @@ function parentContextFor(
   return undefined;
 }
 
+/** The node as it should generate, with placement folded into its properties. */
+function placed(
+  node: Node<ServiceNodeData>,
+  nodes: Node<ServiceNodeData>[]
+): Node<ServiceNodeData> {
+  return { ...node, data: { ...node.data, properties: placedProperties(node, nodes) } };
+}
+
 export function generatePulumiProject(
   nodes: Node<ServiceNodeData>[],
   edges: Edge[],
@@ -157,7 +165,11 @@ const tags = {
   // error in TypeScript, not merely untidy.
   containersFirst(nodes).forEach((node) => {
     const varName = names.get(node.id) as string;
-    content += generateTypeScriptResource(node, varName, parentContextFor(node, nodes, names));
+    content += generateTypeScriptResource(
+      placed(node, nodes),
+      varName,
+      parentContextFor(node, nodes, names)
+    );
   });
 
   content += `\n// Exports\n`;
@@ -431,7 +443,11 @@ tags = {
 
   containersFirst(nodes).forEach((node) => {
     const varName = names.get(node.id) as string;
-    content += generatePythonResource(node, varName, parentContextFor(node, nodes, names));
+    content += generatePythonResource(
+      placed(node, nodes),
+      varName,
+      parentContextFor(node, nodes, names)
+    );
   });
 
   content += `\n# Exports\n`;

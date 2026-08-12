@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Settings, Trash2, Info } from 'lucide-react';
 import { useDesignerStore } from '@/lib/stores/designer-store';
-import { getServiceById } from '@infracanvas/core';
+import { ZONE_PROPERTY, getServiceById, zoneNameOf } from '@infracanvas/core';
 import { Button } from '@/components/ui/button';
 import { NodeEvidence } from './NodeEvidence';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,13 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
   const serviceDefinition = useMemo(
     () => (selectedNode ? getServiceById(selectedNode.data.serviceId) : null),
     [selectedNode]
+  );
+
+  // The zone a node is drawn in decides its zone, so offering the choice again
+  // here would let the panel disagree with both the canvas and the export.
+  const zoneName = useMemo(
+    () => (selectedNode ? zoneNameOf(selectedNode, nodes) : undefined),
+    [selectedNode, nodes]
   );
 
   const handleClose = () => {
@@ -100,6 +107,25 @@ export function PropertiesPanel({ isMobile = false }: PropertiesPanelProps) {
           <div className="space-y-3 md:space-y-4">
             {serviceDefinition.properties.map((prop) => {
               const currentValue = selectedNode.data.properties[prop.name] ?? prop.default;
+
+              if (prop.name === ZONE_PROPERTY && zoneName) {
+                return (
+                  <div key={prop.name} className="space-y-1 md:space-y-1.5">
+                    <Label className="flex items-center gap-1 text-[11px] md:text-xs">
+                      {prop.label}
+                    </Label>
+                    <Input
+                      value={zoneName}
+                      readOnly
+                      disabled
+                      className="h-8 text-xs md:h-9 md:text-sm"
+                    />
+                    <p className="text-[9px] text-gray-500 md:text-[10px]">
+                      Taken from the availability zone this sits inside.
+                    </p>
+                  </div>
+                );
+              }
 
               return (
                 <div key={prop.name} className="space-y-1 md:space-y-1.5">

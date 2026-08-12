@@ -73,11 +73,14 @@ export {
 } from './codegen/emit';
 
 export {
+  ZONE_PROPERTY,
   ancestors,
   containersFirst,
   isProvisionable,
   parentLinks,
+  placedProperties,
   placementOf,
+  zoneNameOf,
   type HierarchyNode,
   type Placement,
 } from './codegen/hierarchy';

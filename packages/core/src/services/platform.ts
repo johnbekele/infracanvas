@@ -2,9 +2,9 @@
  * Compute, containers, security, and observability.
  *
  * The container entries matter more than they look. A cluster is a box that
- * holds services, an availability zone is a box that holds subnets, and without
- * them a diagram of nine services is nine boxes in a row with no statement about
- * what shares capacity or what survives losing a zone.
+ * holds services, an availability zone is the box everything else sits in, and
+ * without them a diagram of nine services is nine boxes in a row with no
+ * statement about what shares capacity or what survives losing a zone.
  */
 import type { AWSService } from '../aws-services';
 import { bool, num, select, text } from './props';
@@ -32,7 +32,9 @@ export const platformServices: AWSService[] = [
     icon: 'boxes',
     allowedConnections: [],
     isContainer: true,
-    allowedParents: ['private-subnet', 'public-subnet', 'availability-zone'],
+    // Not the zone itself: the zone now holds the network, so a cluster placed
+    // straight into one would be a cluster in no subnet, which cannot be emitted.
+    allowedParents: ['private-subnet', 'public-subnet'],
     subnetPlacement: anySubnet,
     properties: [
       text('clusterName', 'Cluster Name', 'my-cluster', true),
@@ -59,7 +61,7 @@ export const platformServices: AWSService[] = [
     icon: 'hexagon',
     allowedConnections: ['rds', 'elasticache', 's3', 'efs', 'msk'],
     isContainer: true,
-    allowedParents: ['private-subnet', 'availability-zone'],
+    allowedParents: ['private-subnet'],
     subnetPlacement: anySubnet,
     properties: [
       text('clusterName', 'Cluster Name', 'my-eks', true),
@@ -82,19 +84,20 @@ export const platformServices: AWSService[] = [
     name: 'Availability Zone',
     shortName: 'AZ',
     category: 'networking',
-    description: 'Isolated failure domain holding subnets',
+    description: 'Isolated failure domain holding a network',
     color: NETWORK_COLOUR,
     icon: 'layout-grid',
     allowedConnections: [],
     isContainer: true,
-    parentRequired: 'vpc-environment',
-    allowedParents: ['vpc-environment'],
+    // The outermost box on the canvas: a zone is where the racks are, and the
+    // networks drawn inside it are what happens to be running there. Declaring
+    // no parents is what keeps it out of a VPC.
     properties: [
       text('zoneName', 'Zone', 'us-east-1a', true),
       bool('primary', 'Primary Zone', true),
     ],
     // A zone is a placement constraint rather than a resource: it becomes the
-    // `availability_zone` argument on the subnets drawn inside it.
+    // `availability_zone` argument on the subnets drawn anywhere inside it.
     iac: {
       terraformResource: '',
       pulumiClass: '',

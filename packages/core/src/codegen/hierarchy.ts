@@ -9,11 +9,12 @@
  * lands wherever the provider defaults put it.
  */
 import { getServiceById } from '../aws-services';
+import type { PropertyValue } from './emit';
 
 export interface HierarchyNode {
   id: string;
   parentNode?: string;
-  data: { serviceId: string };
+  data: { serviceId: string; properties?: Record<string, PropertyValue> };
 }
 
 /** The containers enclosing a node, by node id. */
@@ -65,6 +66,41 @@ export function placementOf<T extends HierarchyNode>(node: T, nodes: T[]): Place
   }
 
   return placement;
+}
+
+/** The property a zone answers on the nodes drawn inside it. */
+export const ZONE_PROPERTY = 'availabilityZone';
+
+/** The name of the availability zone a node is drawn inside, if it is in one. */
+export function zoneNameOf<T extends HierarchyNode>(node: T, nodes: T[]): string | undefined {
+  const zoneId = placementOf(node, nodes).zone;
+  if (!zoneId) return undefined;
+
+  const zoneName = nodes.find((candidate) => candidate.id === zoneId)?.data.properties?.zoneName;
+  return typeof zoneName === 'string' && zoneName !== '' ? zoneName : undefined;
+}
+
+/**
+ * The properties a node generates with, after placement has answered some of them.
+ *
+ * A subnet drawn inside an availability zone takes its zone from the box it sits
+ * in. Reading the property alone would export a subnet in `us-east-1a` from a
+ * picture that says `us-east-1b`: the zone is the only reason the box exists, and
+ * until now nothing downstream read it, so the box drew a promise it never kept.
+ */
+export function placedProperties<T extends HierarchyNode>(
+  node: T,
+  nodes: T[]
+): Record<string, PropertyValue> {
+  const properties = { ...(node.data.properties ?? {}) };
+
+  const service = getServiceById(node.data.serviceId);
+  if (!service?.properties.some((property) => property.name === ZONE_PROPERTY)) return properties;
+
+  const zoneName = zoneNameOf(node, nodes);
+  if (zoneName) properties[ZONE_PROPERTY] = zoneName;
+
+  return properties;
 }
 
 /**

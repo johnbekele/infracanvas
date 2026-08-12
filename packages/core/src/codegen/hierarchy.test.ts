@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ancestors, containersFirst, placementOf } from './hierarchy';
+import { ancestors, containersFirst, placedProperties, placementOf } from './hierarchy';
 import { generateTerraformProject } from './terraform';
 import { generatePulumiProject } from './pulumi';
 import type { ServiceNodeData } from '../types';
@@ -11,7 +11,13 @@ interface TestNode {
   parentNode?: string;
 }
 
-function node(id: string, serviceId: string, serviceName: string, parentNode?: string): TestNode {
+function node(
+  id: string,
+  serviceId: string,
+  serviceName: string,
+  parentNode?: string,
+  properties: Record<string, string | number | boolean> = {}
+): TestNode {
   return {
     id,
     position: { x: 0, y: 0 },
@@ -22,7 +28,7 @@ function node(id: string, serviceId: string, serviceName: string, parentNode?: s
       shortName: serviceName,
       color: '#000000',
       category: 'compute',
-      properties: {},
+      properties,
     } as ServiceNodeData,
   };
 }
@@ -38,6 +44,47 @@ function nestedDesign(): TestNode[] {
     node('nat', 'nat-gateway', 'NAT Gateway', 'private'),
   ];
 }
+
+/** A zone holding a VPC, a subnet in that VPC, and a gateway. */
+function zonedDesign(): TestNode[] {
+  return [
+    node('zone', 'availability-zone', 'Zone B', undefined, {
+      zoneName: 'eu-west-1b',
+      primary: true,
+    }),
+    node('vpc', 'vpc-environment', 'Production VPC', 'zone'),
+    node('public', 'public-subnet', 'Edge Subnet', 'vpc', { availabilityZone: 'us-east-1a' }),
+    node('nat', 'nat-gateway', 'NAT Gateway', 'public'),
+  ];
+}
+
+describe('placedProperties', () => {
+  it('takes the zone from the box the network around a subnet is drawn in', () => {
+    const nodes = zonedDesign();
+    expect(placedProperties(nodes[2], nodes).availabilityZone).toBe('eu-west-1b');
+  });
+
+  it('leaves a subnet outside any zone with the zone it was configured with', () => {
+    const nodes = [
+      node('vpc', 'vpc-environment', 'Production VPC'),
+      node('public', 'public-subnet', 'Edge Subnet', 'vpc', { availabilityZone: 'us-east-1a' }),
+    ];
+
+    expect(placedProperties(nodes[1], nodes).availabilityZone).toBe('us-east-1a');
+  });
+
+  it('does not invent a zone argument for a service that has no such property', () => {
+    const nodes = zonedDesign();
+    expect(placedProperties(nodes[3], nodes)).not.toHaveProperty('availabilityZone');
+  });
+
+  it('ignores a zone whose name has been cleared', () => {
+    const nodes = zonedDesign();
+    nodes[0].data.properties = { zoneName: '' };
+
+    expect(placedProperties(nodes[2], nodes).availabilityZone).toBe('us-east-1a');
+  });
+});
 
 describe('placementOf', () => {
   it('finds every enclosing container, not just the immediate one', () => {
@@ -109,6 +156,23 @@ describe('generated Terraform', () => {
     expect(outputs).not.toContain('aws_private_subnet');
   });
 
+  it('gives a subnet the zone it is drawn in rather than the one it defaults to', () => {
+    const zoned =
+      generateTerraformProject(zonedDesign(), []).files.find((file) => file.path === 'main.tf')
+        ?.content ?? '';
+
+    expect(zoned).toMatch(/module "edge_subnet" \{[\s\S]*availabilityZone = "eu-west-1b"/);
+    expect(zoned).not.toContain('us-east-1a');
+  });
+
+  it('keeps the VPC reference on a subnet whose VPC is drawn inside a zone', () => {
+    const zoned =
+      generateTerraformProject(zonedDesign(), []).files.find((file) => file.path === 'main.tf')
+        ?.content ?? '';
+
+    expect(zoned).toMatch(/module "edge_subnet" \{[\s\S]*vpc_id = module\.production_vpc\.id/);
+  });
+
   it('does not export an id for a construct that generates no resource', () => {
     const zone = generateTerraformProject(
       [node('az', 'availability-zone', 'us-east-1a')],
@@ -133,6 +197,13 @@ describe('generated Pulumi', () => {
     const main = project.files.find((file) => file.path === '__main__.py')?.content ?? '';
 
     expect(main.indexOf('app_subnet = ')).toBeLessThan(main.indexOf('nat_gateway = '));
+  });
+
+  it('gives a subnet the zone it is drawn in', () => {
+    const project = generatePulumiProject(zonedDesign(), [], 'python');
+    const main = project.files.find((file) => file.path === '__main__.py')?.content ?? '';
+
+    expect(main).toMatch(/edge_subnet = aws\.ec2\.Subnet\([\s\S]*availability_zone="eu-west-1b"/);
   });
 
   it('references the enclosing subnet from the resource inside it', () => {

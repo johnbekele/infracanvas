@@ -11,9 +11,8 @@
  * Kept out of the canvas component so the rules can be tested without rendering
  * React Flow.
  */
-import { PADDING, getServiceById, type Size } from '@infracanvas/core';
+import { PADDING, getServiceById, type ServiceNodeData, type Size } from '@infracanvas/core';
 import type { Node } from 'reactflow';
-import type { ServiceNodeData } from '@/lib/stores/designer-store';
 
 export interface Point {
   x: number;
@@ -22,13 +21,36 @@ export interface Point {
 
 /** Sizes a container falls back to before it has been measured or resized. */
 export const CONTAINER_DEFAULT_SIZE: Record<string, Size> = {
+  // A zone is drawn around a VPC, so it starts large enough to hold one.
+  'availability-zone': { width: 580, height: 520 },
   'vpc-environment': { width: 500, height: 400 },
   'public-subnet': { width: 220, height: 180 },
   'private-subnet': { width: 220, height: 180 },
-  'availability-zone': { width: 300, height: 260 },
   'ecs-cluster': { width: 240, height: 200 },
   'eks-cluster': { width: 240, height: 200 },
 };
+
+/**
+ * Paint order for containers, outermost furthest back.
+ *
+ * Only the ordering matters, since React Flow gives a child at least its
+ * parent's z. It lives here because two places need the same answer: the canvas
+ * when a container is dropped, and the store when a saved design is reloaded.
+ * They used to hold separate tables, so a reloaded container came back at a
+ * depth the canvas would never have given it.
+ */
+const CONTAINER_Z_INDEX: Record<string, number> = {
+  'availability-zone': -4,
+  'vpc-environment': -3,
+  'public-subnet': -2,
+  'private-subnet': -2,
+  'ecs-cluster': -1,
+  'eks-cluster': -1,
+};
+
+export function containerZIndex(serviceId: string): number {
+  return CONTAINER_Z_INDEX[serviceId] ?? -1;
+}
 
 export const SERVICE_NODE_SIZE: Size = { width: 144, height: 96 };
 
@@ -173,8 +195,8 @@ export function canNest(serviceId: string, containerServiceId: string | null): b
 
   if (service.allowedParents) return service.allowedParents.includes(containerServiceId);
 
-  // A container with no stated parents does not nest. Otherwise a VPC could be
-  // dropped inside a subnet, which describes nothing.
+  // A container with no stated parents does not nest. Otherwise an availability
+  // zone could be dropped inside a subnet, which describes nothing.
   if (service.isContainer) return false;
 
   if (containerServiceId === 'public-subnet') {

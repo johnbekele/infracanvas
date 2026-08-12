@@ -2,7 +2,7 @@
 
 import { getServiceById } from '../aws-services';
 import { emitTerraform, snakeCase } from './emit';
-import { containersFirst, parentLinks, placementOf } from './hierarchy';
+import { containersFirst, parentLinks, placedProperties, placementOf } from './hierarchy';
 import type { ServiceNodeData } from '../types';
 
 export interface TerraformFile {
@@ -160,7 +160,7 @@ module "${name}" {
 
   name        = "${name}"
   environment = var.environment
-${generateModuleInputs(node)}${placement ? `\n${placement}` : ''}
+${generateModuleInputs(node, nodes)}${placement ? `\n${placement}` : ''}
 }
 `;
   });
@@ -168,8 +168,8 @@ ${generateModuleInputs(node)}${placement ? `\n${placement}` : ''}
   return content;
 }
 
-function generateModuleInputs(node: Node<ServiceNodeData>): string {
-  const props = node.data.properties;
+function generateModuleInputs(node: Node<ServiceNodeData>, nodes: Node<ServiceNodeData>[]): string {
+  const props = placedProperties(node, nodes);
   const lines: string[] = [];
 
   Object.entries(props).forEach(([key, value]) => {

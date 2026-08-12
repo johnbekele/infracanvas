@@ -9,6 +9,11 @@ import { closePool, ping } from './lib/db/client.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
 import { logError } from './lib/log.js';
 import { env } from './lib/env.js';
+import { useSystemCertificateAuthorities } from './lib/tls.js';
+
+// Before any outbound call, so a corporate TLS proxy does not make every LLM
+// provider look unreachable.
+useSystemCertificateAuthorities();
 
 // Read the configuration before binding a port. It is validated lazily, so
 // without this a misconfigured process starts, accepts traffic, and reports the

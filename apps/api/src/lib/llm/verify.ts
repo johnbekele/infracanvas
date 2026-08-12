@@ -107,6 +107,18 @@ export async function verifyCredential(input: VerifyInput): Promise<VerifyResult
       return { ok: false, error: `${provider.name} did not respond within 10 seconds.` };
     }
 
+    const causeMessage =
+      error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
+
+    if (causeMessage.includes('issuer certificate')) {
+      return {
+        ok: false,
+        error:
+          `Could not verify the TLS connection to ${provider.name}. ` +
+          'If you are behind a corporate proxy, set NODE_EXTRA_CA_CERTS to your root CA bundle.',
+      };
+    }
+
     return {
       ok: false,
       error: `Could not reach ${provider.name}. Check the base URL and that the service is running.`,

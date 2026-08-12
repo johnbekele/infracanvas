@@ -7,11 +7,12 @@ import { useDesignerStore, type ServiceNodeData } from '@/lib/stores/designer-st
 const controlStyle = { background: 'transparent', border: 'none' };
 
 /**
- * Containers that group compute rather than define a network boundary.
+ * Containers that group by capacity or by failure domain rather than by network.
  *
  * A cluster is the answer to "what shares capacity", and an availability zone is
- * the answer to "what fails together". Both are drawn as boxes because that is
- * what they are: nine services in a flat row cannot express either.
+ * the answer to "what fails together" -- the outermost box, holding the networks
+ * that happen to run there. Both are drawn as boxes because that is what they
+ * are: nine services in a flat row cannot express either.
  */
 const VARIANTS = {
   'ecs-cluster': {
@@ -29,7 +30,7 @@ const VARIANTS = {
   'availability-zone': {
     icon: LayoutGrid,
     label: 'Availability Zone',
-    hint: 'Everything here fails together',
+    hint: 'Drop a VPC here: everything inside fails together',
     accent: 'purple',
   },
 } as const;
@@ -62,8 +63,11 @@ const ACCENTS = {
 } as const;
 
 function ClusterNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>) {
-  const { selectNode, selectedNodeId, removeNodeWithChildren } = useDesignerStore();
+  const { selectNode, selectedNodeId, removeNodeWithChildren, getChildNodes } = useDesignerStore();
   const isSelected = selected || selectedNodeId === id;
+  // The hint sits in the middle of the box, which is exactly where the first
+  // child lands, so it reads as a label for that child once there is one.
+  const isEmpty = getChildNodes(id).length === 0;
 
   const variant = VARIANTS[data.serviceId as keyof typeof VARIANTS] ?? VARIANTS['ecs-cluster'];
   const colours = ACCENTS[variant.accent];
@@ -113,9 +117,11 @@ function ClusterNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>
             : `${colours.border} ${colours.surface}`
         }`}
       >
-        <div className="pointer-events-none absolute inset-2 flex items-center justify-center">
-          <p className={`text-[11px] font-medium ${colours.muted}`}>{variant.hint}</p>
-        </div>
+        {isEmpty && (
+          <div className="pointer-events-none absolute inset-2 flex items-center justify-center">
+            <p className={`text-[11px] font-medium ${colours.muted}`}>{variant.hint}</p>
+          </div>
+        )}
       </div>
 
       {isSelected && (

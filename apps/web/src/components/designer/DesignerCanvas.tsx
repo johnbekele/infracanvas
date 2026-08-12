@@ -19,6 +19,7 @@ import {
   absolutePosition,
   canNest,
   containerAt,
+  containerZIndex,
   grownSize,
   positionWithin,
   sizeOf,
@@ -49,16 +50,6 @@ function nodeTypeFor(serviceId: string): string {
   if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
   return 'serviceNode';
 }
-
-/** Containers render behind their children, outermost furthest back. */
-const CONTAINER_Z: Record<string, number> = {
-  'vpc-environment': -4,
-  'availability-zone': -3,
-  'public-subnet': -2,
-  'private-subnet': -2,
-  'ecs-cluster': -1,
-  'eks-cluster': -1,
-};
 
 const edgeTypes = {
   deletable: DeletableEdge,
@@ -188,7 +179,7 @@ function DesignerCanvasInner() {
           style: { width: defaultSize.width, height: defaultSize.height },
           width: defaultSize.width,
           height: defaultSize.height,
-          zIndex: CONTAINER_Z[service.id] ?? -1,
+          zIndex: containerZIndex(service.id),
         });
       }
 
