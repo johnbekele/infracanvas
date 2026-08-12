@@ -4,9 +4,14 @@ import { findOrCreateUser } from './users.js';
 import { connectRepository } from './repositories.js';
 import {
   createExperiment,
+  findExperiment,
   listDeployments,
+  listExperiments,
   listExpiredExperiments,
   recordDeployment,
+  recordVerdict,
+  renameExperiment,
+  setExperimentArchived,
   setExperimentStatus,
   type CreateExperimentInput,
 } from './experiments.js';
@@ -33,11 +38,14 @@ async function makeRepository(userId: string) {
 
 const HOUR = 60 * 60 * 1000;
 
-function experimentInput(userId: string, over: Partial<CreateExperimentInput> = {}) {
+function experimentInput(
+  userId: string,
+  over: Partial<CreateExperimentInput> = {}
+): CreateExperimentInput {
   return {
     userId,
     name: 'Aurora Serverless',
-    irVersion: '1.0.0',
+    hypothesis: 'Aurora Serverless v2 is cheaper than RDS under bursty load',
     expiresAt: new Date(Date.now() + 8 * HOUR),
     budgetUsd: 25,
     ...over,
@@ -63,7 +71,14 @@ describe('createExperiment', () => {
     expect(experiment.name).toBe('Aurora Serverless');
     expect(experiment.status).toBe('draft');
     expect(experiment.budgetUsd).toBe(25);
-    expect(experiment.ir).toEqual({});
+    expect(experiment.hypothesis).toBe(
+      'Aurora Serverless v2 is cheaper than RDS under bursty load'
+    );
+    expect(experiment.verdict).toBe('undecided');
+    expect(experiment.verdictNote).toBeNull();
+    expect(experiment.verdictAt).toBeNull();
+    expect(experiment.archivedAt).toBeNull();
+    expect(experiment.headRevisionId).toBeNull();
   });
 
   it('returns the budget as a number rather than the string pg gives for numeric', async () => {
@@ -96,19 +111,12 @@ describe('createExperiment', () => {
     ).rejects.toThrow();
   });
 
-  it('stores the architecture document it was given', async () => {
+  it('refuses a hypothesis longer than the column allows', async () => {
     const user = await makeUser();
 
-    const experiment = await createExperiment(
-      experimentInput(user.id, { ir: { irVersion: '1.0.0', name: 'Seeded', nodes: [], edges: [] } })
-    );
-
-    expect(experiment.ir).toEqual({
-      irVersion: '1.0.0',
-      name: 'Seeded',
-      nodes: [],
-      edges: [],
-    });
+    await expect(
+      createExperiment(experimentInput(user.id, { hypothesis: 'x'.repeat(501) }))
+    ).rejects.toThrow();
   });
 });
 
@@ -218,6 +226,153 @@ describe('recordDeployment', () => {
   });
 });
 
+describe('findExperiment', () => {
+  it('finds an experiment belonging to the user', async () => {
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+
+    expect((await findExperiment(user.id, created.id))?.id).toBe(created.id);
+  });
+
+  it('returns null for an experiment belonging to another user', async () => {
+    // The owner is part of the lookup rather than a check afterwards, and the
+    // answer is "not found" rather than a permission error: telling a caller the
+    // id exists turns a uuid guess into an oracle for who is testing what.
+    const alice = await makeUser(1, 'alice');
+    const bob = await makeUser(2, 'bob');
+    const hers = await createExperiment(experimentInput(alice.id));
+
+    expect(await findExperiment(bob.id, hers.id)).toBeNull();
+  });
+
+  it('reads a malformed id as not found rather than failing the query', async () => {
+    const user = await makeUser();
+    expect(await findExperiment(user.id, 'not-a-uuid')).toBeNull();
+  });
+});
+
+describe('listExperiments', () => {
+  it('returns only the caller\u2019s experiments, newest first', async () => {
+    const alice = await makeUser(1, 'alice');
+    const bob = await makeUser(2, 'bob');
+
+    await createExperiment(experimentInput(alice.id, { name: 'First' }));
+    await createExperiment(experimentInput(alice.id, { name: 'Second' }));
+    await createExperiment(experimentInput(bob.id, { name: 'Bob\u2019s' }));
+
+    expect((await listExperiments(alice.id)).map((e) => e.name)).toEqual(['Second', 'First']);
+  });
+
+  it('hides archived experiments unless asked for them', async () => {
+    const user = await makeUser();
+    const kept = await createExperiment(experimentInput(user.id, { name: 'Kept' }));
+    const shelved = await createExperiment(experimentInput(user.id, { name: 'Shelved' }));
+    await setExperimentArchived(user.id, shelved.id, true);
+
+    expect((await listExperiments(user.id)).map((e) => e.name)).toEqual(['Kept']);
+    expect((await listExperiments(user.id, { includeArchived: true })).map((e) => e.name)).toEqual([
+      'Shelved',
+      'Kept',
+    ]);
+    expect((await findExperiment(user.id, kept.id))?.archivedAt).toBeNull();
+  });
+
+  it('filters to one repository', async () => {
+    const user = await makeUser();
+    const repository = await makeRepository(user.id);
+    await createExperiment(
+      experimentInput(user.id, { name: 'On repo', repositoryId: repository.id })
+    );
+    await createExperiment(experimentInput(user.id, { name: 'Detached' }));
+
+    const scoped = await listExperiments(user.id, { repositoryId: repository.id });
+
+    expect(scoped.map((e) => e.name)).toEqual(['On repo']);
+  });
+});
+
+describe('renameExperiment', () => {
+  it('renames and restates the hypothesis without touching anything else', async () => {
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+
+    const renamed = await renameExperiment(user.id, created.id, {
+      name: 'Aurora vs RDS',
+      hypothesis: 'Aurora is cheaper below 40% duty cycle',
+    });
+
+    expect(renamed?.name).toBe('Aurora vs RDS');
+    expect(renamed?.hypothesis).toBe('Aurora is cheaper below 40% duty cycle');
+    expect(renamed?.headRevisionId).toBe(created.headRevisionId);
+    expect(renamed?.status).toBe(created.status);
+  });
+
+  it('leaves a field alone when it is not supplied', async () => {
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+
+    const renamed = await renameExperiment(user.id, created.id, { name: 'Just the name' });
+
+    expect(renamed?.name).toBe('Just the name');
+    expect(renamed?.hypothesis).toBe(created.hypothesis);
+  });
+
+  it('refuses to rename another user\u2019s experiment', async () => {
+    const alice = await makeUser(1, 'alice');
+    const bob = await makeUser(2, 'bob');
+    const hers = await createExperiment(experimentInput(alice.id));
+
+    expect(await renameExperiment(bob.id, hers.id, { name: 'Mine now' })).toBeNull();
+    expect((await findExperiment(alice.id, hers.id))?.name).toBe('Aurora Serverless');
+  });
+});
+
+describe('recordVerdict', () => {
+  it('stores the verdict with its reason and the moment it was reached', async () => {
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+
+    const decided = await recordVerdict(user.id, created.id, 'adopt', 'A third cheaper at p95');
+
+    expect(decided?.verdict).toBe('adopt');
+    expect(decided?.verdictNote).toBe('A third cheaper at p95');
+    expect(decided?.verdictAt).toBeInstanceOf(Date);
+  });
+
+  it('refuses a verdict with no note', async () => {
+    // A verdict with no reason and no date is a badge rather than a result: six
+    // months later nobody can tell whether "reject" meant too expensive or slow.
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+
+    await expect(
+      query(`UPDATE experiments SET verdict = 'reject' WHERE id = $1`, [created.id])
+    ).rejects.toThrow();
+
+    expect((await findExperiment(user.id, created.id))?.verdict).toBe('undecided');
+  });
+
+  it('clears the note and the date when returning to undecided', async () => {
+    const user = await makeUser();
+    const created = await createExperiment(experimentInput(user.id));
+    await recordVerdict(user.id, created.id, 'reject', 'Twice the cost for the same p95');
+
+    const reopened = await recordVerdict(user.id, created.id, 'undecided', '');
+
+    expect(reopened?.verdict).toBe('undecided');
+    expect(reopened?.verdictNote).toBeNull();
+    expect(reopened?.verdictAt).toBeNull();
+  });
+
+  it('refuses to record a verdict on another user\u2019s experiment', async () => {
+    const alice = await makeUser(1, 'alice');
+    const bob = await makeUser(2, 'bob');
+    const hers = await createExperiment(experimentInput(alice.id));
+
+    expect(await recordVerdict(bob.id, hers.id, 'adopt', 'Not mine to judge')).toBeNull();
+  });
+});
+
 describe('referential behaviour', () => {
   it('keeps the experiment when its source repository is deleted', async () => {
     // Disconnecting a repository must not destroy the record of what was
@@ -272,14 +427,14 @@ describe('performance', () => {
     // partial index excludes, so the sweep's index stays small and selective --
     // which is the shape production has.
     await query(
-      `INSERT INTO experiments (user_id, name, status, ir_version, expires_at, budget_usd)
-       SELECT $1, 'draft-' || g, 'draft', '1.0.0', now() - interval '1 hour', 10
+      `INSERT INTO experiments (user_id, name, status, hypothesis, expires_at, budget_usd)
+       SELECT $1, 'draft-' || g, 'draft', 'a hypothesis', now() - interval '1 hour', 10
          FROM generate_series(1, 99950) AS g`,
       [user.id]
     );
     await query(
-      `INSERT INTO experiments (user_id, name, status, ir_version, expires_at, budget_usd)
-       SELECT $1, 'due-' || g, 'deployed', '1.0.0', now() - interval '1 hour', 10
+      `INSERT INTO experiments (user_id, name, status, hypothesis, expires_at, budget_usd)
+       SELECT $1, 'due-' || g, 'deployed', 'a hypothesis', now() - interval '1 hour', 10
          FROM generate_series(1, 50) AS g`,
       [user.id]
     );

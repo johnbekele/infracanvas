@@ -15,7 +15,7 @@ async function makeExperiment() {
   return createExperiment({
     userId: user.id,
     name: 'Aurora Serverless',
-    irVersion: '1.0.0',
+    hypothesis: 'The generated program is the one that gets deployed',
     expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000),
     budgetUsd: 25,
   });
@@ -144,7 +144,7 @@ describe('listArtifacts', () => {
     const other = await createExperiment({
       userId: experiment.userId,
       name: 'RDS baseline',
-      irVersion: '1.0.0',
+      hypothesis: 'The generated program is the one that gets deployed',
       expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000),
       budgetUsd: 25,
     });
