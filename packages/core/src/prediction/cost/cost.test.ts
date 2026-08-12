@@ -206,7 +206,7 @@ describe('the assumption projection', () => {
 });
 
 describe('performance', () => {
-  it('prices a 40 resource architecture in under 20ms and revises one in under 2ms', () => {
+  it('prices a 40 resource architecture and revises one, each in under 20ms', () => {
     const document = threeTier();
     const rds = rdsNode();
     while (document.nodes.length < 40) {
