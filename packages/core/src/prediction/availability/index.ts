@@ -1,6 +1,7 @@
 import type { ArchitectureIr, IrEdge, IrNode, ResourceKind } from '@infracanvas/ir-schema';
 
 import { kindToServiceId } from '../../ir/kind-map';
+import { DEFAULT_USAGE } from '../../resources/contract';
 import { getResourceContract } from '../../resources/registry';
 import { defaultAssumptions, type AssumptionSet } from '../assumptions';
 import { predicted, type Assumption, type Prediction } from '../prediction';
@@ -50,7 +51,7 @@ export interface AvailabilityContext {
   assumptions: AssumptionSet;
 }
 
-export function availabilityContext(region = 'us-east-1'): AvailabilityContext {
+export function availabilityContext(region = DEFAULT_USAGE.region): AvailabilityContext {
   return { region, assumptions: defaultAssumptions() };
 }
 
