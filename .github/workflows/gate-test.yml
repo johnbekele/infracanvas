@@ -19,7 +19,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-node
       - run: pnpm turbo build
 
@@ -27,12 +27,12 @@ jobs:
     name: Unit tests (TypeScript)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-node
       # The IR generator emits TypeScript and Pydantic from one schema, and its
       # idempotency test runs the whole generator rather than half of it, so this
       # job needs the Python toolchain even though it runs no Python tests.
-      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
       - run: uv sync --directory services/brain --all-extras
@@ -43,7 +43,7 @@ jobs:
     name: Unit tests (Python)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: exists
         run: |
           if [ -f services/brain/pyproject.toml ]; then
@@ -52,7 +52,7 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "::notice::services/brain not present yet; Python tests are inert."
           fi
-      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         if: steps.exists.outputs.found == 'true'
         with:
           enable-cache: true
@@ -65,7 +65,7 @@ jobs:
     name: Unit tests (Rust)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: exists
         run: |
           if [ -f Cargo.toml ]; then
@@ -102,7 +102,7 @@ jobs:
     env:
       DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_test?sslmode=disable
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-node
       - name: Apply migrations
         run: |
@@ -127,7 +127,7 @@ jobs:
     needs: [test-node, test-python, test-rust]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Enforce 85% coverage on changed lines
