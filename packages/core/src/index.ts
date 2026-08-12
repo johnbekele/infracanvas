@@ -168,3 +168,31 @@ export {
   type UsageAssumptions,
   type WellArchitectedRule,
 } from './resources';
+
+// Prediction: what an architecture costs, and the assumptions behind the figure
+export {
+  DEFAULT_ASSUMPTIONS,
+  defaultAssumptions,
+  UnknownAssumptionError,
+  USAGE_ASSUMPTION_IDS,
+  usageFor,
+  withOverride,
+  type Assumption,
+  type AssumptionId,
+  type AssumptionSet,
+} from './prediction';
+
+export {
+  costArchitecture,
+  costContext,
+  costModel,
+  predicted,
+  reviseAssumption,
+  rollUpCost,
+  type ArchitectureCost,
+  type CostContext,
+  type CostLine,
+  type Prediction,
+  type ResourceCost,
+  type Revision,
+} from './prediction';
