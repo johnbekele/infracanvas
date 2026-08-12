@@ -1,7 +1,12 @@
 import type { ArchitectureIr, IrNode, ResourceKind } from '@infracanvas/ir-schema';
 
 import { getResourceContract } from '../../resources/registry';
-import { usd, type CostEstimate, type UsageAssumptions } from '../../resources/contract';
+import {
+  DEFAULT_USAGE,
+  usd,
+  type CostEstimate,
+  type UsageAssumptions,
+} from '../../resources/contract';
 import {
   USAGE_ASSUMPTION_IDS,
   defaultAssumptions,
@@ -45,7 +50,7 @@ export interface CostContext {
   assumptions: AssumptionSet;
 }
 
-export function costContext(region = 'us-east-1'): CostContext {
+export function costContext(region = DEFAULT_USAGE.region): CostContext {
   return { region, assumptions: defaultAssumptions() };
 }
 
