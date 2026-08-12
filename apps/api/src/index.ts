@@ -3,6 +3,7 @@ import express from 'express';
 import { corsMiddleware } from './middleware/cors.js';
 import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
+import experimentRoutes from './routes/experiments/index.js';
 import { mountInternalRoutes } from './routes/internal/index.js';
 import repositoryRoutes from './routes/repositories/index.js';
 import settingsRoutes from './routes/settings/index.js';
@@ -56,6 +57,7 @@ app.use('/auth', authRoutes);
 app.use('/github', githubRoutes);
 app.use('/repositories', repositoryRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/experiments', experimentRoutes);
 
 // 404 handler
 app.use((_req, res) => {

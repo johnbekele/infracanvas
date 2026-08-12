@@ -1,0 +1,7 @@
+{"kind":"token","seq":1,"text":"Multi-AZ raises the monthly cost by "}
+{"kind":"citation","seq":2,"scheme":"prediction","target":"945c3e36b14430b6c7a66382e6e71a6dc1fc9008c8a86f628258674df45a8158","verified":true,"reason":null}
+{"kind":"tool_call","seq":3,"callId":"call_1","tool":"price_change","summary":"Pricing a change of 1 operation"}
+{"kind":"tool_result","seq":4,"callId":"call_1","tool":"price_change","ok":true,"summary":"$15.44 a month more","durationMs":4}
+{"kind":"limit","seq":5,"limit":"tool_calls","message":"This turn reached its ceiling of 12 tool calls."}
+{"kind":"error","seq":6,"code":"provider_error","message":"The model provider refused the request (401)."}
+{"kind":"done","seq":7,"finish":"complete","inputTokens":1840,"outputTokens":214,"toolCalls":1,"unverifiedCitations":0}
