@@ -40,6 +40,38 @@ flagged.
 `db/schema.sql` is not committed. The migrations are the source of truth, and a generated dump would
 only be one more thing to fall out of date.
 
+## The job queue
+
+`jobs` and `job_events` are the queue. Work that cannot finish inside an HTTP request goes there
+instead of running in the request handler; repository analysis is the first such job.
+
+A worker claims work with a single statement, so two workers racing never take the same job:
+
+```sql
+UPDATE jobs SET status = 'running', attempts = attempts + 1,
+       leased_until = now() + $lease, lease_owner = $owner
+WHERE id IN (
+  SELECT id FROM jobs
+   WHERE kind = ANY($kinds) AND run_at <= now() AND attempts < max_attempts
+     AND (status = 'queued' OR (status = 'running' AND leased_until < now()))
+   ORDER BY priority, run_at
+   FOR UPDATE SKIP LOCKED
+   LIMIT $limit
+)
+RETURNING *;
+```
+
+`leased_until` is what makes this a queue rather than a list of intentions. A worker renews its lease
+while it works; one that dies stops renewing, and the job becomes claimable again. Every write is
+scoped to `lease_owner`, so a worker whose lease lapsed cannot report a result over the worker that
+replaced it.
+
+`job_events` is the progress log, keyed by a monotonic `bigserial`. That id is what a browser sends
+back as `Last-Event-ID`, so a dropped progress stream resumes rather than replaying.
+
+The worker runs inside the API process. `WORKER_ENABLED=false` turns it off, which is how a process
+serving traffic and a process running jobs are separated when that becomes worth doing.
+
 ## Timestamps
 
 `created_at` and `updated_at` are maintained by a database trigger rather than by the application.
