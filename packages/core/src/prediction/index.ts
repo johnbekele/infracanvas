@@ -73,3 +73,25 @@ export {
   type QueueInput,
   type QueueModel,
 } from './latency';
+
+export {
+  ANY_SERVICE,
+  AWS_LIMITS,
+  bottleneckContext,
+  concurrency,
+  findBottleneck,
+  limitApplies,
+  limitsFor,
+  limitValueFor,
+  MAX_BISECTIONS,
+  residenceSeconds,
+  RPS_CEILING,
+  RPS_TOLERANCE,
+  solveBreakingRps,
+  utilisationAt,
+  withTargetRps,
+  type Bottleneck,
+  type BottleneckContext,
+  type BottleneckReport,
+  type ServiceLimit,
+} from './bottleneck';
