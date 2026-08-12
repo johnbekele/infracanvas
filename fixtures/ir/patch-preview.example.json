@@ -1,0 +1,327 @@
+{
+  "preview": {
+    "previewVersion": 1,
+    "basedOnIrDigest": "832cdf37e883d40a2d7b19a93bd97fef469f22c270239af40668c055da26583c",
+    "patchDigest": "945c3e36b14430b6c7a66382e6e71a6dc1fc9008c8a86f628258674df45a8158",
+    "applicable": true,
+    "problems": [],
+    "touchedNodeIds": ["rds-primary"],
+    "cost": {
+      "monthlyUsdBefore": 15.44,
+      "monthlyUsdAfter": 30.88,
+      "monthlyUsdDelta": 15.44,
+      "completeness": "partial",
+      "byResource": [
+        {
+          "resourceId": "rds-primary",
+          "change": "changed",
+          "monthlyUsdBefore": 15.44,
+          "monthlyUsdAfter": 30.88,
+          "monthlyUsdDelta": 15.44,
+          "lines": [
+            {
+              "resourceId": "rds-primary",
+              "label": "db.t3.micro postgres, Multi-AZ",
+              "unit": "instance-hour",
+              "quantity": 730,
+              "unitPriceUsd": 0.036,
+              "monthlyUsd": 26.28,
+              "assumptionIds": ["time.hoursPerMonth"]
+            },
+            {
+              "resourceId": "rds-primary",
+              "label": "gp3 storage, Multi-AZ",
+              "unit": "gb-month",
+              "quantity": 20,
+              "unitPriceUsd": 0.23,
+              "monthlyUsd": 4.6,
+              "assumptionIds": []
+            },
+            {
+              "resourceId": "rds-primary",
+              "label": "db.t3.micro postgres",
+              "unit": "instance-hour",
+              "quantity": 730,
+              "unitPriceUsd": 0.018,
+              "monthlyUsd": 13.14,
+              "assumptionIds": ["time.hoursPerMonth"]
+            },
+            {
+              "resourceId": "rds-primary",
+              "label": "gp3 storage",
+              "unit": "gb-month",
+              "quantity": 20,
+              "unitPriceUsd": 0.115,
+              "monthlyUsd": 2.3,
+              "assumptionIds": []
+            }
+          ]
+        }
+      ],
+      "unpriced": [
+        {
+          "resourceId": "alb-public",
+          "kind": "alb",
+          "dimension": "cost",
+          "reason": "no cost model for alb",
+          "side": "both"
+        },
+        {
+          "resourceId": "ecs-api",
+          "kind": "ecs_service",
+          "dimension": "cost",
+          "reason": "no cost model for ecs_service",
+          "side": "both"
+        },
+        {
+          "resourceId": "rds-primary",
+          "kind": "rds_instance",
+          "dimension": "cost",
+          "reason": "backupStorageBeyondAllocated",
+          "side": "both"
+        },
+        {
+          "resourceId": "subnet-private-a",
+          "kind": "subnet",
+          "dimension": "cost",
+          "reason": "no cost model for subnet",
+          "side": "both"
+        },
+        {
+          "resourceId": "subnet-public-a",
+          "kind": "subnet",
+          "dimension": "cost",
+          "reason": "no cost model for subnet",
+          "side": "both"
+        },
+        {
+          "resourceId": "vpc-main",
+          "kind": "vpc",
+          "dimension": "cost",
+          "reason": "no cost model for vpc",
+          "side": "both"
+        }
+      ]
+    },
+    "availability": {
+      "before": 0.9948010099500001,
+      "after": 0.9993001099950001,
+      "delta": 0.004499100044999982,
+      "downtimeMinutesBefore": 224.6,
+      "downtimeMinutesAfter": 30.2,
+      "weakestBefore": "rds-primary",
+      "weakestAfter": "rds-primary",
+      "completeness": "complete",
+      "unmodelled": []
+    },
+    "findings": {
+      "appeared": [],
+      "resolved": [
+        {
+          "ruleId": "RDS-REL-001",
+          "pillar": "reliability",
+          "severity": "medium",
+          "message": "The database runs in one availability zone, so losing that zone loses the data tier.",
+          "pointer": "/nodes/5/params/multiAz",
+          "remediation": "Enable Multi-AZ for a synchronous standby with automatic failover. It roughly doubles the instance and storage cost."
+        }
+      ],
+      "unchangedCount": 1,
+      "unruled": [
+        {
+          "resourceId": "alb-public",
+          "kind": "alb",
+          "dimension": "rules",
+          "reason": "no resource contract for alb, so no rule could have been evaluated",
+          "side": "both"
+        },
+        {
+          "resourceId": "ecs-api",
+          "kind": "ecs_service",
+          "dimension": "rules",
+          "reason": "no resource contract for ecs_service, so no rule could have been evaluated",
+          "side": "both"
+        },
+        {
+          "resourceId": "subnet-private-a",
+          "kind": "subnet",
+          "dimension": "rules",
+          "reason": "no resource contract for subnet, so no rule could have been evaluated",
+          "side": "both"
+        },
+        {
+          "resourceId": "subnet-public-a",
+          "kind": "subnet",
+          "dimension": "rules",
+          "reason": "no resource contract for subnet, so no rule could have been evaluated",
+          "side": "both"
+        },
+        {
+          "resourceId": "vpc-main",
+          "kind": "vpc",
+          "dimension": "rules",
+          "reason": "no resource contract for vpc, so no rule could have been evaluated",
+          "side": "both"
+        }
+      ]
+    },
+    "assumptions": [
+      {
+        "id": "time.hoursPerMonth",
+        "label": "Hours per month",
+        "value": 730,
+        "unit": "h",
+        "source": "default",
+        "rationale": "A month of continuous operation, 730 hours, which is what an always-on resource bills for. AWS uses the same figure on its own price list."
+      }
+    ],
+    "baselineCacheHit": false,
+    "computedMs": 0
+  },
+  "inverse": {
+    "patchVersion": 1,
+    "basedOnIrDigest": "4777df0f4b3a7e81a1c70114df489dbb6e07b96237603f3b00a7b5fe64959a47",
+    "summary": "Reverts: Make the primary database Multi-AZ",
+    "ops": [
+      {
+        "op": "set_param",
+        "nodeId": "rds-primary",
+        "param": "multiAz",
+        "value": false
+      }
+    ]
+  },
+  "patchedIr": {
+    "irVersion": "1.1.0",
+    "name": "Three tier web application",
+    "provider": "aws",
+    "region": "eu-west-1",
+    "nodes": [
+      {
+        "id": "vpc-main",
+        "kind": "vpc",
+        "name": "Main VPC",
+        "layout": {
+          "x": 0,
+          "y": 0,
+          "width": 960,
+          "height": 640
+        },
+        "params": {
+          "cidrBlock": "10.0.0.0/16",
+          "enableDnsHostnames": true,
+          "enableDnsSupport": true
+        }
+      },
+      {
+        "id": "subnet-public-a",
+        "kind": "subnet",
+        "name": "Public A",
+        "parent": "vpc-main",
+        "layout": {
+          "x": 32,
+          "y": 64,
+          "width": 420,
+          "height": 240
+        },
+        "params": {
+          "tier": "public",
+          "cidrBlock": "10.0.1.0/24",
+          "availabilityZone": "eu-west-1a"
+        }
+      },
+      {
+        "id": "subnet-private-a",
+        "kind": "subnet",
+        "name": "Private A",
+        "parent": "vpc-main",
+        "layout": {
+          "x": 32,
+          "y": 340,
+          "width": 420,
+          "height": 240
+        },
+        "params": {
+          "tier": "private",
+          "cidrBlock": "10.0.2.0/24",
+          "availabilityZone": "eu-west-1a"
+        }
+      },
+      {
+        "id": "alb-public",
+        "kind": "alb",
+        "name": "Public load balancer",
+        "parent": "subnet-public-a",
+        "layout": {
+          "x": 24,
+          "y": 48
+        },
+        "params": {
+          "scheme": "internet-facing",
+          "idleTimeoutSeconds": 60
+        }
+      },
+      {
+        "id": "ecs-api",
+        "kind": "ecs_service",
+        "name": "API service",
+        "parent": "subnet-private-a",
+        "layout": {
+          "x": 24,
+          "y": 48
+        },
+        "params": {
+          "cpu": 512,
+          "memory": 1024,
+          "desiredCount": 2
+        }
+      },
+      {
+        "id": "rds-primary",
+        "kind": "rds_instance",
+        "name": "Primary database",
+        "parent": "subnet-private-a",
+        "layout": {
+          "x": 232,
+          "y": 48
+        },
+        "params": {
+          "engine": "postgres",
+          "engineVersion": "16.4",
+          "instanceClass": "db.t3.micro",
+          "allocatedStorageGb": 20,
+          "storageType": "gp3",
+          "multiAz": true,
+          "publiclyAccessible": false,
+          "deletionProtection": false,
+          "backupRetentionDays": 7,
+          "storageEncrypted": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "alb-to-api",
+        "kind": "routes_to",
+        "source": "alb-public",
+        "target": "ecs-api",
+        "label": "HTTPS"
+      },
+      {
+        "id": "api-to-db",
+        "kind": "connects",
+        "source": "ecs-api",
+        "target": "rds-primary",
+        "label": "5432"
+      }
+    ],
+    "presentation": {
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      }
+    }
+  },
+  "patchedIrDigest": "4777df0f4b3a7e81a1c70114df489dbb6e07b96237603f3b00a7b5fe64959a47"
+}
