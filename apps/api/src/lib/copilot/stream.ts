@@ -41,9 +41,17 @@ export function writeKeepalive(res: Response): void {
   res.write(': keepalive\n\n');
 }
 
-/** The sequence a resuming client has already seen, from `Last-Event-ID`. */
-export function seqFromLastEventId(header: string | undefined): number {
-  if (header === undefined) return 0;
+/**
+ * The sequence a resuming client has already seen, from `Last-Event-ID`.
+ *
+ * The argument is unknown rather than a string because a header sent twice and
+ * a query parameter written twice both arrive as an array. Neither is a
+ * sequence, and treating one as a string would call `slice` on an array and
+ * resume from somewhere nobody asked for; anything that is not a string means
+ * "from the beginning", which is what a client with no id gets.
+ */
+export function seqFromLastEventId(header: unknown): number {
+  if (typeof header !== 'string') return 0;
   const seq = Number.parseInt(header.slice(header.lastIndexOf(':') + 1), 10);
   return Number.isFinite(seq) && seq > 0 ? seq : 0;
 }

@@ -146,9 +146,9 @@ router.get('/messages/:messageId/events', async (req: Request, res: Response) =>
     return;
   }
 
-  const after = seqFromLastEventId(
-    (req.headers['last-event-id'] as string | undefined) ?? (req.query.lastEventId as string)
-  );
+  // The header is what `EventSource` sends on its own; the query parameter is
+  // for a client that cannot set one, such as a browser reconnecting by hand.
+  const after = seqFromLastEventId(req.headers['last-event-id'] ?? req.query.lastEventId);
 
   openStream(res);
   // One snapshot, always: it is what repairs a client that missed events which

@@ -38,6 +38,9 @@ describe('the wire format', () => {
     expect(seqFromLastEventId('9f1c:41')).toBe(41);
     expect(seqFromLastEventId(undefined)).toBe(0);
     expect(seqFromLastEventId('nonsense')).toBe(0);
+    // A header sent twice, or a query parameter written twice, arrives as an
+    // array. It is not a sequence, so it resumes from the beginning.
+    expect(seqFromLastEventId(['9f1c:41', '9f1c:2'])).toBe(0);
   });
 
   it('emits a keepalive as a comment, which no client parses as an event', () => {
