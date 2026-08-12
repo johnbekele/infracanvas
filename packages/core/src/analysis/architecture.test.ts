@@ -12,6 +12,9 @@ const serviceIdsOf = (proposal: ArchitectureProposal) =>
 const hasEdge = (proposal: ArchitectureProposal, source: string, target: string) =>
   proposal.edges.some((edge) => edge.source === source && edge.target === target);
 
+const edgeBetween = (proposal: ArchitectureProposal, source: string, target: string) =>
+  proposal.edges.find((edge) => edge.source === source && edge.target === target);
+
 describe('a repository with nothing to deploy', () => {
   it('proposes nothing and says why', () => {
     // Drawing an architecture for a library would present a guess as a
@@ -163,6 +166,137 @@ describe('a monorepo with several services', () => {
     expect(proposal.decisions.find((entry) => entry.nodeId === bedrock?.id)?.rationale).toContain(
       'substitution'
     );
+  });
+});
+
+describe('a repository that declares its own topology', () => {
+  // Two services, two databases, and a compose file that says which service
+  // opens which. Capability overlap alone cannot tell them apart: both declare
+  // the same Postgres driver.
+  const profile = profileWith({
+    components: [
+      component({
+        path: 'apps/billing',
+        kind: 'api',
+        dependencies: [
+          dependency('express', 'http-server', 'apps/billing/package.json'),
+          dependency('pg', 'postgres', 'apps/billing/package.json'),
+          dependency('@aws-sdk/client-s3', 'object-storage', 'apps/billing/package.json'),
+        ],
+        dockerfiles: ['apps/billing/Dockerfile'],
+        composeService: 'billing',
+      }),
+      component({
+        path: 'apps/reports',
+        kind: 'api',
+        dependencies: [
+          dependency('express', 'http-server', 'apps/reports/package.json'),
+          dependency('pg', 'postgres', 'apps/reports/package.json'),
+        ],
+        dockerfiles: ['apps/reports/Dockerfile'],
+        composeService: 'reports',
+      }),
+    ],
+    composeServices: [
+      composeService('billing', {
+        buildContext: 'apps/billing',
+        dependsOn: ['billing-db', 'cache'],
+      }),
+      composeService('reports', { buildContext: 'apps/reports', dependsOn: ['analytics-db'] }),
+      composeService('billing-db', { image: 'postgres:16', capability: 'postgres' }),
+      composeService('analytics-db', { image: 'postgres:16', capability: 'postgres' }),
+      composeService('cache', { image: 'redis:7', capability: 'redis' }),
+    ],
+  });
+
+  const proposal = proposeArchitecture(profile, 'ledger');
+  const billing = nodeFor(proposal, 'apps/billing')!;
+  const reports = nodeFor(proposal, 'apps/reports')!;
+  const billingDb = proposal.nodes.find((node) => node.id === 'database-billing-db')!;
+  const analyticsDb = proposal.nodes.find((node) => node.id === 'database-analytics-db')!;
+
+  it('draws the edge the compose file declares', () => {
+    expect(hasEdge(proposal, billing.id, billingDb.id)).toBe(true);
+    expect(hasEdge(proposal, reports.id, analyticsDb.id)).toBe(true);
+  });
+
+  it('marks a declared edge as declared', () => {
+    const edge = edgeBetween(proposal, billing.id, billingDb.id);
+
+    expect(edge?.origin).toBe('declared');
+    expect(edge?.label).toBe('depends_on');
+  });
+
+  it('does not guess the connection the declaration leaves out', () => {
+    // Capability overlap would wire both services to both databases. The
+    // repository already said which one each of them opens.
+    expect(hasEdge(proposal, billing.id, analyticsDb.id)).toBe(false);
+    expect(hasEdge(proposal, reports.id, billingDb.id)).toBe(false);
+  });
+
+  it('resolves a declaration onto the node that replaced the container', () => {
+    const cache = proposal.nodes.find((node) => node.serviceId === 'elasticache')!;
+
+    expect(edgeBetween(proposal, billing.id, cache.id)?.origin).toBe('declared');
+  });
+
+  it('still infers a connection to a service compose cannot name', () => {
+    // A bucket is not a compose service, so declaring `depends_on` says nothing
+    // about it and the inferred edge has to survive.
+    const bucket = proposal.nodes.find((node) => node.id === 'storage-objects')!;
+    const edge = edgeBetween(proposal, billing.id, bucket.id);
+
+    expect(edge?.origin).toBe('inferred');
+  });
+
+  it('reports a declared dependency it could not draw', () => {
+    const withUnknown = profileWith({
+      ...profile,
+      composeServices: [
+        composeService('billing', { buildContext: 'apps/billing', dependsOn: ['telemetry'] }),
+        composeService('telemetry', { image: 'acme/in-house-collector' }),
+      ],
+    });
+
+    const gaps = proposeArchitecture(withUnknown, 'ledger').gaps;
+
+    expect(gaps.some((gap) => gap.includes('depends on telemetry'))).toBe(true);
+  });
+
+  it('says nothing about a dependency naming a service compose never declared', () => {
+    // An override file this analysis did not read, or a typo. Either way there is
+    // no dropped dependency to report.
+    const withGhost = profileWith({
+      ...profile,
+      composeServices: [
+        composeService('billing', { buildContext: 'apps/billing', dependsOn: ['ghost'] }),
+      ],
+    });
+
+    const gaps = proposeArchitecture(withGhost, 'ledger').gaps;
+
+    expect(gaps.some((gap) => gap.includes('ghost'))).toBe(false);
+  });
+});
+
+describe('a repository that declares nothing', () => {
+  // The compose services in this fixture carry no `depends_on`, so the overlap
+  // heuristic is all there is, and it has to keep working.
+  const proposal = proposeArchitecture(MONOREPO, 'platform');
+
+  it('falls back to capability overlap', () => {
+    const api = nodeFor(proposal, 'apps/api')!;
+    const databases = proposal.nodes.filter((node) => node.serviceId === 'rds');
+
+    expect(databases).toHaveLength(2);
+    for (const database of databases) {
+      expect(hasEdge(proposal, api.id, database.id)).toBe(true);
+    }
+  });
+
+  it('marks every edge it guessed as inferred', () => {
+    expect(proposal.edges.length).toBeGreaterThan(0);
+    expect(proposal.edges.every((edge) => edge.origin === 'inferred')).toBe(true);
   });
 });
 
