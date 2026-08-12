@@ -75,7 +75,9 @@ export function fourLevelChain(): ArchitectureIr {
     irVersion: threeTier().irVersion,
     name: 'Four level containment',
     provider: 'aws',
-    region: 'eu-west-1',
+    // A fixture states its own region rather than reading configuration; a test
+    // that priced against whatever the environment held would assert nothing.
+    region: 'eu-west-1', // infracanvas-allow: no-hardcoded-region
     nodes,
     edges: [],
     presentation: { viewport: { x: 0, y: 0, zoom: 1 } },
