@@ -29,9 +29,7 @@ import { VpcEnvironmentNode } from './VpcEnvironmentNode';
 import { SubnetNode } from './SubnetNode';
 import { ClusterNode } from './ClusterNode';
 import { ServicePalette } from './ServicePalette';
-import { PropertiesPanel } from './PropertiesPanel';
-import { EstimatePanel } from './estimate/EstimatePanel';
-import { CodePanel } from './CodePanel';
+import { WorkspaceDock } from './dock/WorkspaceDock';
 import { DesignerToolbar } from './DesignerToolbar';
 import { DeletableEdge } from './DeletableEdge';
 import { Button } from '@/components/ui/button';
@@ -423,16 +421,10 @@ function DesignerCanvasInner() {
             </div>
           )}
         </div>
-
-        {/* Code Panel */}
-        <CodePanel isMobile={isMobile} />
       </div>
 
-      {/* Properties Panel */}
-      <PropertiesPanel isMobile={isMobile} />
-
-      {/* Estimate Panel */}
-      <EstimatePanel isMobile={isMobile} />
+      {/* Simulation, properties and generated code, one at a time down the right edge. */}
+      <WorkspaceDock isMobile={isMobile} />
     </div>
   );
 }
