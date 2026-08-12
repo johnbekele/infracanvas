@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Code2, Gauge, Settings2, X } from 'lucide-react';
+import { ChevronRight, Code2, Gauge, Settings2, Sparkles, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
 import { CodeTab } from './CodeTab';
+import { CopilotTab } from './CopilotTab';
 import { PropertiesTab } from './PropertiesTab';
 import { SimulationTab } from './SimulationTab';
 
-type DockTab = 'simulation' | 'properties' | 'code';
+type DockTab = 'simulation' | 'copilot' | 'properties' | 'code';
 
 const TABS: { id: DockTab; label: string; icon: typeof Gauge }[] = [
   { id: 'simulation', label: 'Simulation', icon: Gauge },
+  { id: 'copilot', label: 'Copilot', icon: Sparkles },
   { id: 'properties', label: 'Properties', icon: Settings2 },
   { id: 'code', label: 'Code', icon: Code2 },
 ];
@@ -31,7 +33,14 @@ const TABS: { id: DockTab; label: string; icon: typeof Gauge }[] = [
  * question "what is this", and the dock should answer the question that was
  * asked rather than wait to be told twice.
  */
-export function WorkspaceDock({ isMobile = false }: { isMobile?: boolean }) {
+export function WorkspaceDock({
+  isMobile = false,
+  experimentId = null,
+}: {
+  isMobile?: boolean;
+  /** The experiment the copilot converses about. Null until one has been started. */
+  experimentId?: string | null;
+}) {
   const [tab, setTab] = useState<DockTab>('simulation');
   const [isOpen, setOpen] = useState(!isMobile);
   const selectedNodeId = useDesignerStore((state) => state.selectedNodeId);
@@ -96,6 +105,7 @@ export function WorkspaceDock({ isMobile = false }: { isMobile?: boolean }) {
       </header>
 
       {tab === 'simulation' && <SimulationTab />}
+      {tab === 'copilot' && <CopilotTab experimentId={experimentId} />}
       {tab === 'properties' && <PropertiesTab />}
       {tab === 'code' && <CodeTab />}
     </aside>
