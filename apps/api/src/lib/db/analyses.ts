@@ -1,5 +1,5 @@
-// Analysis runs and the profiles they produce.
-import type { AppProfile } from '@infracanvas/core';
+// Analysis runs, the profiles they produce, and the architecture proposed from them.
+import type { AppProfile, ArchitectureProposal } from '@infracanvas/core';
 import { query } from './client.js';
 
 export type AnalysisStatus = 'pending' | 'running' | 'succeeded' | 'failed';
@@ -11,6 +11,12 @@ export interface Analysis {
   commitSha: string | null;
   status: AnalysisStatus;
   profile: AppProfile | null;
+  /**
+   * The architecture synthesised from `profile`, with every decision, its
+   * rationale, and the repository paths it was drawn from. Null for a run that
+   * failed, and for a run that succeeded before the proposal was stored.
+   */
+  architecture: ArchitectureProposal | null;
   error: string | null;
   startedAt: Date | null;
   finishedAt: Date | null;
@@ -25,6 +31,7 @@ interface AnalysisRow {
   commit_sha: string | null;
   status: AnalysisStatus;
   profile: AppProfile | null;
+  architecture: ArchitectureProposal | null;
   error: string | null;
   started_at: Date | null;
   finished_at: Date | null;
@@ -40,6 +47,7 @@ function toAnalysis(row: AnalysisRow): Analysis {
     commitSha: row.commit_sha,
     status: row.status,
     profile: row.profile,
+    architecture: row.architecture,
     error: row.error,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
@@ -81,17 +89,28 @@ export async function startAnalysis(repositoryId: string, ref: string): Promise<
   }
 }
 
-export async function completeAnalysis(id: string, profile: AppProfile): Promise<Analysis> {
+/**
+ * Record a successful run, its profile, and the architecture proposed from it.
+ *
+ * The proposal is written in the same statement as the profile so the two can
+ * never disagree about which commit they describe.
+ */
+export async function completeAnalysis(
+  id: string,
+  profile: AppProfile,
+  architecture: ArchitectureProposal
+): Promise<Analysis> {
   const result = await query<AnalysisRow>(
     `UPDATE analyses
-        SET status      = 'succeeded',
-            profile     = $2,
-            commit_sha  = $3,
-            finished_at = now(),
-            error       = NULL
+        SET status       = 'succeeded',
+            profile      = $2,
+            architecture = $4,
+            commit_sha   = $3,
+            finished_at  = now(),
+            error        = NULL
       WHERE id = $1
       RETURNING *`,
-    [id, JSON.stringify(profile), profile.commitSha]
+    [id, JSON.stringify(profile), profile.commitSha, JSON.stringify(architecture)]
   );
 
   const row = result.rows[0];
