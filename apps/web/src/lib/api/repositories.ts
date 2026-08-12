@@ -1,5 +1,5 @@
 // Connected repositories and their analyses.
-import type { AppProfile } from '@infracanvas/core';
+import type { AppProfile, ArchitectureProposal } from '@infracanvas/core';
 import { apiFetch } from './client';
 
 export interface ConnectedRepository {
@@ -23,6 +23,12 @@ export interface Analysis {
   commitSha: string | null;
   status: AnalysisStatus;
   profile: AppProfile | null;
+  /**
+   * The architecture the server proposed from `profile`, with the rationale and
+   * evidence behind each decision. Null for a failed run, and for a run recorded
+   * before the proposal was stored.
+   */
+  architecture: ArchitectureProposal | null;
   error: string | null;
   startedAt: string | null;
   finishedAt: string | null;
