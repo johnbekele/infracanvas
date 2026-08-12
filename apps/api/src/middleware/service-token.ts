@@ -50,9 +50,11 @@ export function requireServiceToken(req: Request, res: Response, next: NextFunct
   const presented = req.header(SERVICE_TOKEN_HEADER) ?? '';
 
   if (configured === undefined || presented === '' || !equal(presented, configured)) {
-    // The outcome is logged; the value presented never is. A rejected token is
-    // still a credential, and one in a log line is one in a log aggregator.
-    console.warn(`Refused an internal request to ${req.path}: service token absent or wrong`);
+    // The outcome is logged and nothing off the request is. A rejected token is
+    // still a credential, and one in a log line is one in a log aggregator; a
+    // path is not a credential but it is written by the caller, and a caller
+    // who can put a newline in a log line can write a log line.
+    console.warn('Refused an internal request: service token absent or wrong');
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
