@@ -22,3 +22,7 @@ tests/fixtures/generated
 
 # Golden emitter output, compared byte for byte
 **/__golden__/**
+
+# Written byte for byte by scripts/ci/build-price-snapshot.mjs, and compared
+# byte for byte by its --check mode.
+data/pricing/MANIFEST.json
