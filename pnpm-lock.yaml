@@ -184,6 +184,9 @@ importers:
         specifier: ^4.4.0
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
     devDependencies:
+      '@infracanvas/ir-schema':
+        specifier: workspace:*
+        version: link:../../packages/ir-schema
       '@types/react':
         specifier: ^18.2.43
         version: 18.3.28
