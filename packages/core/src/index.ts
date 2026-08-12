@@ -173,6 +173,7 @@ export {
 export {
   DEFAULT_ASSUMPTIONS,
   defaultAssumptions,
+  SERVICE_TIME_PREFIX,
   UnknownAssumptionError,
   USAGE_ASSUMPTION_IDS,
   usageFor,
@@ -216,4 +217,55 @@ export {
   type ServiceSla,
   type SliDefinition,
   type SloProposal,
+} from './prediction';
+
+// Prediction: how slow the architecture is as it fills up, resource by resource
+export {
+  arrivalRateFrom,
+  composePath,
+  DEFAULT_LAMBDA_CONCURRENCY,
+  DEFAULT_SERVICE_TIMES_MS,
+  erlangC,
+  GRID_POINTS,
+  kingmanFactor,
+  latencyContext,
+  latencyContribution,
+  pathLatency,
+  SATURATION_THRESHOLD,
+  sequentialPath,
+  sojournPercentile,
+  sojournSurvival,
+  withArrivalRate,
+  type ComposedSegment,
+  type Distribution,
+  type Grid,
+  type LatencyContext,
+  type PathLatency,
+  type PathSegment,
+  type QueueContribution,
+  type QueueInput,
+  type QueueModel,
+} from './prediction';
+
+// Prediction: which component gives way first, and at what request rate
+export {
+  ANY_SERVICE,
+  AWS_LIMITS,
+  bottleneckContext,
+  concurrency,
+  findBottleneck,
+  limitApplies,
+  limitsFor,
+  limitValueFor,
+  MAX_BISECTIONS,
+  residenceSeconds,
+  RPS_CEILING,
+  RPS_TOLERANCE,
+  solveBreakingRps,
+  utilisationAt,
+  withTargetRps,
+  type Bottleneck,
+  type BottleneckContext,
+  type BottleneckReport,
+  type ServiceLimit,
 } from './prediction';
