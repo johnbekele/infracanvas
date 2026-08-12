@@ -35,3 +35,17 @@ export function quantity(value: number, unit: string): string {
   const rounded = value >= 100 ? Math.round(value).toLocaleString() : value.toFixed(2);
   return `${rounded} ${unit}`;
 }
+
+/** Milliseconds below a second, seconds above it, because 1,240ms reads as a mistake. */
+export function duration(ms: number): string {
+  if (ms < 1) return `${(ms * 1000).toFixed(0)}\u00b5s`;
+  if (ms < 1000) return `${ms < 10 ? ms.toFixed(1) : Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
+/** A request rate, kept whole because a fractional request per second is noise. */
+export function rate(rps: number): string {
+  if (rps < 1) return `${rps.toFixed(2)}/s`;
+  if (rps < 1000) return `${Math.round(rps).toLocaleString()}/s`;
+  return `${(rps / 1000).toFixed(1)}k/s`;
+}
