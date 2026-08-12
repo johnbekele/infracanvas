@@ -14,7 +14,7 @@
  * store, which is tracked separately; switching to one is a store option here
  * rather than a rewrite.
  */
-import { rateLimit } from 'express-rate-limit';
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 
 /**
  * Hops of reverse proxy in front of this process.
@@ -66,3 +66,40 @@ export const signInRateLimit = limiter(15 * 60 * 1000, 20);
 
 /** Ordinary API traffic. */
 export const apiRateLimit = limiter(60 * 1000, 100);
+
+/**
+ * The same limiter, bucketed by who is asking rather than by where they are.
+ *
+ * A copilot turn spends the user's own tokens and holds a connection for up to
+ * two minutes, so the meaningful bucket is the session's user, not the address:
+ * a household behind one address would otherwise share a ceiling, and a user
+ * with two devices would spend it twice as fast. `ipKeyGenerator` is the
+ * fallback for a request with no session, and it is the library's rather than a
+ * hand-rolled one for the reason this module already gives: an IPv6 client
+ * needs bucketing by subnet or one host rotates through addresses forever.
+ */
+function userLimiter(windowMs: number, limit: number) {
+  return rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    keyGenerator: (req) => req.session?.userId ?? ipKeyGenerator(req.ip ?? ''),
+    handler: (_req, res, _next, options) => {
+      res.status(options.statusCode).json({
+        error: 'Too many requests',
+        retryAfter: Math.ceil(options.windowMs / 1000),
+      });
+    },
+    validate: { trustProxy: TRUST_PROXY_HOPS > 0 ? false : true },
+  });
+}
+
+/**
+ * Forty turns an hour per user.
+ *
+ * A guard on this process, not on spend: spend is the monthly token budget,
+ * which refuses with a 402 and knows what a turn actually cost. This one only
+ * stops a stuck client from holding forty connections open.
+ */
+export const copilotTurnRateLimit = userLimiter(60 * 60 * 1000, 40);
