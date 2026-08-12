@@ -87,7 +87,136 @@ export const DEFAULT_ASSUMPTIONS = [
     rationale:
       'The share of failures that take every replica at once, through a control plane problem or a region-wide event. Treating replicas as independent gives a three-zone deployment about eight nines, a figure nobody has ever observed; a tenth is a guess, but it is a guess anyone can change and watch the result move.',
   },
+  {
+    id: 'traffic.arrivalCv',
+    label: 'Burstiness of arrivals',
+    value: 1,
+    unit: 'coefficient of variation',
+    source: 'default',
+    rationale:
+      'One is the Poisson arrival stream, which is what M/M/c assumes and the only defensible value for traffic nobody has measured. Anything else is a claim about how bursty the load is, and Kingman\u2019s correction applies it the moment a measurement replaces this figure.',
+  },
+  {
+    id: 'service.serviceCv',
+    label: 'Variability of service time',
+    value: 1,
+    unit: 'coefficient of variation',
+    source: 'default',
+    rationale:
+      'One is the exponential service time the queueing model assumes. A cache with a uniform hit path is nearer zero and a service with a slow tail is above one, but both are measurements this model does not have.',
+  },
+  {
+    id: 'service.timeMs.alb',
+    label: 'Load balancer service time',
+    value: 1.5,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'Choosing a target and proxying the request, which is the AWS-side portion of TargetResponseTime rather than the target\u2019s own work.',
+  },
+  {
+    id: 'service.timeMs.api_gateway',
+    label: 'API Gateway service time',
+    value: 3,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'Authorisation, request mapping and the hop to the integration, excluding the integration itself, which appears as its own resource on the path.',
+  },
+  {
+    id: 'service.timeMs.cloudfront_distribution',
+    label: 'CloudFront service time',
+    value: 10,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'Edge processing and the leg to the viewer for a cached object. A miss pays the origin as well, and the origin is a resource of its own on the path rather than a number folded into this one.',
+  },
+  {
+    id: 'service.timeMs.ec2_instance',
+    label: 'EC2 application service time',
+    value: 40,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'Application work for one request on a general-purpose instance, excluding whatever it calls. It is the largest default here because application code usually is the largest term.',
+  },
+  {
+    id: 'service.timeMs.ecs_service',
+    label: 'ECS task service time',
+    value: 40,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'The same application work as on EC2, because it is the same code in a container. Making the container cheaper would be a claim about the runtime rather than about the request.',
+  },
+  {
+    id: 'service.timeMs.lambda_function',
+    label: 'Lambda service time',
+    value: 55,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'A warm invocation: the same application work plus the runtime\u2019s per-invocation overhead. Cold starts are excluded because they are a separate stage rather than a slower average.',
+  },
+  {
+    id: 'service.timeMs.rds_instance',
+    label: 'Database service time',
+    value: 8,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'One indexed query returning a small result set from a warm buffer cache. A resource contract that models the query itself replaces this figure.',
+  },
+  {
+    id: 'service.timeMs.elasticache_cluster',
+    label: 'Cache service time',
+    value: 0.6,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'An in-memory read plus one network round trip inside the availability zone. Sub-millisecond is the point of the cache, and a default that hid that would hide why it is there.',
+  },
+  {
+    id: 'service.timeMs.dynamodb_table',
+    label: 'DynamoDB service time',
+    value: 6,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'A single-item read over HTTPS, which is what the single-digit millisecond figure AWS quotes describes.',
+  },
+  {
+    id: 'service.timeMs.s3_bucket',
+    label: 'Object storage service time',
+    value: 25,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'A GET of an object of a few hundred kilobytes, first byte to last. Large objects are bandwidth rather than service time and are not modelled here.',
+  },
+  {
+    id: 'service.timeMs.sqs_queue',
+    label: 'Queue service time',
+    value: 12,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'One SendMessage round trip. Time a message spends waiting to be consumed is the consumer\u2019s queue rather than this one, and modelling it here would count the same wait twice.',
+  },
+  {
+    id: 'service.timeMs.nat_gateway',
+    label: 'NAT gateway service time',
+    value: 0.5,
+    unit: 'ms',
+    source: 'default',
+    rationale:
+      'Address translation on the way out of the VPC. Small enough to be invisible on a path and large enough that the connection limit it imposes is worth solving for.',
+  },
 ] as const satisfies readonly Assumption[];
+
+/** Prefix under which a mean service time is registered, one assumption per resource kind. */
+export const SERVICE_TIME_PREFIX = 'service.timeMs.';
 
 /** Assumption ids, so a typo in a dependency reference fails to compile. */
 export type AssumptionId = (typeof DEFAULT_ASSUMPTIONS)[number]['id'];

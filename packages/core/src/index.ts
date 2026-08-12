@@ -173,6 +173,7 @@ export {
 export {
   DEFAULT_ASSUMPTIONS,
   defaultAssumptions,
+  SERVICE_TIME_PREFIX,
   UnknownAssumptionError,
   USAGE_ASSUMPTION_IDS,
   usageFor,
@@ -216,4 +217,32 @@ export {
   type ServiceSla,
   type SliDefinition,
   type SloProposal,
+} from './prediction';
+
+// Prediction: how slow the architecture is as it fills up, resource by resource
+export {
+  arrivalRateFrom,
+  composePath,
+  DEFAULT_LAMBDA_CONCURRENCY,
+  DEFAULT_SERVICE_TIMES_MS,
+  erlangC,
+  GRID_POINTS,
+  kingmanFactor,
+  latencyContext,
+  latencyContribution,
+  pathLatency,
+  SATURATION_THRESHOLD,
+  sequentialPath,
+  sojournPercentile,
+  sojournSurvival,
+  withArrivalRate,
+  type ComposedSegment,
+  type Distribution,
+  type Grid,
+  type LatencyContext,
+  type PathLatency,
+  type PathSegment,
+  type QueueContribution,
+  type QueueInput,
+  type QueueModel,
 } from './prediction';
