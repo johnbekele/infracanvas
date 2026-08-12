@@ -56,6 +56,17 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   return response.json();
 }
 
+/**
+ * The absolute URL for an endpoint.
+ *
+ * `EventSource` cannot be given a base the way `apiFetch` composes one, so the
+ * same two cases -- a deployed API origin, or Vite's `/api` proxy in development
+ * -- are resolved here rather than duplicated at each call site.
+ */
+export function apiUrl(endpoint: string): string {
+  return API_BASE_URL ? `${API_BASE_URL}${endpoint}` : `/api${endpoint}`;
+}
+
 export type AuthMethodId = 'oauth' | 'token';
 
 export interface AuthMethod {

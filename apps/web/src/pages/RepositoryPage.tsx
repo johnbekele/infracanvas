@@ -5,8 +5,15 @@ import { proposeArchitecture } from '@infracanvas/core';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ProfileSummary } from '@/components/analysis/ProfileSummary';
 import { ArchitectureProposalPanel } from '@/components/analysis/ArchitectureProposalPanel';
+import { AnalysisProgressPanel } from '@/components/analysis/AnalysisProgressPanel';
 import { Button } from '@/components/ui/button';
-import { useAnalyses, useRepository, useRunAnalysis } from '@/lib/hooks/use-repositories';
+import {
+  activeAnalysis,
+  useAnalyses,
+  useRepository,
+  useRunAnalysis,
+} from '@/lib/hooks/use-repositories';
+import { useAnalysisProgress } from '@/lib/hooks/use-analysis-progress';
 
 export function RepositoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +38,16 @@ export function RepositoryPage() {
     if (!latestProfile || !repository) return null;
     return proposeArchitecture(latestProfile, repository.githubName);
   }, [latestProfile, repository]);
+
+  // Watch whichever run is in flight, whether this tab started it or another one
+  // did. Read from the analyses list rather than from the mutation, so a reload
+  // mid-analysis still shows progress instead of an idle page.
+  const running = useMemo(() => activeAnalysis(analyses), [analyses]);
+  const progress = useAnalysisProgress(id, running?.id ?? null);
+
+  // Queued counts as busy: the work has been asked for, and offering the button
+  // again would only earn a 409 from the one-active-run rule.
+  const busy = runAnalysis.isPending || running !== null;
 
   return (
     <div className="flex h-screen flex-col bg-gray-50 dark:bg-gray-950">
@@ -66,11 +83,8 @@ export function RepositoryPage() {
                 </p>
               </div>
 
-              <Button
-                onClick={() => runAnalysis.mutate(undefined)}
-                disabled={runAnalysis.isPending}
-              >
-                {runAnalysis.isPending ? (
+              <Button onClick={() => runAnalysis.mutate(undefined)} disabled={busy}>
+                {busy ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analysing…
@@ -92,13 +106,17 @@ export function RepositoryPage() {
               </p>
             )}
 
-            {latestFailure?.error && !runAnalysis.isPending && (
+            {progress && running && (
+              <AnalysisProgressPanel progress={progress} branch={running.ref} />
+            )}
+
+            {latestFailure?.error && !busy && (
               <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
                 The last analysis failed: {latestFailure.error}
               </p>
             )}
 
-            {!latestProfile && !runAnalysis.isPending && (
+            {!latestProfile && !busy && (
               <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-900">
                 <p className="mb-1 font-medium text-gray-900 dark:text-white">
                   This repository has not been analysed yet
