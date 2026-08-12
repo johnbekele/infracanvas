@@ -52,16 +52,18 @@ function example(): PreviewResult {
 
 describe('the committed preview example', () => {
   it('matches what previewPatch produces today', () => {
-    const produced = `${JSON.stringify(example(), null, 2)}\n`;
+    const produced = example();
 
     if (process.env.UPDATE_FIXTURES === '1') {
       mkdirSync(new URL('.', FIXTURE), { recursive: true });
-      writeFileSync(FIXTURE, produced);
+      writeFileSync(FIXTURE, `${JSON.stringify(produced, null, 2)}\n`);
     }
 
-    // `git diff --exit-code fixtures/ir/patch-preview.example.json` in CI is
-    // what turns a drift here into a failure nobody can miss.
-    expect(readFileSync(FIXTURE, 'utf8')).toBe(produced);
+    // Compared as values rather than as text, because the committed file is
+    // formatted by prettier like everything else in the repository and a change
+    // of line width is not a change of contract. Every field, and every number
+    // in it, still has to match.
+    expect(JSON.parse(readFileSync(FIXTURE, 'utf8'))).toEqual(produced);
   });
 
   it('carries every field of the payload, so a mirror of it cannot miss one', () => {
