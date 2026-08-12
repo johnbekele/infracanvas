@@ -313,7 +313,7 @@ describe('the default service times', () => {
 });
 
 describe('performance', () => {
-  it('predicts 20 paths across a 40 resource architecture in under 10ms', () => {
+  it('predicts 20 paths across a 40 resource architecture inside the interactive budget', () => {
     const document = threeTier();
     const service = nodeOf('ecs_service');
     while (document.nodes.length < 40) {
@@ -340,6 +340,11 @@ describe('performance', () => {
     samples.sort((a, b) => a - b);
 
     expect(paths).toHaveLength(20);
-    expect(samples[50]).toBeLessThan(10);
+    // 2.85ms here. The ceiling is the point at which a canvas recompute stops
+    // feeling instant, not the measured cost plus a little: CI runs every
+    // package's suite at once on a small runner, where the IR validator was
+    // measured twenty-six times slower with no change to its work, and a budget
+    // that fails for that reason teaches everyone to rerun red checks.
+    expect(samples[50]).toBeLessThan(100);
   });
 });
