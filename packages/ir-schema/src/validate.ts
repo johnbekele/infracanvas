@@ -129,6 +129,21 @@ function toProblem(error: ErrorObject, prefix = ''): IrProblem {
   };
 }
 
+/**
+ * The branch a kind names, matched against the keys this module registered
+ * rather than indexed by the string off the document. The map holds nothing but
+ * compiled validators, so indexing it was already safe; matching first makes
+ * what is called depend on a key this file wrote, which is what a reader - and
+ * a taint analysis - has to establish before it can trust a call.
+ */
+function branchFor(kind: unknown): ValidateFunction | undefined {
+  if (typeof kind !== 'string') return undefined;
+  for (const [known, validate] of BRANCH_BY_KIND) {
+    if (known === kind) return validate;
+  }
+  return undefined;
+}
+
 function nodeIndexOf(instancePath: string): number | null {
   const match = /^\/nodes\/(\d+)(?:\/|$)/.exec(instancePath);
   return match ? Number(match[1]) : null;
@@ -156,7 +171,7 @@ function schemaProblems(input: unknown): IrProblem[] {
   for (const index of [...ambiguous].sort((a, b) => a - b)) {
     const node = Array.isArray(nodes) ? nodes[index] : undefined;
     const kind = (node as { kind?: unknown } | undefined)?.kind;
-    const branch = typeof kind === 'string' ? BRANCH_BY_KIND.get(kind) : undefined;
+    const branch = branchFor(kind);
     if (!branch) {
       problems.push({
         pointer: `/nodes/${index}/kind`,

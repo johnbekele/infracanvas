@@ -60,9 +60,30 @@ interface EnvConfig {
    */
   WORKER_CONCURRENCY: number;
 
+  /**
+   * Shared credential for the internal plane in `apps/api/src/routes/internal`.
+   * Optional: when it is unset those routes are not mounted at all, which is
+   * the right shape for a deployment that runs nothing beside this process.
+   */
+  BRAIN_SERVICE_TOKEN?: string;
+
   // Optional
   GITHUB_WEBHOOK_SECRET?: string;
   NODE_ENV: 'development' | 'production' | 'test';
+}
+
+/** `openssl rand -hex 32` produces 64 characters; anything shorter is guessable. */
+const MIN_SERVICE_TOKEN_LENGTH = 32;
+
+function readServiceToken(raw: string | undefined): string | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  if (raw.length < MIN_SERVICE_TOKEN_LENGTH) {
+    throw new Error(
+      `BRAIN_SERVICE_TOKEN must be at least ${MIN_SERVICE_TOKEN_LENGTH} characters.\n` +
+        'Generate with: openssl rand -hex 32'
+    );
+  }
+  return raw;
 }
 
 function parseAuthProvider(raw: string | undefined): AuthProvider {
@@ -146,6 +167,7 @@ function getEnv(): EnvConfig {
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
     WORKER_ENABLED: process.env.WORKER_ENABLED !== 'false',
     WORKER_CONCURRENCY: parseConcurrency(process.env.WORKER_CONCURRENCY),
+    BRAIN_SERVICE_TOKEN: readServiceToken(process.env.BRAIN_SERVICE_TOKEN),
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   };
@@ -177,6 +199,10 @@ export function envSafe(): Partial<EnvConfig> {
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
     WORKER_ENABLED: process.env.WORKER_ENABLED !== 'false',
+    // Read without the length check: `envSafe` is the partial reader for paths
+    // that must not throw, and a short token is refused at the boundary that
+    // uses it rather than by a getter.
+    BRAIN_SERVICE_TOKEN: process.env.BRAIN_SERVICE_TOKEN,
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   };
