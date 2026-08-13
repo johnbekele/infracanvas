@@ -39,8 +39,8 @@ function app(userId = OWNER): Express {
     req.session = { userId, sessionId: 'test-session' } as never;
     next();
   });
-  server.use('/experiments/:id/copilot/proposals', proposalRoutes);
-  server.use('/experiments/:id/copilot', copilotRoutes);
+  server.use('/experiments/:experimentId/copilot/proposals', proposalRoutes);
+  server.use('/experiments/:experimentId/copilot', copilotRoutes);
   return server;
 }
 
@@ -83,7 +83,7 @@ function withModel(rounds: Parameters<typeof scriptedModel>[0]) {
   return model;
 }
 
-describe('POST /experiments/:id/copilot/messages', () => {
+describe('POST /experiments/:experimentId/copilot/messages', () => {
   it('streams a turn as server-sent events', async () => {
     withModel([text('Multi-AZ ', 'costs more.')]);
 
@@ -190,7 +190,7 @@ describe('POST /experiments/:id/copilot/messages', () => {
   });
 });
 
-describe('GET /experiments/:id/copilot', () => {
+describe('GET /experiments/:experimentId/copilot', () => {
   it('returns the transcript in order', async () => {
     withModel([text('Answered.')]);
     await request(app())
@@ -210,7 +210,7 @@ describe('GET /experiments/:id/copilot', () => {
   });
 });
 
-describe('GET /experiments/:id/copilot/messages/:messageId/events', () => {
+describe('GET /experiments/:experimentId/copilot/messages/:messageId/events', () => {
   it('resumes a finished message with one snapshot and a done, without blocking', async () => {
     withModel([text('All done.')]);
     await request(app())

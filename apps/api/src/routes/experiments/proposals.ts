@@ -21,7 +21,7 @@ import { copilotPlatform } from './platform.js';
 const router: Router = Router({ mergeParams: true });
 
 function scopeOf(req: Request): { experimentId: string; userId: string } {
-  return { experimentId: req.params.id, userId: req.session?.userId ?? '' };
+  return { experimentId: req.params.experimentId, userId: req.session?.userId ?? '' };
 }
 
 router.post('/:proposalId/accept', async (req: Request, res: Response) => {

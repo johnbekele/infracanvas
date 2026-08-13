@@ -38,7 +38,7 @@ const PERSIST_INTERVAL_MS = 250;
 const PERSIST_CHARS = 512;
 
 function scopeOf(req: Request): { experimentId: string; userId: string } {
-  return { experimentId: req.params.id, userId: req.session?.userId ?? '' };
+  return { experimentId: req.params.experimentId, userId: req.session?.userId ?? '' };
 }
 
 router.get('/', async (req: Request, res: Response) => {
