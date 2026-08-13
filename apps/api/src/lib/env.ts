@@ -38,10 +38,20 @@ interface EnvConfig {
   APP_URL: string;
   API_URL: string;
 
+  /**
+   * How long a new experiment lives before the sweeper may reclaim it, and what
+   * it is allowed to cost. Both are set on the row at creation rather than read
+   * at sweep time, so changing them later does not silently extend or shrink the
+   * guardrails on experiments that already exist.
+   */
+  EXPERIMENT_DEFAULT_TTL_HOURS: number;
+  EXPERIMENT_DEFAULT_BUDGET_USD: number;
+
   // Optional AWS
   AWS_ACCESS_KEY_ID?: string;
   AWS_SECRET_ACCESS_KEY?: string;
-  AWS_REGION?: string;
+  /** Always populated: `getEnv` applies a default, so no caller needs a fallback. */
+  AWS_REGION: string;
 
   // Optional
   GITHUB_WEBHOOK_SECRET?: string;
@@ -59,6 +69,25 @@ function parseAuthProvider(raw: string | undefined): AuthProvider {
       'Use "oauth" for a hosted multi-user deployment, or "token" for local development ' +
       'and single-user self-hosting.'
   );
+}
+
+/**
+ * A positive number from the environment, or `fallback` when unset.
+ *
+ * Rejects zero, a negative, and anything unparseable rather than falling back,
+ * because a misspelled budget silently becoming the default is how an experiment
+ * gets a cap nobody chose. The database CHECK refuses a non-positive budget
+ * anyway; failing here means hearing about it at startup rather than on the first
+ * request that tries to create one.
+ */
+function positiveNumber(name: string, raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === '') return fallback;
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${name} must be a positive number, got "${raw}".`);
+  }
+  return value;
 }
 
 function getEnv(): EnvConfig {
@@ -106,6 +135,16 @@ function getEnv(): EnvConfig {
     JWT_SECRET: process.env.JWT_SECRET!,
     APP_URL: process.env.APP_URL!,
     API_URL: process.env.API_URL!,
+    EXPERIMENT_DEFAULT_TTL_HOURS: positiveNumber(
+      'EXPERIMENT_DEFAULT_TTL_HOURS',
+      process.env.EXPERIMENT_DEFAULT_TTL_HOURS,
+      8
+    ),
+    EXPERIMENT_DEFAULT_BUDGET_USD: positiveNumber(
+      'EXPERIMENT_DEFAULT_BUDGET_USD',
+      process.env.EXPERIMENT_DEFAULT_BUDGET_USD,
+      50
+    ),
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
@@ -136,6 +175,16 @@ export function envSafe(): Partial<EnvConfig> {
     JWT_SECRET: process.env.JWT_SECRET,
     APP_URL: process.env.APP_URL || 'http://localhost:5173',
     API_URL: process.env.API_URL || 'http://localhost:3001',
+    EXPERIMENT_DEFAULT_TTL_HOURS: positiveNumber(
+      'EXPERIMENT_DEFAULT_TTL_HOURS',
+      process.env.EXPERIMENT_DEFAULT_TTL_HOURS,
+      8
+    ),
+    EXPERIMENT_DEFAULT_BUDGET_USD: positiveNumber(
+      'EXPERIMENT_DEFAULT_BUDGET_USD',
+      process.env.EXPERIMENT_DEFAULT_BUDGET_USD,
+      50
+    ),
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
