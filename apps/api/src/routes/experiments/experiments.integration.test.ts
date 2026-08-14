@@ -140,7 +140,11 @@ async function makeRepository(userId: string, githubId = 987_654, name = 'hello-
 async function analysedRepository(userId: string) {
   const repository = await makeRepository(userId);
   const analysis = await queueAnalysis(repository.id, 'main');
-  await completeAnalysis(analysis.id, profile(), proposeArchitecture(profile(), repository.githubName));
+  await completeAnalysis(
+    analysis.id,
+    profile(),
+    proposeArchitecture(profile(), repository.githubName)
+  );
   return repository;
 }
 

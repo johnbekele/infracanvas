@@ -106,7 +106,10 @@ async function makeExperiment(
  * by the real preview plane, so `patchedIr`, `inverse` and the digests are the
  * bytes the user would have been shown rather than plausible stand-ins.
  */
-async function propose(scope: CopilotScope, ops: IrPatchOp[] = [MULTI_AZ]): Promise<ProposalRecord> {
+async function propose(
+  scope: CopilotScope,
+  ops: IrPatchOp[] = [MULTI_AZ]
+): Promise<ProposalRecord> {
   const current = await store.experiment(scope);
   const patch: IrPatch = {
     patchVersion: IR_PATCH_VERSION,
@@ -375,7 +378,9 @@ describe('decide', () => {
     const user = await makeUser();
     const scope = await makeExperiment(user.id);
 
-    expect(await store.decide(scope, '00000000-0000-4000-8000-000000000000', 'accepted')).toBeNull();
+    expect(
+      await store.decide(scope, '00000000-0000-4000-8000-000000000000', 'accepted')
+    ).toBeNull();
   });
 });
 
