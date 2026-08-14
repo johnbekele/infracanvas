@@ -87,8 +87,18 @@ migrations applied, and run separately:
 pnpm --filter @infracanvas/api test:integration
 ```
 
-They truncate tables between cases, so point `DATABASE_URL` at a scratch database rather than one
-holding anything you want to keep.
+They truncate tables between cases, so they run against `infracanvas_test` and refuse to start
+against a database whose name does not look like one. Create it once:
+
+```bash
+createdb -h localhost -p 5433 -U infracanvas infracanvas_test
+DATABASE_URL=postgres://infracanvas:infracanvas@localhost:5433/infracanvas_test?sslmode=disable dbmate up
+```
+
+The guard is there because `DATABASE_URL` is usually already exported in the shell for `dbmate`,
+and it is inherited by the test run. Without the check, the suite deletes the repositories,
+analyses and experiments you were working with, and the only symptom is an application that looks
+freshly installed. `INTEGRATION_ALLOW_ANY_DATABASE=true` overrides it if you really mean it.
 
 ## Production
 
