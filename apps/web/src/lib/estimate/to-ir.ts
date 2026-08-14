@@ -28,6 +28,30 @@ export interface ConversionResult {
   skipped: { id: string; name: string; reason: string }[];
 }
 
+/**
+ * A canvas id as the document spells it.
+ *
+ * React Flow ids are whatever created them -- `node_3` from the palette,
+ * `reactflow__edge-node_1-node_2` for a drawn connection -- and the schema
+ * accepts lower-case, digits and hyphens only. Until this existed the estimate
+ * panel never noticed, because it validates nothing; the API does, so anything
+ * drawn by hand was rejected the moment it was sent, for a reason about
+ * underscores that says nothing to the person who drew it.
+ *
+ * The mapping is deterministic so that reading a document back onto the canvas
+ * can match the same nodes, and total so that no name is left empty.
+ */
+export function irIdOf(canvasId: string): string {
+  const cleaned = canvasId
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 63);
+
+  return cleaned === '' || !/^[a-z0-9]/.test(cleaned) ? `n-${cleaned}`.slice(0, 63) : cleaned;
+}
+
 type Properties = Record<string, string | number | boolean>;
 
 function text(properties: Properties, key: string): string | undefined {
@@ -137,10 +161,10 @@ export function canvasStoreToIr(
     }
 
     irNodes.push({
-      id: node.id,
+      id: irIdOf(node.id),
       kind,
       name: node.data.serviceName || node.id,
-      ...(node.parentNode === undefined ? {} : { parent: node.parentNode }),
+      ...(node.parentNode === undefined ? {} : { parent: irIdOf(node.parentNode) }),
       layout: { x: Math.round(node.position.x), y: Math.round(node.position.y) },
       params,
     } as IrNode);
@@ -160,11 +184,11 @@ export function canvasStoreToIr(
     region: options.region ?? DEFAULT_USAGE.region,
     nodes: irNodes,
     edges: edges
-      .filter((edge) => present.has(edge.source) && present.has(edge.target))
+      .filter((edge) => present.has(irIdOf(edge.source)) && present.has(irIdOf(edge.target)))
       .map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
+        id: irIdOf(edge.id),
+        source: irIdOf(edge.source),
+        target: irIdOf(edge.target),
         // The canvas draws one undifferentiated line, so every edge is the
         // weakest claim the schema offers rather than a routing relationship
         // nothing established.

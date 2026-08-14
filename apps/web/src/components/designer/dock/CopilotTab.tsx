@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowUp, Check, Loader2, Square, Wrench } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useConversation } from '@/lib/copilot/use-conversation';
 
 import { PatchProposalCard } from './PatchProposalCard';
+import type { AcceptedPatch } from '@/lib/copilot/api';
 import type { Turn, ToolCall } from '@/lib/copilot/conversation';
 
 /**
@@ -20,22 +22,57 @@ import type { Turn, ToolCall } from '@/lib/copilot/conversation';
  * priced model and a number a model made up are indistinguishable in prose, and
  * seeing which tool produced the figure is how a reader tells them apart.
  */
+/**
+ * Refusals a model key fixes. Kept as a set rather than an equality check
+ * because the one that was compared against here before, `no_credential`, is
+ * not a code the server sends, so the sentence explaining the fix never showed.
+ */
+const NO_KEY_CODES = new Set(['no_llm_credential', 'unsupported_provider']);
+
 export function CopilotTab({
   experimentId,
+  onStart,
+  isStarting = false,
+  startError = null,
+  skipped = [],
   onApplied,
 }: {
   experimentId: string | null;
-  onApplied?: (touchedNodeIds: string[]) => void;
+  /**
+   * Turns the drawing into an experiment, on a page that has no experiment yet.
+   * Absent when the page is already showing one.
+   */
+  onStart?: () => Promise<string | null>;
+  isStarting?: boolean;
+  startError?: string | null;
+  /** Canvas nodes the architecture document cannot represent, named so the user knows. */
+  skipped?: string[];
+  onApplied?: (applied: AcceptedPatch) => void;
 }) {
   const { turns, isStreaming, refusal, send, stop, accept, reject } = useConversation(experimentId);
   const [draft, setDraft] = useState('');
   const bottom = useRef<HTMLDivElement>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' });
   }, [turns]);
 
-  if (experimentId === null) {
+  /**
+   * A message typed before there is an experiment starts one and is then sent.
+   *
+   * The alternative is a disabled box with an explanation of why the user has
+   * to press something else first, which is a rule about our data model dressed
+   * up as an instruction. Typing is the intent; making the experiment is
+   * bookkeeping the platform can do on the way.
+   */
+  useEffect(() => {
+    if (pending === null || experimentId === null) return;
+    send(pending);
+    setPending(null);
+  }, [pending, experimentId, send]);
+
+  if (experimentId === null && onStart === undefined) {
     return (
       <div className="flex-1 p-3">
         <p className="text-[11px] text-gray-500">
@@ -49,8 +86,17 @@ export function CopilotTab({
 
   const submit = () => {
     const message = draft.trim();
-    if (message === '' || isStreaming) return;
+    if (message === '' || isStreaming || isStarting) return;
     setDraft('');
+
+    if (experimentId === null) {
+      void onStart?.().then((started) => {
+        if (started === null) return;
+        setPending(message);
+      });
+      return;
+    }
+
     send(message);
   };
 
@@ -60,8 +106,9 @@ export function CopilotTab({
         {turns.length === 0 && (
           <p className="text-[11px] text-gray-500">
             Ask for what you want rather than for a service. &ldquo;Spend less, I can take slower
-            reads&rdquo; and &ldquo;this has to survive a zone failure&rdquo; are the kinds of
-            things it can price and act on.
+            reads&rdquo; and &ldquo;this has to survive a zone failure&rdquo; are the kinds of things
+            it can price and act on. It answers with a change to the canvas, costed, for you to
+            accept or throw away.
           </p>
         )}
 
@@ -71,11 +118,25 @@ export function CopilotTab({
             turn={turn}
             onAccept={async (proposalId) => {
               const applied = await accept(proposalId);
-              if (applied !== null) onApplied?.(applied.touchedNodeIds);
+              if (applied !== null) onApplied?.(applied);
             }}
             onReject={reject}
           />
         ))}
+
+        {skipped.length > 0 && (
+          <p className="text-[10px] text-gray-500">
+            Reasoning about everything on the canvas except {skipped.join(', ')}, which the
+            architecture document has no representation for yet. Nothing it says accounts for those.
+          </p>
+        )}
+
+        {startError !== null && (
+          <p className="flex items-start gap-1.5 text-[11px] text-amber-800 dark:text-amber-300">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+            {startError}
+          </p>
+        )}
 
         {refusal !== null && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-900 dark:bg-amber-950/30">
@@ -83,9 +144,14 @@ export function CopilotTab({
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               {refusal.message}
             </p>
-            {refusal.code === 'no_credential' && (
-              <p className="mt-1 pl-4.5 text-[10px] text-amber-800 dark:text-amber-300">
-                The copilot spends your own key rather than a shared one. Add it under Settings.
+            {NO_KEY_CODES.has(refusal.code) && (
+              <p className="mt-1 text-[10px] text-amber-800 dark:text-amber-300">
+                The copilot spends your key rather than a shared one, so nothing runs until there is
+                one to spend.{' '}
+                <Link to="/settings" className="font-medium underline">
+                  Add a model key
+                </Link>
+                .
               </p>
             )}
           </div>
@@ -117,11 +183,15 @@ export function CopilotTab({
             <Button
               size="icon"
               className="h-8 w-8"
-              disabled={draft.trim() === ''}
+              disabled={draft.trim() === '' || isStarting}
               onClick={submit}
               title="Send"
             >
-              <ArrowUp className="h-4 w-4" />
+              {isStarting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>

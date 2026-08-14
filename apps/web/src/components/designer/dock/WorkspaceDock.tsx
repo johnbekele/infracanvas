@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight, Code2, Gauge, Settings2, Sparkles, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { applyIrToFlow } from '@/lib/architecture/ir-to-flow';
+import type { AcceptedPatch } from '@/lib/copilot/api';
+import { useCanvasExperiment } from '@/lib/copilot/use-canvas-experiment';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
 import { CodeTab } from './CodeTab';
@@ -35,15 +38,36 @@ const TABS: { id: DockTab; label: string; icon: typeof Gauge }[] = [
  */
 export function WorkspaceDock({
   isMobile = false,
-  experimentId = null,
+  experimentId: bound = null,
 }: {
   isMobile?: boolean;
-  /** The experiment the copilot converses about. Null until one has been started. */
+  /**
+   * The experiment the copilot converses about, when the page already has one.
+   * On the open designer there is none, and the canvas starts one on first use.
+   */
   experimentId?: string | null;
 }) {
   const [tab, setTab] = useState<DockTab>('simulation');
   const [isOpen, setOpen] = useState(!isMobile);
   const selectedNodeId = useDesignerStore((state) => state.selectedNodeId);
+  const designName = useDesignerStore((state) => state.designName);
+  const canvasExperiment = useCanvasExperiment(designName);
+
+  const experimentId = bound ?? canvasExperiment.experimentId;
+
+  /**
+   * The canvas adopts the document the patch produced.
+   *
+   * This is what makes the copilot an editor rather than an adviser: accepting
+   * a proposal changes the drawing the user is looking at, and every panel that
+   * reads the canvas -- the simulation, the generated code -- recomputes from
+   * it, so one acceptance moves the whole workspace at once.
+   */
+  const applyRevision = useCallback((applied: AcceptedPatch) => {
+    const { nodes, edges, designName: name, loadDesign } = useDesignerStore.getState();
+    const next = applyIrToFlow(applied.ir, { nodes, edges });
+    loadDesign(next.nodes, next.edges, name);
+  }, []);
 
   useEffect(() => {
     if (selectedNodeId === null) return;
@@ -105,7 +129,16 @@ export function WorkspaceDock({
       </header>
 
       {tab === 'simulation' && <SimulationTab />}
-      {tab === 'copilot' && <CopilotTab experimentId={experimentId} />}
+      {tab === 'copilot' && (
+        <CopilotTab
+          experimentId={experimentId}
+          onStart={bound === null ? canvasExperiment.start : undefined}
+          isStarting={canvasExperiment.isStarting}
+          startError={canvasExperiment.error}
+          skipped={canvasExperiment.skipped}
+          onApplied={applyRevision}
+        />
+      )}
       {tab === 'properties' && <PropertiesTab />}
       {tab === 'code' && <CodeTab />}
     </aside>

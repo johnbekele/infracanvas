@@ -57,6 +57,38 @@ describe('converting the canvas store to the IR', () => {
     expect(() => assertValidIr(document)).not.toThrow();
   });
 
+  it('accepts the ids the palette actually generates', () => {
+    // The fixtures above were written by hand and happened to be legal, so for
+    // a long time nothing here exercised what the designer produces: React Flow
+    // numbers a dropped service `node_0`, and the schema forbids underscores.
+    // Every hand-drawn architecture was rejected by the API on that alone.
+    const { document } = canvasStoreToIr(
+      [
+        node('node_0', 'vpc-environment', { cidrBlock: '10.0.0.0/16' }),
+        node(
+          'node_1',
+          'private-subnet',
+          { cidrBlock: '10.0.1.0/24', availabilityZone: 'us-east-1a' },
+          'node_0'
+        ),
+        node('node_2', 'rds', database, 'node_1'),
+      ],
+      [
+        {
+          id: 'reactflow__edge-node_1-node_2',
+          source: 'node_1',
+          target: 'node_2',
+        } as Edge,
+      ]
+    );
+
+    expect(() => assertValidIr(document)).not.toThrow();
+    // The nesting has to survive the renaming, or the subnet stops containing
+    // the database and the availability model stops seeing a zone.
+    expect(document.nodes[2]?.parent).toBe(document.nodes[1]?.id);
+    expect(document.edges[0]?.source).toBe(document.nodes[1]?.id);
+  });
+
   it('reads a subnet tier from which shape the canvas drew', () => {
     const { document } = canvasStoreToIr(
       [

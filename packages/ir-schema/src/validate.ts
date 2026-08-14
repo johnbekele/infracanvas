@@ -75,14 +75,42 @@ const validateDocument = ajv.compile(schemaJson);
  * offending parameter.
  */
 const BRANCH_BY_KIND = new Map<string, ValidateFunction>();
-for (const [def, kinds] of [
-  ['vpcNode', ['vpc']],
-  ['subnetNode', ['subnet']],
-  ['pendingContractNode', pendingKinds()],
-] as const) {
-  const branch = ajv.getSchema(`${IR_SCHEMA_ID}#/$defs/${def}`);
+for (const { $ref } of schemaJson.properties.nodes.items.oneOf) {
+  const def = $ref.replace('#/$defs/', '');
+  const branch = ajv.getSchema(`${IR_SCHEMA_ID}${$ref}`);
   if (!branch) throw new Error(`Schema is missing the ${def} definition.`);
-  for (const kind of kinds) BRANCH_BY_KIND.set(kind, branch);
+  for (const kind of kindsOfBranch(def)) BRANCH_BY_KIND.set(kind, branch);
+}
+
+/**
+ * The kinds a branch accepts, read off the branch.
+ *
+ * This was a list written beside the schema, and it went stale the moment
+ * `rds_instance` was given typed parameters: the new branch was added to the
+ * schema and not to the list, so every document containing a database failed
+ * with "not a resource kind this schema version knows" -- a message that blames
+ * the document for a gap in this table, about the one kind the cost and
+ * reliability models are built on. Deriving it means adding a branch cannot
+ * leave the dispatch behind.
+ */
+function kindsOfBranch(def: string): string[] {
+  const branch = (schemaJson.$defs as Record<string, unknown>)[def] as {
+    properties?: { kind?: { const?: string; $ref?: string } };
+  };
+
+  const kind = branch?.properties?.kind;
+  if (kind?.const !== undefined) return [kind.const];
+
+  // A branch that names an enum of kinds rather than one constant, which is how
+  // every kind still awaiting a resource contract shares a single branch.
+  if (kind?.$ref !== undefined) {
+    const enumerated = (schemaJson.$defs as Record<string, { enum?: string[] }>)[
+      kind.$ref.replace('#/$defs/', '')
+    ];
+    return enumerated?.enum ?? [];
+  }
+
+  return [];
 }
 
 function pendingKinds(): string[] {

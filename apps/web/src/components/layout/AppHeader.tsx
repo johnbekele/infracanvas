@@ -7,6 +7,10 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { to: '/repositories', label: 'Repositories' },
   { to: '/designer', label: 'Designer' },
+  // In the nav rather than only in the account menu: this is where the model
+  // key lives, and until there is one the copilot refuses every turn. A setting
+  // that gates the headline feature is not an account preference.
+  { to: '/settings', label: 'Settings' },
 ];
 
 /**
