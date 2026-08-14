@@ -118,11 +118,7 @@ const KINDS = new Set([
  * ship a new event before this bundle learns about it, and losing one frame is
  * a better outcome for the reader than ending a turn that was going fine.
  */
-export function parseCopilotEvent(
-  kind: string,
-  seq: number,
-  data: string
-): CopilotEvent | null {
+export function parseCopilotEvent(kind: string, seq: number, data: string): CopilotEvent | null {
   if (!KINDS.has(kind) || !Number.isInteger(seq)) return null;
 
   const trimmed = data.trim();

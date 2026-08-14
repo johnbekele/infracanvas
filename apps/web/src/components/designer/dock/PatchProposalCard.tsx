@@ -72,9 +72,7 @@ export function PatchProposalCard({ proposal, onAccept, onReject }: PatchProposa
           label="Availability"
           value={`${percent(availability.before)} → ${percent(availability.after)}`}
           detail={`${downtime(availability.after)} of downtime`}
-          tone={
-            availability.delta === 0 ? 'flat' : availability.delta > 0 ? 'good' : 'bad'
-          }
+          tone={availability.delta === 0 ? 'flat' : availability.delta > 0 ? 'good' : 'bad'}
           partial={availability.completeness === 'partial'}
         />
       </div>
@@ -159,8 +157,7 @@ function Delta({
       <p className="text-[9px] text-gray-500">{detail}</p>
       {partial && (
         <p className="mt-0.5 flex items-center gap-1 text-[9px] text-amber-700 dark:text-amber-400">
-          <AlertTriangle className="h-2.5 w-2.5" />
-          a bound, not a figure
+          <AlertTriangle className="h-2.5 w-2.5" />a bound, not a figure
         </p>
       )}
     </div>

@@ -304,10 +304,14 @@ describe('update', () => {
       status: 'streaming',
     });
 
-    expect((await transcript.update(scope, message.id, { proposalId })).proposalId).toBe(proposalId);
+    expect((await transcript.update(scope, message.id, { proposalId })).proposalId).toBe(
+      proposalId
+    );
     // A null is a real edit rather than "not mentioned", which COALESCE could not
     // have expressed.
-    expect((await transcript.update(scope, message.id, { proposalId: null })).proposalId).toBeNull();
+    expect(
+      (await transcript.update(scope, message.id, { proposalId: null })).proposalId
+    ).toBeNull();
   });
 
   it('keeps the citations a turn verified', async () => {

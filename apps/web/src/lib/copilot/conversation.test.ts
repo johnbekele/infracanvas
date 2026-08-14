@@ -66,7 +66,14 @@ describe('assembling a turn from its events', () => {
 
   it('counts citations the run loop could not verify', () => {
     const turn = replay([
-      { kind: 'citation', seq: 1, scheme: 'file', target: 'api/main.py#L1', verified: true, reason: null },
+      {
+        kind: 'citation',
+        seq: 1,
+        scheme: 'file',
+        target: 'api/main.py#L1',
+        verified: true,
+        reason: null,
+      },
       {
         kind: 'citation',
         seq: 2,

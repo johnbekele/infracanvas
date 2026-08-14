@@ -89,9 +89,7 @@ export function applyEvent(turn: Turn, event: CopilotEvent): Turn {
       return { ...next, proposal: event };
 
     case 'citation':
-      return event.verified
-        ? next
-        : { ...next, unverifiedCitations: next.unverifiedCitations + 1 };
+      return event.verified ? next : { ...next, unverifiedCitations: next.unverifiedCitations + 1 };
 
     case 'limit':
       return { ...next, note: event.message };

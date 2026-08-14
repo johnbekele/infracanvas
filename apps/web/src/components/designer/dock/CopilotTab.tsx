@@ -106,9 +106,9 @@ export function CopilotTab({
         {turns.length === 0 && (
           <p className="text-[11px] text-gray-500">
             Ask for what you want rather than for a service. &ldquo;Spend less, I can take slower
-            reads&rdquo; and &ldquo;this has to survive a zone failure&rdquo; are the kinds of things
-            it can price and act on. It answers with a change to the canvas, costed, for you to
-            accept or throw away.
+            reads&rdquo; and &ldquo;this has to survive a zone failure&rdquo; are the kinds of
+            things it can price and act on. It answers with a change to the canvas, costed, for you
+            to accept or throw away.
           </p>
         )}
 
@@ -245,14 +245,12 @@ function TurnView({
 
       {turn.unverifiedCitations > 0 && (
         <p className="text-[10px] text-amber-700 dark:text-amber-400">
-          {turn.unverifiedCitations} citation{turn.unverifiedCitations === 1 ? '' : 's'} could not be
-          checked against the evidence this run collected. Treat those claims as unsourced.
+          {turn.unverifiedCitations} citation{turn.unverifiedCitations === 1 ? '' : 's'} could not
+          be checked against the evidence this run collected. Treat those claims as unsourced.
         </p>
       )}
 
-      {turn.note !== null && (
-        <p className="text-[10px] text-gray-500">{turn.note}</p>
-      )}
+      {turn.note !== null && <p className="text-[10px] text-gray-500">{turn.note}</p>}
     </div>
   );
 }
@@ -273,4 +271,3 @@ function ToolCallLine({ call }: { call: ToolCall }) {
     </p>
   );
 }
-
