@@ -43,14 +43,34 @@ export interface GeneratedCode {
 
 export type CodeLanguage = 'terraform' | 'pulumi';
 
-/** Container services that hold other nodes on the canvas. */
+/**
+ * Container services that hold other nodes on the canvas.
+ *
+ * These are the AWS architecture groups. Most of them describe organisation
+ * rather than infrastructure -- an account or a region is a boundary a reader
+ * needs and Terraform does not -- so they emit no code, exactly as the
+ * availability zone does.
+ */
 export type ContainerNodeType =
+  | 'aws-cloud'
+  | 'region'
+  | 'aws-account'
+  | 'corporate-data-center'
+  | 'availability-zone'
   | 'vpc-environment'
   | 'public-subnet'
   | 'private-subnet'
-  | 'availability-zone'
+  | 'security-group'
+  | 'auto-scaling-group'
   | 'ecs-cluster'
-  | 'eks-cluster';
+  | 'eks-cluster'
+  | 'spot-fleet'
+  | 'server-contents'
+  | 'ec2-instance-contents'
+  | 'elastic-beanstalk-container'
+  | 'step-functions'
+  | 'iot-greengrass'
+  | 'iot-greengrass-deployment';
 
 // Service node data used in the designer
 export interface ServiceNodeData {

@@ -4,14 +4,14 @@ import { motion } from 'framer-motion';
 
 import { getServiceById } from '@infracanvas/core';
 import { type ServiceNodeData } from '@/lib/stores/designer-store';
-import { iconFor } from './service-icons';
+import { ServiceIconBadge } from './ServiceIconBadge';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
 function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>) {
   const { selectNode, selectedNodeId } = useDesignerStore();
   // Indexed by the icon the catalog declares. Indexing by `serviceId`
   // silently gave every node the same fallback glyph.
-  const Icon = iconFor(getServiceById(data.serviceId)?.icon);
+  const catalogIcon = getServiceById(data.serviceId)?.icon;
 
   const isSelected = selected || selectedNodeId === id;
 
@@ -73,12 +73,7 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>
           className="relative flex items-center justify-center rounded-t-[10px] p-3"
           style={{ backgroundColor: data.color + '20' }}
         >
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg"
-            style={{ backgroundColor: data.color }}
-          >
-            <Icon className="h-5 w-5 text-white" />
-          </div>
+          <ServiceIconBadge iconName={catalogIcon} color={data.color} />
         </div>
 
         {/* Service Name */}

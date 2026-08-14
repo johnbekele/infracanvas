@@ -111,7 +111,7 @@ export const aiServices: AWSService[] = [
     category: 'ai-ml',
     description: 'Content and topic filters applied to model calls',
     color: AI_COLOUR,
-    icon: 'shield',
+    icon: 'filter',
     allowedConnections: ['bedrock', 'bedrock-agent'],
     properties: [
       text('guardrailName', 'Guardrail Name', 'my-guardrail', true),
@@ -226,7 +226,7 @@ export const aiServices: AWSService[] = [
     category: 'ai-ml',
     description: 'Managed enterprise search with natural language',
     color: AI_COLOUR,
-    icon: 'search',
+    icon: 'file-search',
     allowedConnections: ['s3', 'ecs', 'lambda', 'rds'],
     properties: [
       text('indexName', 'Index Name', 'my-index', true),

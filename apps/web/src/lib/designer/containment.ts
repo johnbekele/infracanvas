@@ -19,15 +19,34 @@ export interface Point {
   y: number;
 }
 
-/** Sizes a container falls back to before it has been measured or resized. */
+/**
+ * Sizes a container falls back to before it has been measured or resized.
+ *
+ * Each is large enough to hold the group AWS draws inside it, so dropping a
+ * region into the cloud and a zone into the region does not mean resizing three
+ * boxes by hand before anything fits.
+ */
 export const CONTAINER_DEFAULT_SIZE: Record<string, Size> = {
+  'aws-cloud': { width: 940, height: 760 },
+  'corporate-data-center': { width: 420, height: 320 },
+  region: { width: 820, height: 660 },
+  'aws-account': { width: 820, height: 660 },
   // A zone is drawn around a VPC, so it starts large enough to hold one.
   'availability-zone': { width: 580, height: 520 },
   'vpc-environment': { width: 500, height: 400 },
-  'public-subnet': { width: 220, height: 180 },
-  'private-subnet': { width: 220, height: 180 },
+  'public-subnet': { width: 260, height: 200 },
+  'private-subnet': { width: 260, height: 200 },
+  'security-group': { width: 280, height: 210 },
+  'auto-scaling-group': { width: 320, height: 240 },
   'ecs-cluster': { width: 240, height: 200 },
   'eks-cluster': { width: 240, height: 200 },
+  'spot-fleet': { width: 280, height: 210 },
+  'elastic-beanstalk-container': { width: 300, height: 230 },
+  'step-functions': { width: 300, height: 230 },
+  'server-contents': { width: 220, height: 170 },
+  'ec2-instance-contents': { width: 220, height: 170 },
+  'iot-greengrass': { width: 320, height: 240 },
+  'iot-greengrass-deployment': { width: 300, height: 220 },
 };
 
 /**
@@ -40,12 +59,25 @@ export const CONTAINER_DEFAULT_SIZE: Record<string, Size> = {
  * depth the canvas would never have given it.
  */
 const CONTAINER_Z_INDEX: Record<string, number> = {
-  'availability-zone': -4,
-  'vpc-environment': -3,
-  'public-subnet': -2,
-  'private-subnet': -2,
-  'ecs-cluster': -1,
-  'eks-cluster': -1,
+  'aws-cloud': -8,
+  'corporate-data-center': -8,
+  region: -7,
+  'aws-account': -7,
+  'availability-zone': -6,
+  'vpc-environment': -5,
+  'public-subnet': -4,
+  'private-subnet': -4,
+  'security-group': -3,
+  'auto-scaling-group': -3,
+  'ecs-cluster': -2,
+  'eks-cluster': -2,
+  'spot-fleet': -2,
+  'elastic-beanstalk-container': -2,
+  'step-functions': -2,
+  'iot-greengrass': -2,
+  'iot-greengrass-deployment': -2,
+  'server-contents': -1,
+  'ec2-instance-contents': -1,
 };
 
 export function containerZIndex(serviceId: string): number {
@@ -56,6 +88,18 @@ export const SERVICE_NODE_SIZE: Size = { width: 144, height: 96 };
 
 export function isContainerService(serviceId: string): boolean {
   return getServiceById(serviceId)?.isContainer === true;
+}
+
+/**
+ * Which React Flow component draws a service.
+ *
+ * Every container is one component, styled from the `group` its catalogue entry
+ * declares. Three call sites needed this answer -- the canvas, a proposal, and
+ * the IR -- and each held its own copy, so a container added to one appeared as a
+ * plain service card in the other two.
+ */
+export function flowTypeFor(serviceId: string): string {
+  return isContainerService(serviceId) ? 'group' : 'serviceNode';
 }
 
 /** The rendered size of a node, preferring what React Flow measured. */

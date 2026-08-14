@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Node } from 'reactflow';
+import { awsServices } from '@infracanvas/core';
 import {
+  CONTAINER_DEFAULT_SIZE,
   absolutePosition,
   canNest,
   containerAt,
+  containerZIndex,
   descendantIds,
+  flowTypeFor,
   grownSize,
   positionWithin,
   sizeOf,
@@ -150,6 +154,79 @@ describe('canNest', () => {
 
   it('rejects a service the catalog has never heard of', () => {
     expect(canNest('not-a-service', null)).toBe(false);
+  });
+});
+
+describe('the AWS architecture groups', () => {
+  it('leaves the outermost boundaries on open canvas', () => {
+    expect(canNest('aws-cloud', null)).toBe(true);
+    expect(canNest('aws-cloud', 'region')).toBe(false);
+    expect(canNest('aws-cloud', 'vpc-environment')).toBe(false);
+  });
+
+  it('keeps a corporate data centre outside the cloud, which is the point of it', () => {
+    expect(canNest('corporate-data-center', null)).toBe(true);
+    expect(canNest('corporate-data-center', 'aws-cloud')).toBe(false);
+  });
+
+  it('draws a region in the cloud and a zone in the region', () => {
+    expect(canNest('region', 'aws-cloud')).toBe(true);
+    expect(canNest('region', 'vpc-environment')).toBe(false);
+    expect(canNest('availability-zone', 'region')).toBe(true);
+  });
+
+  it('still starts a zone or a VPC on open canvas, now that a region can hold them', () => {
+    expect(canNest('availability-zone', null)).toBe(true);
+    expect(canNest('vpc-environment', null)).toBe(true);
+    expect(canNest('vpc-environment', 'region')).toBe(true);
+    expect(canNest('vpc-environment', 'availability-zone')).toBe(true);
+  });
+
+  it('holds resources inside a security group, which is how AWS draws one', () => {
+    expect(canNest('ec2', 'security-group')).toBe(true);
+    expect(canNest('security-group', 'vpc-environment')).toBe(true);
+    expect(canNest('security-group', 'aws-cloud')).toBe(false);
+  });
+
+  it('holds the steps a workflow orchestrates', () => {
+    expect(canNest('lambda', 'step-functions')).toBe(true);
+    expect(canNest('step-functions', 'private-subnet')).toBe(true);
+  });
+
+  it('scales capacity inside a network, never outside one', () => {
+    expect(canNest('auto-scaling-group', 'private-subnet')).toBe(true);
+    expect(canNest('auto-scaling-group', 'vpc-environment')).toBe(true);
+    expect(canNest('auto-scaling-group', null)).toBe(true);
+    expect(canNest('auto-scaling-group', 'region')).toBe(false);
+  });
+
+  it('draws every container as a group and every leaf as a card', () => {
+    expect(flowTypeFor('aws-cloud')).toBe('group');
+    expect(flowTypeFor('security-group')).toBe('group');
+    expect(flowTypeFor('lambda')).toBe('serviceNode');
+  });
+
+  // Three tables have to agree about a container, and they used to be edited one
+  // at a time: a container missing from the size table opened at a leaf's size,
+  // and one missing from the paint order covered its own children.
+  it('gives every container a style, a starting size and a paint order', () => {
+    const containers = awsServices.filter((service) => service.isContainer);
+
+    expect(containers.length).toBeGreaterThan(15);
+
+    for (const container of containers) {
+      expect(container.group, `${container.id} declares no group style`).toBeDefined();
+      expect(CONTAINER_DEFAULT_SIZE[container.id], `${container.id} has no size`).toBeDefined();
+      expect(containerZIndex(container.id)).toBeLessThan(0);
+    }
+  });
+
+  it('paints an outer group behind the groups it holds', () => {
+    expect(containerZIndex('aws-cloud')).toBeLessThan(containerZIndex('region'));
+    expect(containerZIndex('region')).toBeLessThan(containerZIndex('availability-zone'));
+    expect(containerZIndex('availability-zone')).toBeLessThan(containerZIndex('vpc-environment'));
+    expect(containerZIndex('vpc-environment')).toBeLessThan(containerZIndex('private-subnet'));
+    expect(containerZIndex('private-subnet')).toBeLessThan(containerZIndex('ecs-cluster'));
   });
 });
 

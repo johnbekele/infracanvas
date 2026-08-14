@@ -6,7 +6,9 @@
 // service meant three parallel edits, so it did not happen, and the export
 // silently degraded to a comment for anything missing.
 import { aiServices } from './services/ai';
+import { analyticsServices } from './services/analytics';
 import { dataServices } from './services/data-stores';
+import { groupServices } from './services/groups';
 import { integrationServices } from './services/integration';
 import { platformServices } from './services/platform';
 
@@ -48,6 +50,13 @@ export interface IacMapping {
   overrides?: Record<string, IacArgument | null>;
   /** Arguments taken from the container this node sits in. */
   fromParent?: { argument: string; from: 'subnet' | 'vpc' | 'cluster' }[];
+  /**
+   * Whether the provider accepts `tags`. Almost every resource does, so it is
+   * declared only where one does not -- and it has to be declared, because a
+   * `tags` block on a resource that has no such argument is not a cosmetic
+   * problem: the plan fails and none of the file applies.
+   */
+  taggable?: boolean;
 }
 
 export type ServiceCategory =
@@ -59,7 +68,29 @@ export type ServiceCategory =
   | 'integration'
   | 'ai-ml'
   | 'analytics'
-  | 'observability';
+  | 'observability'
+  | 'grouping';
+
+/**
+ * How a container is drawn on the canvas.
+ *
+ * An AWS diagram carries meaning in the border before anyone reads a label: a
+ * dashed edge is a region or an availability zone, a washed interior is a
+ * subnet, and everything else is a solid outline with the group's icon in the
+ * corner. A reader who knows the convention reads it first, so the styling is
+ * declared here as catalogue data rather than as another branch inside a
+ * component -- which is how three container components ended up with three
+ * unrelated colour schemes.
+ */
+export interface GroupStyle {
+  /** Border, label and icon colour. */
+  stroke: string;
+  /** Interior wash. Absent leaves the canvas showing through, as most groups do. */
+  fill?: string;
+  border: 'solid' | 'dashed' | 'dotted';
+  /** AWS labels an availability zone with text alone, with no corner icon. */
+  showIcon?: boolean;
+}
 
 export interface AWSService {
   id: string;
@@ -80,6 +111,8 @@ export interface AWSService {
    */
   allowedParents?: string[];
   subnetPlacement?: SubnetPlacement;
+  /** Present on containers, absent on leaves. */
+  group?: GroupStyle;
 }
 
 export const serviceCategories = [
@@ -92,6 +125,7 @@ export const serviceCategories = [
   { id: 'security', name: 'Security', color: '#DD344C' },
   { id: 'integration', name: 'Integration', color: '#FF4F8B' },
   { id: 'observability', name: 'Observability', color: '#E7157B' },
+  { id: 'grouping', name: 'Groups', color: '#242F3E' },
 ] as const;
 
 const coreServices: AWSService[] = [
@@ -173,7 +207,7 @@ const coreServices: AWSService[] = [
     category: 'compute',
     description: 'Serverless compute service',
     color: '#FF9900',
-    icon: 'zap',
+    icon: 'lambda',
     allowedConnections: [
       'dynamodb',
       's3',
@@ -319,7 +353,7 @@ const coreServices: AWSService[] = [
     category: 'storage',
     description: 'Object storage service',
     color: '#569A31',
-    icon: 'database',
+    icon: 'archive',
     allowedConnections: ['cloudfront', 'lambda', 'iam'],
     properties: [
       {
@@ -535,7 +569,7 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'DNS and domain management',
     color: '#8C4FFF',
-    icon: 'globe',
+    icon: 'route',
     allowedConnections: ['cloudfront', 'api-gateway', 'ec2', 's3'],
     properties: [
       {
@@ -591,7 +625,7 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'API management service',
     color: '#FF4F8B',
-    icon: 'git-branch',
+    icon: 'webhook',
     allowedConnections: ['lambda', 'ec2', 'ecs', 'cognito'],
     properties: [
       { name: 'apiName', label: 'API Name', type: 'text', default: 'my-api', required: true },
@@ -622,7 +656,7 @@ const coreServices: AWSService[] = [
     category: 'security',
     description: 'Identity and access management',
     color: '#DD344C',
-    icon: 'shield',
+    icon: 'fingerprint',
     allowedConnections: ['lambda', 'ec2', 'ecs', 's3', 'dynamodb'],
     properties: [
       { name: 'roleName', label: 'Role Name', type: 'text', default: 'my-role', required: true },
@@ -745,12 +779,14 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'Virtual network container with public and private subnets',
     color: '#8C4FFF',
-    icon: 'network',
+    icon: 'square-stack',
     allowedConnections: [],
     isContainer: true,
-    // A zone is the only thing a VPC is drawn inside, and it stays optional: a
-    // design that says nothing about failure domains is still a valid design.
-    allowedParents: ['availability-zone'],
+    // A zone is the only AWS resource a VPC is drawn inside, and it stays
+    // optional: a design that says nothing about failure domains is still a valid
+    // design. The rest are organisational boxes that provision nothing.
+    allowedParents: ['availability-zone', 'region', 'aws-account', 'aws-cloud'],
+    group: { stroke: '#248814', border: 'solid', showIcon: true },
     properties: [
       { name: 'vpcName', label: 'VPC Name', type: 'text', default: 'my-vpc', required: true },
       {
@@ -772,10 +808,13 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'Internet-accessible subnet with public IP assignment',
     color: '#22C55E',
-    icon: 'globe',
+    icon: 'door-open',
     allowedConnections: [],
     isContainer: true,
     parentRequired: 'vpc-environment',
+    // The two subnets are the only groups AWS fills, which is what makes a
+    // reachable subnet distinguishable from an unreachable one at a glance.
+    group: { stroke: '#248814', fill: '#E9F3E6', border: 'solid', showIcon: true },
     properties: [
       {
         name: 'subnetName',
@@ -811,10 +850,11 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'Internal-only subnet without public IP assignment',
     color: '#EF4444',
-    icon: 'shield',
+    icon: 'shield-half',
     allowedConnections: [],
     isContainer: true,
     parentRequired: 'vpc-environment',
+    group: { stroke: '#147EBA', fill: '#E6F2F8', border: 'solid', showIcon: true },
     properties: [
       {
         name: 'subnetName',
@@ -850,7 +890,7 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'Layer 7 load balancer for HTTP/HTTPS traffic',
     color: '#8C4FFF',
-    icon: 'git-branch',
+    icon: 'scale',
     allowedConnections: ['ecs', 'ec2', 'lambda'],
     subnetPlacement: { allowedInPublic: true, allowedInPrivate: false, requiresSubnet: true },
     properties: [
@@ -870,7 +910,7 @@ const coreServices: AWSService[] = [
     category: 'networking',
     description: 'Layer 4 load balancer for TCP/UDP traffic',
     color: '#8C4FFF',
-    icon: 'git-branch',
+    icon: 'split',
     allowedConnections: ['ecs', 'ec2'],
     subnetPlacement: { allowedInPublic: true, allowedInPrivate: true, requiresSubnet: true },
     properties: [
@@ -920,9 +960,11 @@ const coreServices: AWSService[] = [
 export const awsServices: AWSService[] = [
   ...coreServices,
   ...dataServices,
+  ...analyticsServices,
   ...aiServices,
   ...integrationServices,
   ...platformServices,
+  ...groupServices,
 ];
 
 export function getServiceById(id: string): AWSService | undefined {

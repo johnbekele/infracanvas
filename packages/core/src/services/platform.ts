@@ -14,6 +14,11 @@ const SECURITY_COLOUR = '#DD344C';
 const NETWORK_COLOUR = '#8C4FFF';
 const OBSERVABILITY_COLOUR = '#E7157B';
 
+/** Group stroke colours, from the AWS architecture group palette. */
+const GROUP_COMPUTE = '#D86613';
+const GROUP_REGION = '#147EBA';
+const GROUP_SECURITY = '#DD3522';
+
 const anySubnet = {
   allowedInPublic: true,
   allowedInPrivate: true,
@@ -36,6 +41,7 @@ export const platformServices: AWSService[] = [
     // straight into one would be a cluster in no subnet, which cannot be emitted.
     allowedParents: ['private-subnet', 'public-subnet'],
     subnetPlacement: anySubnet,
+    group: { stroke: GROUP_COMPUTE, border: 'solid', showIcon: true },
     properties: [
       text('clusterName', 'Cluster Name', 'my-cluster', true),
       select('capacityProvider', 'Capacity', [
@@ -63,6 +69,7 @@ export const platformServices: AWSService[] = [
     isContainer: true,
     allowedParents: ['private-subnet'],
     subnetPlacement: anySubnet,
+    group: { stroke: GROUP_COMPUTE, border: 'solid', showIcon: true },
     properties: [
       text('clusterName', 'Cluster Name', 'my-eks', true),
       text('version', 'Kubernetes Version', '1.31'),
@@ -89,9 +96,12 @@ export const platformServices: AWSService[] = [
     icon: 'layout-grid',
     allowedConnections: [],
     isContainer: true,
-    // The outermost box on the canvas: a zone is where the racks are, and the
-    // networks drawn inside it are what happens to be running there. Declaring
-    // no parents is what keeps it out of a VPC.
+    // A zone is where the racks are, and the networks drawn inside it are what
+    // happens to be running there. Only a region encloses it: naming no other
+    // parent is what keeps it out of a VPC.
+    allowedParents: ['region', 'aws-cloud', 'aws-account'],
+    // AWS labels a zone with text alone, with no corner icon.
+    group: { stroke: GROUP_REGION, border: 'dashed', showIcon: false },
     properties: [
       text('zoneName', 'Zone', 'us-east-1a', true),
       bool('primary', 'Primary Zone', true),
@@ -113,7 +123,7 @@ export const platformServices: AWSService[] = [
     category: 'compute',
     description: 'Container service with no instances to manage',
     color: COMPUTE_COLOUR,
-    icon: 'container',
+    icon: 'cloud-cog',
     allowedConnections: ['rds', 'elasticache', 's3', 'sqs', 'efs', 'secrets-manager'],
     allowedParents: ['ecs-cluster', 'private-subnet', 'public-subnet'],
     subnetPlacement: anySubnet,
@@ -211,7 +221,7 @@ export const platformServices: AWSService[] = [
     category: 'compute',
     description: 'Build and host a front end from a repository',
     color: COMPUTE_COLOUR,
-    icon: 'globe',
+    icon: 'app-window',
     allowedConnections: ['api-gateway', 'appsync', 'cognito', 's3'],
     properties: [
       text('appName', 'App Name', 'my-site', true),
@@ -311,9 +321,16 @@ export const platformServices: AWSService[] = [
     category: 'security',
     description: 'Stateful firewall rules for a resource',
     color: SECURITY_COLOUR,
-    icon: 'shield',
+    icon: 'brick-wall',
     allowedConnections: ['ec2', 'ecs', 'rds', 'alb', 'elasticache', 'fargate'],
     allowedParents: ['vpc-environment'],
+    // AWS draws a security group as a box around what it protects, and the
+    // grouping is the useful part: the reader sees which resources share the
+    // rules. It still emits its own `aws_security_group`.
+    isContainer: true,
+    // Labelled without an icon, as AWS draws it: the box is usually small and
+    // tight around one resource, and a badge crowds the name out of it.
+    group: { stroke: GROUP_SECURITY, border: 'solid', showIcon: false },
     properties: [
       text('groupName', 'Group Name', 'my-sg', true),
       text('ingressPorts', 'Allowed Inbound Ports', '443'),
@@ -386,7 +403,7 @@ export const platformServices: AWSService[] = [
     category: 'observability',
     description: 'Distributed traces across services',
     color: OBSERVABILITY_COLOUR,
-    icon: 'git-compare',
+    icon: 'footprints',
     allowedConnections: ['ecs', 'lambda', 'api-gateway', 'appsync', 'ec2'],
     properties: [
       text('groupName', 'Group Name', 'my-app-traces', true),

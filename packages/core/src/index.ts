@@ -55,6 +55,7 @@ export {
   getServicesByCategory,
   canConnect,
   type AWSService,
+  type GroupStyle,
   type IacArgument,
   type IacMapping,
   type ServiceCategory,

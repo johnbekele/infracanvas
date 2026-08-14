@@ -20,14 +20,13 @@ import {
   canNest,
   containerAt,
   containerZIndex,
+  flowTypeFor,
   grownSize,
   positionWithin,
   sizeOf,
 } from '@/lib/designer/containment';
 import { ServiceNode } from './ServiceNode';
-import { VpcEnvironmentNode } from './VpcEnvironmentNode';
-import { SubnetNode } from './SubnetNode';
-import { ClusterNode } from './ClusterNode';
+import { GroupNode } from './GroupNode';
 import { ServicePalette } from './ServicePalette';
 import { WorkspaceDock } from './dock/WorkspaceDock';
 import { DesignerToolbar } from './DesignerToolbar';
@@ -36,18 +35,13 @@ import { Button } from '@/components/ui/button';
 
 const nodeTypes = {
   serviceNode: ServiceNode,
-  vpcEnvironment: VpcEnvironmentNode,
-  subnet: SubnetNode,
-  cluster: ClusterNode,
+  group: GroupNode,
+  // A design saved before the containers became one component carries one of
+  // these three types, and React Flow renders nothing for a type it cannot find.
+  vpcEnvironment: GroupNode,
+  subnet: GroupNode,
+  cluster: GroupNode,
 };
-
-/** Which React Flow component draws a service. */
-function nodeTypeFor(serviceId: string): string {
-  if (serviceId === 'vpc-environment') return 'vpcEnvironment';
-  if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
-  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
-  return 'serviceNode';
-}
 
 const edgeTypes = {
   deletable: DeletableEdge,
@@ -152,7 +146,7 @@ function DesignerCanvasInner() {
         properties[prop.name] = prop.default;
       });
 
-      const nodeType = nodeTypeFor(service.id);
+      const nodeType = flowTypeFor(service.id);
       const newNode: Parameters<typeof addNode>[0] = {
         id: getNodeId(),
         type: nodeType,

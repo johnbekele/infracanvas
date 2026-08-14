@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, GripVertical } from 'lucide-react';
 import { awsServices, serviceCategories, type AWSService } from '@infracanvas/core';
 import { Input } from '@/components/ui/input';
-import { iconFor } from './service-icons';
+import { ServiceIconBadge } from './ServiceIconBadge';
 
 interface ServicePaletteProps {
   onDragStart: (event: React.DragEvent, service: AWSService) => void;
@@ -92,7 +92,6 @@ export function ServicePalette({ onDragStart }: ServicePaletteProps) {
                   >
                     <div className="space-y-1 py-1 pl-4">
                       {services.map((service) => {
-                        const Icon = iconFor(service.icon);
                         return (
                           <div
                             key={service.id}
@@ -101,12 +100,12 @@ export function ServicePalette({ onDragStart }: ServicePaletteProps) {
                             className="group flex cursor-grab items-center gap-2 rounded-lg border border-transparent bg-gray-50 px-2 py-2 transition-colors hover:border-gray-200 hover:bg-gray-100 active:cursor-grabbing dark:bg-gray-800/50 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                           >
                             <GripVertical className="h-3 w-3 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-600" />
-                            <div
-                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
-                              style={{ backgroundColor: service.color }}
-                            >
-                              <Icon className="h-3.5 w-3.5 text-white" />
-                            </div>
+                            <ServiceIconBadge
+                              iconName={service.icon}
+                              color={service.color}
+                              sizeClassName="h-7 w-7 rounded-md"
+                              glyphClassName="h-3.5 w-3.5"
+                            />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-xs font-medium text-gray-900 dark:text-white">
                                 {service.name}

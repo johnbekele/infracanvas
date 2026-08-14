@@ -2,24 +2,7 @@
 import type { Edge, Node } from 'reactflow';
 import { getServiceById, type ArchitectureProposal, type ProposedNode } from '@infracanvas/core';
 import type { ServiceNodeData } from '@/lib/stores/designer-store';
-import { CONTAINER_DEFAULT_SIZE } from '@/lib/designer/containment';
-
-/** Container nodes render behind their children, outermost furthest back. */
-const Z_INDEX: Record<string, number> = {
-  'vpc-environment': -4,
-  'availability-zone': -3,
-  'public-subnet': -2,
-  'private-subnet': -2,
-  'ecs-cluster': -1,
-  'eks-cluster': -1,
-};
-
-function flowTypeFor(serviceId: string): string {
-  if (serviceId === 'vpc-environment') return 'vpcEnvironment';
-  if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
-  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
-  return 'serviceNode';
-}
+import { containerZIndex, flowTypeFor } from '@/lib/designer/containment';
 
 function toFlowNode(proposed: ProposedNode): Node<ServiceNodeData> | null {
   const service = getServiceById(proposed.serviceId);
@@ -61,7 +44,7 @@ function toFlowNode(proposed: ProposedNode): Node<ServiceNodeData> | null {
       style: { width: proposed.size.width, height: proposed.size.height },
       width: proposed.size.width,
       height: proposed.size.height,
-      zIndex: Z_INDEX[proposed.serviceId] ?? -1,
+      zIndex: containerZIndex(proposed.serviceId),
     });
   }
 

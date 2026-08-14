@@ -7,28 +7,11 @@ import {
   type IrNode,
 } from '@infracanvas/core';
 
-import { CONTAINER_DEFAULT_SIZE } from '@/lib/designer/containment';
+import { CONTAINER_DEFAULT_SIZE, containerZIndex, flowTypeFor } from '@/lib/designer/containment';
 import { irIdOf } from '@/lib/estimate/to-ir';
 import type { ServiceNodeData } from '@/lib/stores/designer-store';
 
 import type { FlowArchitecture } from './to-flow';
-
-/** Container nodes render behind their children, outermost furthest back. */
-const Z_INDEX: Record<string, number> = {
-  'vpc-environment': -4,
-  'availability-zone': -3,
-  'public-subnet': -2,
-  'private-subnet': -2,
-  'ecs-cluster': -1,
-  'eks-cluster': -1,
-};
-
-function flowTypeFor(serviceId: string): string {
-  if (serviceId === 'vpc-environment') return 'vpcEnvironment';
-  if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
-  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
-  return 'serviceNode';
-}
 
 /**
  * Where to put a node the document has and the canvas does not.
@@ -126,7 +109,7 @@ export function applyIrToFlow(
         style: { width: size.width, height: size.height },
         width: size.width,
         height: size.height,
-        zIndex: Z_INDEX[serviceId] ?? -1,
+        zIndex: containerZIndex(serviceId),
       });
     }
 
