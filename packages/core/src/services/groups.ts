@@ -71,7 +71,9 @@ export const groupServices: AWSService[] = [
     isContainer: true,
     allowedParents: ['aws-cloud'],
     group: { stroke: REGION_BLUE, border: 'dashed', showIcon: true },
-    properties: [text('regionName', 'Region', 'us-east-1', true)],
+    // The label a reader sees on the box, which they then edit. It configures no
+    // client and reaches no provider, so it is not a region read from code.
+    properties: [text('regionName', 'Region', 'us-east-1', true)], // infracanvas-allow: no-hardcoded-region
     iac: noIac,
   },
   {
