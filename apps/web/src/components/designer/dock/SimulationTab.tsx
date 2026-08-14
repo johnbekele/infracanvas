@@ -1,75 +1,151 @@
-import { useEstimate } from '@/lib/estimate/use-estimate';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, ArrowUpRight } from 'lucide-react';
 
-import { AssumptionEditor } from '../estimate/AssumptionEditor';
-import { AvailabilitySummary } from '../estimate/AvailabilitySummary';
-import { BottleneckSummary } from '../estimate/BottleneckSummary';
-import { CostBreakdown } from '../estimate/CostBreakdown';
-import { FindingsList } from '../estimate/FindingsList';
-import { LatencySummary } from '../estimate/LatencySummary';
-import { SloProposals } from '../estimate/SloProposals';
+import type { Slice } from '@/components/simulation/charts/StackedBar';
+import { Label } from '@/components/ui/blueprint';
+import { downtime, duration, moneyExact, percent, rate } from '@/lib/estimate/format';
+import { useEstimate } from '@/lib/estimate/use-estimate';
+import { categoryOfKind } from '@/lib/simulation/coverage';
 
 /**
- * What the architecture on the canvas would cost, how available it would be,
- * how fast it would answer, where it would stop scaling, and where it departs
- * from the Well-Architected Framework - with every assumption behind those
- * figures as an editable input.
+ * The running summary beside the canvas: four figures, where the money goes,
+ * and how much the models could not account for.
  *
- * The panel shows its working on purpose. A tool that answers "$412 a month"
- * and stops is asking to be trusted; one that names the rate, the quantity, the
- * assumption the quantity came from and the things it could not price is asking
- * to be checked, which is the only basis on which anyone should act on it.
+ * It used to be the whole simulation, which put a scrolling wall of tables in a
+ * 320px column next to the drawing they described. The detail now lives on its
+ * own page; what belongs here is the part a person wants while they are still
+ * drawing -- did that change make it cheaper, slower, less available -- with
+ * one link to the reasoning.
  */
 export function SimulationTab() {
-  const { estimate, skipped, error, overrideAssumption, resetAssumptions } = useEstimate();
+  const { estimate, skipped, error } = useEstimate();
 
-  return (
-    <div className="flex-1 space-y-4 overflow-y-auto p-3">
-      {error !== null && (
-        <p className="rounded-md bg-rose-50 p-2 text-[11px] text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+  if (error !== null) {
+    return (
+      <div className="flex-1 p-3">
+        <p className="border-destructive/40 bg-destructive/5 text-destructive border p-2 text-[11px]">
           {error}
         </p>
-      )}
+      </div>
+    );
+  }
 
-      {estimate === null && error === null && (
-        <p className="text-[11px] text-gray-500">
+  if (estimate === null) {
+    return (
+      <div className="flex-1 p-3">
+        <p className="text-muted-foreground text-[11px]">
           Nothing on the canvas yet. Drop a service, or open a repository and let the analysis
           propose one, and every figure here follows from it.
         </p>
-      )}
+      </div>
+    );
+  }
 
-      {estimate !== null && (
-        <>
-          <CostBreakdown cost={estimate.cost} />
-          <AvailabilitySummary report={estimate.availability} />
-          <LatencySummary latency={estimate.latency} />
-          <BottleneckSummary report={estimate.bottleneck} />
-          <SloProposals slos={estimate.slos} />
-          <FindingsList findings={estimate.findings} />
+  const availability = estimate.availability.value;
+  const first = estimate.bottleneck.value.first;
+  const blindSpots =
+    estimate.cost.value.unpriced.length +
+    availability.unmodelled.length +
+    estimate.findings.unchecked.length +
+    skipped.length;
 
-          {skipped.length > 0 && (
-            <section>
-              <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                Left out of every figure
-              </h4>
-              <ul className="mt-1 space-y-0.5 text-[10px] text-gray-500">
-                {skipped.map((node) => (
-                  <li key={node.id}>
-                    {node.name} {node.reason}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+  const byCategory = new Map<string, Slice>();
+  for (const resource of estimate.cost.value.byResource) {
+    if (resource.lines.length === 0) continue;
+    const category = categoryOfKind(resource.kind);
+    const existing = byCategory.get(category.name);
+    if (existing === undefined) {
+      byCategory.set(category.name, {
+        key: category.name,
+        label: category.name,
+        value: resource.monthlyUsd,
+        colour: category.colour,
+      });
+    } else {
+      existing.value += resource.monthlyUsd;
+    }
+  }
 
-          <div className="border-t border-gray-200 pt-3 dark:border-gray-800">
-            <AssumptionEditor
-              assumptions={estimate.assumptions}
-              onChange={overrideAssumption}
-              onReset={resetAssumptions}
-            />
+  const rows = [
+    {
+      label: 'Availability',
+      value: percent(availability.compositeAvailability),
+      note: downtime(availability.compositeAvailability),
+    },
+    {
+      label: 'p95 latency',
+      value: estimate.latency === null ? '—' : duration(estimate.latency.value.p95Ms),
+      note: estimate.latency === null ? 'nothing on the path queues' : 'across every hop',
+    },
+    {
+      label: 'Scale ceiling',
+      value: first === null ? 'none found' : rate(first.breakingRps),
+      note: first === null ? 'within the swept range' : first.label.toLowerCase(),
+    },
+    {
+      label: 'Findings',
+      value: String(estimate.findings.findings.length),
+      note: `${estimate.findings.unchecked.length} kinds have no rules`,
+    },
+  ];
+
+  return (
+    <div className="flex-1 space-y-3 overflow-y-auto p-3">
+      <div>
+        <Label>Monthly cost</Label>
+        <p className="tabular font-heading text-2xl font-semibold leading-tight">
+          {moneyExact(estimate.cost.value.monthlyUsd)}
+        </p>
+        {byCategory.size > 0 && (
+          <div className="border-border mt-1.5 flex h-2 w-full overflow-hidden border">
+            {[...byCategory.values()].map((slice) => (
+              <span
+                key={slice.key}
+                title={`${slice.label} ${moneyExact(slice.value)}`}
+                style={{
+                  width: `${(slice.value / estimate.cost.value.monthlyUsd) * 100}%`,
+                  background: slice.colour,
+                }}
+              />
+            ))}
           </div>
-        </>
+        )}
+      </div>
+
+      <dl className="space-y-1.5">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-baseline justify-between gap-2">
+            <dt className="text-muted-foreground text-[11px]">{row.label}</dt>
+            <dd className="text-right">
+              <span className="tabular text-xs font-medium">{row.value}</span>
+              <span className="text-muted-foreground block text-[9px]">{row.note}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {blindSpots > 0 && (
+        <p className="flex items-start gap-1.5 border border-[hsl(var(--ink-warn))]/40 bg-[hsl(var(--ink-warn))]/[0.06] p-2 text-[10px] leading-snug">
+          <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
+          <span>
+            {blindSpots} thing{blindSpots === 1 ? '' : 's'} these figures leave out. Each headline
+            is a floor over the part that could be modelled.
+          </span>
+        </p>
       )}
+
+      <Link
+        to="/simulation"
+        className="border-primary bg-primary text-primary-foreground flex items-center justify-center gap-1.5 border px-2 py-1.5 text-xs font-medium"
+      >
+        Open the full simulation
+        <ArrowUpRight className="h-3 w-3" />
+      </Link>
+
+      <p className="text-muted-foreground text-[9px] leading-snug">
+        Predicted from the drawing, not measured. The full dashboard shows every rate, quantity and
+        assumption behind these figures.
+      </p>
     </div>
   );
 }

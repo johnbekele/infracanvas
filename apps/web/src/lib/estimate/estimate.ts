@@ -15,6 +15,7 @@ import {
   type ArchitectureCost,
   type ArchitectureFindings,
   type Assumption,
+  type AssumptionSet,
   type AvailabilityReport,
   type BottleneckReport,
   type IrNode,
@@ -56,12 +57,14 @@ function ensureContracts(): void {
   registered = true;
 }
 
-export function estimateArchitecture(
-  document: ArchitectureIr,
-  overrides: ReadonlyMap<string, number> = new Map()
-): ArchitectureEstimate {
-  ensureContracts();
-
+/**
+ * The assumptions in force, given the user's overrides.
+ *
+ * Exported because anything that re-solves the architecture -- the load sweep,
+ * a what-if -- has to start from the same inputs as the headline figure, and
+ * rebuilding the set at each call site is how the two quietly diverge.
+ */
+export function assumptionsFrom(overrides: ReadonlyMap<string, number> = new Map()): AssumptionSet {
   let assumptions = defaultAssumptions();
   for (const [id, value] of overrides) {
     // An override for an assumption nothing reads throws rather than being
@@ -69,7 +72,16 @@ export function estimateArchitecture(
     // rather than as a figure that ignores its own input.
     assumptions = withOverride(assumptions, id, value);
   }
+  return assumptions;
+}
 
+export function estimateArchitecture(
+  document: ArchitectureIr,
+  overrides: ReadonlyMap<string, number> = new Map()
+): ArchitectureEstimate {
+  ensureContracts();
+
+  const assumptions = assumptionsFrom(overrides);
   const region = document.region;
   const cost = costArchitecture(document, { region, assumptions });
   const report = availability(document, { region, assumptions });
@@ -106,7 +118,7 @@ export function estimateArchitecture(
 function latencyOf(
   document: ArchitectureIr,
   report: AvailabilityReport,
-  assumptions: ReturnType<typeof defaultAssumptions>
+  assumptions: AssumptionSet
 ): Prediction<PathLatency> | null {
   const byId = new Map<string, IrNode>(document.nodes.map((node) => [node.id, node]));
   const onPath = report.nodes

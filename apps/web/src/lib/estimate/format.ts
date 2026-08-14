@@ -14,6 +14,20 @@ export function money(usd: number): string {
   return `$${(usd / 1000).toFixed(1)}k`;
 }
 
+/**
+ * To the cent, for anywhere a reader might add the figures up.
+ *
+ * `money` rounds $13.14 and $2.30 to $13 and $2, which sum to $15 against a
+ * $15.44 total. On a card that is a rounding; in a table whose purpose is to
+ * let someone check the arithmetic it is a table that does not add up.
+ */
+export function moneyExact(usd: number): string {
+  return `$${usd.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 /** Nines, to as many decimal places as the figure earns and no more. */
 export function percent(fraction: number): string {
   const value = fraction * 100;

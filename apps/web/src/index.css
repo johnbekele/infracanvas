@@ -2,50 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * A drawing-office palette rather than a SaaS one: paper, ink, and one blue
+ * that only ever means "this is an action". The figures on a simulation page
+ * are the content, and a page of coloured surfaces competes with them for the
+ * attention that should land on a number.
+ *
+ * Corners are square throughout (`--radius: 0`). It is most of the character,
+ * and it costs nothing because every component reads the token.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 240 3% 95%;
+    --foreground: 210 5% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 5% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
+    --popover-foreground: 210 5% 11%;
+    --primary: 209 92% 43%;
+    --primary-foreground: 240 3% 95%;
+    --secondary: 240 3% 91%;
+    --secondary-foreground: 210 5% 11%;
+    --muted: 240 3% 91%;
+    --muted-foreground: 210 4% 42%;
+    --accent: 240 3% 91%;
+    --accent-foreground: 210 5% 11%;
+    --destructive: 3 40% 45%;
+    --destructive-foreground: 240 3% 95%;
+    --border: 210 5% 84%;
+    --input: 210 5% 84%;
+    --ring: 209 92% 43%;
+    --radius: 0rem;
+
+    /* Ink for the models, one hue each, so a colour means the same thing on
+       every chart: cost, availability, latency, saturation. */
+    --ink-cost: 224 68% 66%;
+    --ink-availability: 173 56% 41%;
+    --ink-latency: 20 74% 57%;
+    --ink-saturation: 267 56% 57%;
+    --ink-warn: 30 47% 48%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 263.4 70% 50.4%;
+    --background: 210 6% 9%;
+    --foreground: 240 3% 92%;
+    --card: 210 6% 12%;
+    --card-foreground: 240 3% 92%;
+    --popover: 210 6% 12%;
+    --popover-foreground: 240 3% 92%;
+    --primary: 209 84% 57%;
+    --primary-foreground: 210 6% 9%;
+    --secondary: 210 6% 17%;
+    --secondary-foreground: 240 3% 92%;
+    --muted: 210 6% 17%;
+    --muted-foreground: 210 5% 60%;
+    --accent: 210 6% 17%;
+    --accent-foreground: 240 3% 92%;
+    --destructive: 3 50% 52%;
+    --destructive-foreground: 240 3% 92%;
+    --border: 210 6% 22%;
+    --input: 210 6% 22%;
+    --ring: 209 84% 57%;
+
+    --ink-cost: 224 68% 72%;
+    --ink-availability: 173 46% 52%;
+    --ink-latency: 20 74% 63%;
+    --ink-saturation: 267 56% 68%;
+    --ink-warn: 30 52% 60%;
   }
 }
 
@@ -55,6 +78,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  }
+  /*
+   * Condensed headings against a normal-width body. It buys a label that can
+   * sit above a large figure without wrapping, which is the whole layout
+   * problem on a dashboard of numbers.
+   */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading {
+    font-family: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.01em;
+  }
+  /* Figures line up in columns only if the digits are the same width. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }
 
