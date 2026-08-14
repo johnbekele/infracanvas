@@ -106,10 +106,9 @@ describe('applyIrToFlow', () => {
       edges: [{ id: 'e1', source: 'old', target: 'db' }] as Edge[],
     };
 
-    const document = ir(
-      [database('db')],
-      [{ id: 'e1', source: 'old', target: 'db', kind: 'connects' }] as ArchitectureIr['edges']
-    );
+    const document = ir([database('db')], [
+      { id: 'e1', source: 'old', target: 'db', kind: 'connects' },
+    ] as ArchitectureIr['edges']);
 
     expect(applyIrToFlow(document, current).edges).toEqual([]);
   });

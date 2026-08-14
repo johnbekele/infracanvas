@@ -43,7 +43,9 @@ export function useCanvasExperiment(designName: string): CanvasExperiment {
 
     const { nodes, edges } = useDesignerStore.getState();
     if (nodes.length === 0) {
-      setError('Draw something first: the copilot reasons about an architecture, not a blank page.');
+      setError(
+        'Draw something first: the copilot reasons about an architecture, not a blank page.'
+      );
       return null;
     }
 
