@@ -72,8 +72,8 @@ export function PerformanceTab({
           </div>
           <p className="text-muted-foreground mt-3 text-xs">
             Composed by convolving each hop's sojourn distribution, not by adding percentiles. The
-            gap between p50 and p99 is queueing: it widens as any hop gets busier, which is what the
-            curve below shows.
+            gap between p50 and p99 is queueing: it widens whenever a hop gets busier, which is what
+            the curve below shows.
           </p>
           {latency.value.saturatedAt.length > 0 && (
             <p className="text-destructive mt-2 text-xs">
