@@ -175,14 +175,14 @@ export const githubApi = {
         commit: { sha: string };
         protected: boolean;
       }>
-    >(`/github/branches?owner=${owner}&repo=${repo}`);
+    >(`/github/branches/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`);
   },
 
   /**
    * Create a new branch
    */
   async createBranch(owner: string, repo: string, branchName: string, fromBranch: string) {
-    return apiFetch(`/github/branches?owner=${owner}&repo=${repo}`, {
+    return apiFetch(`/github/branches/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
       method: 'POST',
       body: JSON.stringify({ branchName, fromBranch }),
     });

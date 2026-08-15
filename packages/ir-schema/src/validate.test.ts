@@ -93,6 +93,26 @@ describe('validateIr', () => {
     );
   });
 
+  /**
+   * The branch map used to be a hand-written list covering vpc, subnet and the
+   * untyped bag, so a typed kind absent from it -- rds_instance was the only
+   * one, and twenty-one more are queued behind it -- reported every parameter
+   * error as "not a resource kind this schema version knows". The pointer has
+   * to reach the parameter, or the message sends the reader to the wrong file.
+   */
+  it('rejects an rds parameter by naming the parameter, not the kind', () => {
+    const result = validateIr(fixture('invalid/rds-storage-below-minimum.json'));
+
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.problems).toContainEqual(
+      expect.objectContaining({ pointer: '/nodes/0/params/allocatedStorageGb', source: 'schema' })
+    );
+    expect(result.problems.some((problem) => problem.message.includes('resource kind'))).toBe(
+      false
+    );
+  });
+
   it('rejects a node that declares no parameters at all', () => {
     const result = validateIr(
       threeTierWith((document) => {
