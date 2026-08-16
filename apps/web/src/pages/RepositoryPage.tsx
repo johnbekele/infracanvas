@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, GitBranch, Loader2, Play } from 'lucide-react';
-import { proposeArchitecture } from '@infracanvas/core';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ProfileSummary } from '@/components/analysis/ProfileSummary';
 import { ArchitectureProposalPanel } from '@/components/analysis/ArchitectureProposalPanel';
 import { Button } from '@/components/ui/button';
 import { useAnalyses, useRepository, useRunAnalysis } from '@/lib/hooks/use-repositories';
+import { latestSucceeded, proposalFor } from '@/lib/analysis/proposal';
 
 export function RepositoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,22 +15,20 @@ export function RepositoryPage() {
   const { data: analyses } = useAnalyses(id);
   const runAnalysis = useRunAnalysis(id);
 
-  // The newest successful run is what the architecture is built from; a later
-  // failed attempt should not erase the profile the user was looking at.
-  const latestProfile = useMemo(
-    () => analyses?.find((analysis) => analysis.status === 'succeeded')?.profile ?? null,
-    [analyses]
-  );
+  // The newest successful run is what the page is built from; a later failed
+  // attempt should not erase the profile the user was looking at.
+  const latestRun = useMemo(() => latestSucceeded(analyses), [analyses]);
+  const latestProfile = latestRun?.profile ?? null;
 
   const latestFailure = useMemo(
     () => (analyses?.[0]?.status === 'failed' ? analyses[0] : null),
     [analyses]
   );
 
-  const proposal = useMemo(() => {
-    if (!latestProfile || !repository) return null;
-    return proposeArchitecture(latestProfile, repository.githubName);
-  }, [latestProfile, repository]);
+  const proposal = useMemo(
+    () => proposalFor(latestRun, repository?.githubName),
+    [latestRun, repository]
+  );
 
   return (
     <div className="flex h-screen flex-col bg-gray-50 dark:bg-gray-950">

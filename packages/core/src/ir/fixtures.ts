@@ -2,6 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 import { assertValidIr, type ArchitectureIr, type IrNode } from '@infracanvas/ir-schema';
 
+import { irDigest } from './digest';
+import { IR_PATCH_VERSION, type IrPatch, type IrPatchOp, type PatchProblem } from './patch';
+
 /**
  * Every valid fixture the schema package ships, read through the same validator
  * a caller would use. Reusing those files rather than restating them here means
@@ -29,6 +32,58 @@ export function fixture(name: string): ArchitectureIr {
 
 export function threeTier(): ArchitectureIr {
   return fixture('three-tier');
+}
+
+/**
+ * A patch fixture names the document it was computed against rather than
+ * carrying its digest.
+ *
+ * Pasting a digest into the file would pin these fixtures to today's bytes of
+ * `three-tier.json`, so an unrelated edit to that document would fail every
+ * patch test with a digest mismatch rather than with whatever actually broke.
+ * The digest is what `applyPatch` checks; where it comes from is bookkeeping.
+ */
+export interface PatchFixture {
+  name: string;
+  ir: ArchitectureIr;
+  patch: IrPatch;
+  /** Present only for the fixtures under `invalid/`, stating how the patch is refused. */
+  expect?: { opIndex: number; source: PatchProblem['source']; why: string };
+}
+
+const patchDirectory = new URL('./__fixtures__/patches/', import.meta.url);
+
+interface PatchFixtureFile {
+  document: string;
+  summary: string;
+  ops: IrPatchOp[];
+  expect?: { opIndex: number; source: PatchProblem['source']; why: string };
+}
+
+export function patchFixture(name: string): PatchFixture {
+  const file: PatchFixtureFile = JSON.parse(
+    readFileSync(new URL(`${name}.json`, patchDirectory), 'utf8')
+  );
+  const ir = fixture(file.document);
+  return {
+    name,
+    ir,
+    patch: {
+      patchVersion: IR_PATCH_VERSION,
+      basedOnIrDigest: irDigest(ir),
+      summary: file.summary,
+      ops: file.ops,
+    },
+    expect: file.expect,
+  };
+}
+
+/** Read from disk, so a fixture added to the directory joins the suite by existing. */
+export function patchFixtureNames(subdirectory = ''): string[] {
+  return readdirSync(new URL(subdirectory, patchDirectory))
+    .filter((entry) => entry.endsWith('.json'))
+    .map((entry) => `${subdirectory}${entry.slice(0, -'.json'.length)}`)
+    .sort();
 }
 
 /**
