@@ -204,14 +204,17 @@ export class Supervisor {
         subject: issue.title,
         blocked: null,
       };
-      const ownedPaths = LANE_PATHS[lane];
+      // The issue's declared Files are the real blast radius; the lane is only
+      // which tool runs. Fall back to the lane's coarse paths only when an issue
+      // carries no Files section to bound it.
+      const boundaryPaths = paths.length > 0 ? paths : LANE_PATHS[lane];
 
       for (let attempt = 0; attempt <= this.config.budgets.localRepairs; attempt += 1) {
         if (this.stopRequested()) return await this.abandon(issue, reporter, 'kill switch');
 
         const prompt =
           attempt === 0
-            ? buildTaskPrompt({ issue, lane, ownedPaths })
+            ? buildTaskPrompt({ issue, lane, boundaryPaths })
             : buildRepairPrompt({ issue, kind: 'verify', failureOutput: verifyTail });
 
         reporter.event('info', attempt === 0 ? 'implement' : 'repair', `agent pass ${attempt + 1}`);

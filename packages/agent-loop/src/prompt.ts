@@ -23,16 +23,17 @@ const ENVELOPE_INSTRUCTION = `When you have finished, print a single fenced \`js
 If you could not complete the work, set \`blocked\` to a short sentence saying why, and leave the rest as your best effort.`;
 
 /** The operations the orchestrator reserves. An agent that runs these corrupts the loop's own bookkeeping. */
-function prohibitions(ownedPaths: readonly string[]): string {
+function prohibitions(boundaryPaths: readonly string[]): string {
   const paths =
-    ownedPaths.length > 0
-      ? ownedPaths.map((p) => `  - ${p}`).join('\n')
+    boundaryPaths.length > 0
+      ? boundaryPaths.map((p) => `  - ${p}`).join('\n')
       : '  (see the Files section of the issue)';
   return `Hard rules:
 - Do not run git. Do not commit, push, branch, or rebase. The orchestrator does all of that.
 - Do not open, edit, review, or merge a pull request, and do not touch the gh CLI.
-- Edit only files inside this worktree, and only the paths this issue declares:
+- Edit only files inside this worktree, and only the paths this issue's Files section declares:
 ${paths}
+  If finishing the work needs a path this list does not name, stop and report it in the \`blocked\` field rather than editing outside the list.
 - Do not touch \`.github/\`, the gates, or the CI configuration unless the issue's Files section names them.
 - Do not add an AI or assistant co-author trailer anywhere.
 - Follow AGENTS.md. Write the tests the "Required Tests" section names. Respect "Out of Scope".
@@ -42,12 +43,19 @@ ${paths}
 export interface TaskPromptInput {
   issue: Issue;
   lane: Lane;
-  ownedPaths: readonly string[];
+  /**
+   * The blast radius the agent may edit: the paths the issue's `### Files`
+   * section declares, which Gate 0 forces every issue to carry. The lane is
+   * only which tool runs; the issue, not the lane, bounds what it may touch —
+   * so an `area:api` issue in a lane whose coarse path list omits `apps/api/`
+   * is still free to edit exactly the api files it declared.
+   */
+  boundaryPaths: readonly string[];
 }
 
 /** The prompt that starts an issue from scratch. */
 export function buildTaskPrompt(input: TaskPromptInput): string {
-  const { issue, ownedPaths } = input;
+  const { issue, boundaryPaths } = input;
   return [
     `You are implementing a single issue in the InfraCanvas repository, working in an isolated git worktree.`,
     ``,
@@ -57,7 +65,7 @@ export function buildTaskPrompt(input: TaskPromptInput): string {
     ``,
     `# ${'-'.repeat(40)}`,
     ``,
-    prohibitions(ownedPaths),
+    prohibitions(boundaryPaths),
     ``,
     ENVELOPE_INSTRUCTION,
   ].join('\n');

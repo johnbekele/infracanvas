@@ -15,30 +15,31 @@ function issue(): Issue {
 
 describe('buildTaskPrompt', () => {
   it('pastes the issue body verbatim, since it is the contract', () => {
-    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', ownedPaths: ['db/'] });
+    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', boundaryPaths: ['db/'] });
     expect(prompt).toContain('### Contract');
     expect(prompt).toContain('DDL here.');
     expect(prompt).toContain('#190');
   });
 
   it('forbids git, gh, and merging, so only the orchestrator touches them', () => {
-    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', ownedPaths: ['db/'] });
+    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', boundaryPaths: ['db/'] });
     expect(prompt).toMatch(/Do not run git/);
     expect(prompt).toMatch(/Do not open, edit, review, or merge a pull request/);
   });
 
-  it('names the paths the lane owns', () => {
+  it('bounds the agent by the paths the issue declares, not the lane', () => {
     const prompt = buildTaskPrompt({
       issue: issue(),
       lane: 'A',
-      ownedPaths: ['db/', 'packages/ir-schema/'],
+      boundaryPaths: ['apps/api/src/routes/telemetry.ts', 'db/x.sql'],
     });
-    expect(prompt).toContain('db/');
-    expect(prompt).toContain('packages/ir-schema/');
+    expect(prompt).toContain('apps/api/src/routes/telemetry.ts');
+    expect(prompt).toContain('db/x.sql');
+    expect(prompt).toMatch(/Files section declares/);
   });
 
   it('asks for the JSON envelope as the final message', () => {
-    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', ownedPaths: [] });
+    const prompt = buildTaskPrompt({ issue: issue(), lane: 'A', boundaryPaths: [] });
     expect(prompt).toContain('```json');
     expect(prompt).toMatch(/"blocked"/);
   });
