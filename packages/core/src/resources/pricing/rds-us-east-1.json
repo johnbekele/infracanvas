@@ -1,0 +1,274 @@
+{
+  "$comment": "Generated from the AWS Price List offer named below. Do not hand-edit; see README.md.",
+  "region": "us-east-1",
+  "currency": "USD",
+  "offerCode": "AmazonRDS",
+  "priceListVersion": "20260806022930",
+  "capturedAt": "2026-08-06T02:29:30Z",
+  "instanceHourUsd": {
+    "mariadb": {
+      "db.m5.2xlarge": {
+        "multi-az": 1.368,
+        "single-az": 0.684
+      },
+      "db.m5.large": {
+        "multi-az": 0.342,
+        "single-az": 0.171
+      },
+      "db.m5.xlarge": {
+        "multi-az": 0.684,
+        "single-az": 0.342
+      },
+      "db.m6g.2xlarge": {
+        "multi-az": 1.216,
+        "single-az": 0.608
+      },
+      "db.m6g.large": {
+        "multi-az": 0.304,
+        "single-az": 0.152
+      },
+      "db.m6g.xlarge": {
+        "multi-az": 0.608,
+        "single-az": 0.304
+      },
+      "db.r5.2xlarge": {
+        "multi-az": 1.92,
+        "single-az": 0.96
+      },
+      "db.r5.large": {
+        "multi-az": 0.48,
+        "single-az": 0.24
+      },
+      "db.r5.xlarge": {
+        "multi-az": 0.96,
+        "single-az": 0.48
+      },
+      "db.r6g.2xlarge": {
+        "multi-az": 1.718,
+        "single-az": 0.859
+      },
+      "db.r6g.large": {
+        "multi-az": 0.43,
+        "single-az": 0.215
+      },
+      "db.r6g.xlarge": {
+        "multi-az": 0.859,
+        "single-az": 0.43
+      },
+      "db.t3.large": {
+        "multi-az": 0.272,
+        "single-az": 0.136
+      },
+      "db.t3.medium": {
+        "multi-az": 0.136,
+        "single-az": 0.068
+      },
+      "db.t3.micro": {
+        "multi-az": 0.034,
+        "single-az": 0.017
+      },
+      "db.t3.small": {
+        "multi-az": 0.068,
+        "single-az": 0.034
+      },
+      "db.t4g.large": {
+        "multi-az": 0.258,
+        "single-az": 0.129
+      },
+      "db.t4g.medium": {
+        "multi-az": 0.129,
+        "single-az": 0.065
+      },
+      "db.t4g.micro": {
+        "multi-az": 0.032,
+        "single-az": 0.016
+      },
+      "db.t4g.small": {
+        "multi-az": 0.065,
+        "single-az": 0.032
+      }
+    },
+    "mysql": {
+      "db.m5.2xlarge": {
+        "multi-az": 1.368,
+        "single-az": 0.684
+      },
+      "db.m5.large": {
+        "multi-az": 0.342,
+        "single-az": 0.171
+      },
+      "db.m5.xlarge": {
+        "multi-az": 0.684,
+        "single-az": 0.342
+      },
+      "db.m6g.2xlarge": {
+        "multi-az": 1.216,
+        "single-az": 0.608
+      },
+      "db.m6g.large": {
+        "multi-az": 0.304,
+        "single-az": 0.152
+      },
+      "db.m6g.xlarge": {
+        "multi-az": 0.608,
+        "single-az": 0.304
+      },
+      "db.r5.2xlarge": {
+        "multi-az": 1.92,
+        "single-az": 0.96
+      },
+      "db.r5.large": {
+        "multi-az": 0.48,
+        "single-az": 0.24
+      },
+      "db.r5.xlarge": {
+        "multi-az": 0.96,
+        "single-az": 0.48
+      },
+      "db.r6g.2xlarge": {
+        "multi-az": 1.718,
+        "single-az": 0.859
+      },
+      "db.r6g.large": {
+        "multi-az": 0.43,
+        "single-az": 0.215
+      },
+      "db.r6g.xlarge": {
+        "multi-az": 0.859,
+        "single-az": 0.43
+      },
+      "db.t3.large": {
+        "multi-az": 0.272,
+        "single-az": 0.136
+      },
+      "db.t3.medium": {
+        "multi-az": 0.136,
+        "single-az": 0.068
+      },
+      "db.t3.micro": {
+        "multi-az": 0.034,
+        "single-az": 0.017
+      },
+      "db.t3.small": {
+        "multi-az": 0.068,
+        "single-az": 0.034
+      },
+      "db.t4g.large": {
+        "multi-az": 0.258,
+        "single-az": 0.129
+      },
+      "db.t4g.medium": {
+        "multi-az": 0.129,
+        "single-az": 0.065
+      },
+      "db.t4g.micro": {
+        "multi-az": 0.032,
+        "single-az": 0.016
+      },
+      "db.t4g.small": {
+        "multi-az": 0.065,
+        "single-az": 0.032
+      }
+    },
+    "postgres": {
+      "db.m5.2xlarge": {
+        "multi-az": 1.424,
+        "single-az": 0.712
+      },
+      "db.m5.large": {
+        "multi-az": 0.356,
+        "single-az": 0.178
+      },
+      "db.m5.xlarge": {
+        "multi-az": 0.712,
+        "single-az": 0.356
+      },
+      "db.m6g.2xlarge": {
+        "multi-az": 1.272,
+        "single-az": 0.636
+      },
+      "db.m6g.large": {
+        "multi-az": 0.318,
+        "single-az": 0.159
+      },
+      "db.m6g.xlarge": {
+        "multi-az": 0.636,
+        "single-az": 0.318
+      },
+      "db.r5.2xlarge": {
+        "multi-az": 2,
+        "single-az": 1
+      },
+      "db.r5.large": {
+        "multi-az": 0.5,
+        "single-az": 0.25
+      },
+      "db.r5.xlarge": {
+        "multi-az": 1,
+        "single-az": 0.5
+      },
+      "db.r6g.2xlarge": {
+        "multi-az": 1.798,
+        "single-az": 0.899
+      },
+      "db.r6g.large": {
+        "multi-az": 0.45,
+        "single-az": 0.225
+      },
+      "db.r6g.xlarge": {
+        "multi-az": 0.899,
+        "single-az": 0.45
+      },
+      "db.t3.large": {
+        "multi-az": 0.29,
+        "single-az": 0.145
+      },
+      "db.t3.medium": {
+        "multi-az": 0.145,
+        "single-az": 0.072
+      },
+      "db.t3.micro": {
+        "multi-az": 0.036,
+        "single-az": 0.018
+      },
+      "db.t3.small": {
+        "multi-az": 0.072,
+        "single-az": 0.036
+      },
+      "db.t4g.large": {
+        "multi-az": 0.258,
+        "single-az": 0.129
+      },
+      "db.t4g.medium": {
+        "multi-az": 0.129,
+        "single-az": 0.065
+      },
+      "db.t4g.micro": {
+        "multi-az": 0.032,
+        "single-az": 0.016
+      },
+      "db.t4g.small": {
+        "multi-az": 0.065,
+        "single-az": 0.032
+      }
+    }
+  },
+  "storageGbMonthUsd": {
+    "gp2": {
+      "multi-az": 0.23,
+      "single-az": 0.115
+    },
+    "gp3": {
+      "multi-az": 0.23,
+      "single-az": 0.115
+    },
+    "io1": {
+      "multi-az": 0.25,
+      "single-az": 0.125
+    },
+    "io2": {
+      "multi-az": 0.25,
+      "single-az": 0.125
+    }
+  }
+}

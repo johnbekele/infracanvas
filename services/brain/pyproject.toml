@@ -8,6 +8,8 @@ dependencies = [
   "uvicorn[standard]>=0.32",
   "pydantic>=2.9",
   "psycopg[binary,pool]>=3.2",
+  "pydantic-ai-slim[anthropic,bedrock,google,openai]>=2.31.0",
+  "cryptography>=50.0.0",
 ]
 
 [project.optional-dependencies]

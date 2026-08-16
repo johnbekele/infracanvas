@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { IrNode } from '../nodes.js';
-import { pendingContractKinds, resourceKinds } from '../validate.js';
+import { pendingContractKinds, resourceKinds, typedContractKinds } from '../validate.js';
 import type { ResourceKind, SubnetNode, VpcNode } from './types.js';
 
 /**
@@ -20,7 +20,10 @@ describe('the generated node union', () => {
           return node.params.cidrBlock;
         case 'subnet':
           return node.params.availabilityZone;
+        case 'rds_instance':
+          return node.params.instanceClass;
         default:
+          // Everything left is a pending kind, whose parameters are still a bag.
           return String(node.params.anything ?? '');
       }
     }
@@ -61,6 +64,6 @@ describe('the generated node union', () => {
     // Runtime, over the same schema the types came from.
     const pending = new Set<string>(pendingContractKinds());
     const typed = resourceKinds().filter((kind) => !pending.has(kind));
-    expect(typed).toEqual(['vpc', 'subnet']);
+    expect(typed).toEqual(typedContractKinds());
   });
 });

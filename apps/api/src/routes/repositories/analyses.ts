@@ -1,5 +1,6 @@
 // Analysis runs for a connected repository.
 import { Router, type Request, type Response } from 'express';
+import { proposeArchitecture } from '@infracanvas/core';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 import { findRepository } from '../../lib/db/repositories.js';
 import {
@@ -77,7 +78,13 @@ router.post('/', async (req: Request, res: Response) => {
       ref,
     });
 
-    res.status(201).json({ analysis: await completeAnalysis(analysis.id, profile) });
+    // Synthesised here rather than in the browser. The proposal is the record of
+    // what was decided about this commit -- each decision with its rationale and
+    // the files it rests on -- and recomputing it on every page load threw that
+    // record away as soon as the user navigated.
+    const architecture = proposeArchitecture(profile, repository.githubName);
+
+    res.status(201).json({ analysis: await completeAnalysis(analysis.id, profile, architecture) });
   } catch (error) {
     // Recorded as a failed run before responding. A run left in `running`
     // would hold the one-active-run index and block every later attempt.

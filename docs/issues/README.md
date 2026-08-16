@@ -39,6 +39,8 @@ One directory per epic, matching the `epic:` labels:
 | `epic-10-loadtest`  | Load testing and measured SLIs         |
 | `epic-11-web`       | Canvas and dashboards                  |
 | `epic-12-launch`    | Merge-back, self-hosting, and security |
+| `epic-13-agent`     | Architecture copilot and typed patches |
+| `epic-14-mcp`       | MCP server over the copilot tools      |
 
 ## File format
 

@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 
 import { getServiceById } from '@infracanvas/core';
 import { type ServiceNodeData } from '@/lib/stores/designer-store';
+import { useCopilotStore } from '@/lib/stores/copilot-store';
 import { iconFor } from './service-icons';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 
 function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>) {
   const { selectNode, selectedNodeId } = useDesignerStore();
+  const highlighted = useCopilotStore((s) => s.highlightedNodeIds.includes(id));
   // Indexed by the icon the catalog declares. Indexing by `serviceId`
   // silently gave every node the same fallback glyph.
   const Icon = iconFor(getServiceById(data.serviceId)?.icon);
@@ -33,7 +35,7 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       className="group relative cursor-pointer"
-      style={{ zIndex: isSelected ? 100 : 10 }}
+      style={{ zIndex: isSelected || highlighted ? 100 : 10 }}
       onClick={() => selectNode(id)}
     >
       {/* INPUT HANDLES - Left & Top (Blue) - Where data/requests come IN */}
@@ -65,7 +67,9 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>
         className={`w-36 rounded-xl border-2 bg-white shadow-lg transition-all duration-200 dark:bg-gray-800 ${
           isSelected
             ? 'border-violet-500 shadow-xl shadow-violet-500/25'
-            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+            : highlighted
+              ? 'border-amber-400 shadow-xl shadow-amber-400/30'
+              : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
         } `}
       >
         {/* Service Icon Header */}
@@ -105,6 +109,11 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNodeData>
             initial={false}
             transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
           />
+        )}
+
+        {/* Proposal highlight — drawn when this node is in touchedNodeIds */}
+        {highlighted && !isSelected && (
+          <div className="pointer-events-none absolute -inset-1 rounded-xl border-2 border-amber-400 ring-2 ring-amber-300/50" />
         )}
       </div>
 

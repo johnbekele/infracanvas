@@ -12,7 +12,14 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
-from brain.ir import ArchitectureIr, IrNodeAdapter, PendingContractNode, SubnetNode, VpcNode
+from brain.ir import (
+    ArchitectureIr,
+    IrNodeAdapter,
+    PendingContractNode,
+    RdsInstanceNode,
+    SubnetNode,
+    VpcNode,
+)
 
 FIXTURES = Path(__file__).resolve().parents[3] / "packages" / "ir-schema" / "fixtures"
 
@@ -59,12 +66,16 @@ def test_pydantic_rejects_an_unknown_top_level_key() -> None:
 
 def test_camel_case_and_snake_case_field_names_both_parse() -> None:
     """The wire format is camelCase; the brain's own code reads PEP 8."""
-    from_wire = ArchitectureIr.model_validate(load(FIXTURES / "minimal.json"))
-    assert from_wire.ir_version == "1.0.0"
+    minimal = load(FIXTURES / "minimal.json")
+    assert isinstance(minimal, dict)
+    from_wire = ArchitectureIr.model_validate(minimal)
+    # Read from the fixture rather than pinned, so a schema version bump is not
+    # a test edit in a file that has nothing to say about versioning.
+    assert from_wire.ir_version == minimal["irVersion"]
 
     by_field_name = ArchitectureIr.model_validate(
         {
-            "ir_version": "1.0.0",
+            "ir_version": minimal["irVersion"],
             "name": "Minimal",
             "provider": "aws",
             "region": "eu-west-1",
@@ -111,7 +122,7 @@ def test_every_resource_kind_in_the_schema_appears_in_the_generated_union() -> N
     schema = json.loads((FIXTURES.parent / "schema" / "architecture-ir.schema.json").read_text())
 
     covered: set[str] = set()
-    for model in (VpcNode, SubnetNode, PendingContractNode):
+    for model in (VpcNode, SubnetNode, RdsInstanceNode, PendingContractNode):
         covered |= set(get_args(model.model_fields["kind"].annotation))
 
     assert covered == set(schema["$defs"]["resourceKind"]["enum"])

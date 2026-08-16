@@ -24,6 +24,8 @@ from brain.ir.models import (
     NodeBase,
     PendingContractNode,
     Presentation,
+    RdsInstanceNode,
+    RdsInstanceParams,
     SubnetNode,
     SubnetParams,
     Viewport,
@@ -34,9 +36,14 @@ from brain.ir.models import (
 #: The node union, tagged by ``kind``. Pydantic dispatches on the discriminator
 #: instead of trying each branch, so a bad parameter reports the branch it
 #: belongs to rather than three failures the reader has to choose between.
-IrNode = Annotated[VpcNode | SubnetNode | PendingContractNode, Field(discriminator="kind")]
+IrNode = Annotated[
+    VpcNode | SubnetNode | RdsInstanceNode | PendingContractNode,
+    Field(discriminator="kind"),
+]
 
-IrNodeAdapter: TypeAdapter[VpcNode | SubnetNode | PendingContractNode] = TypeAdapter(IrNode)
+IrNodeAdapter: TypeAdapter[VpcNode | SubnetNode | RdsInstanceNode | PendingContractNode] = (
+    TypeAdapter(IrNode)
+)
 
 __all__ = [
     "ArchitectureIr",
@@ -47,6 +54,8 @@ __all__ = [
     "NodeBase",
     "PendingContractNode",
     "Presentation",
+    "RdsInstanceNode",
+    "RdsInstanceParams",
     "SubnetNode",
     "SubnetParams",
     "Viewport",
