@@ -24,6 +24,19 @@ uv run --directory services/brain uvicorn brain.app:create_app --factory --reloa
 matters when every pull request pays that cost, and `uv.lock` pins hashes so CI installs exactly
 what you tested against.
 
+## Engine parity test
+
+The engine parity test compares the `ic_engine` Python extension against the `ic-engine` CLI. It
+skips when the extension has not been built, so the regular Python suite still works without a Rust
+toolchain.
+
+```bash
+maturin build -m crates/ic-engine/Cargo.toml --release
+uv pip install --directory services/brain "$PWD"/target/wheels/ic_engine-*.whl
+cargo build --bin ic-engine --release
+PATH="$PWD/target/release:$PATH" uv run --directory services/brain pytest tests/test_engine_parity.py -v
+```
+
 ## Checks
 
 These are the same commands the gates run, so a clean run here means a clean run there.
