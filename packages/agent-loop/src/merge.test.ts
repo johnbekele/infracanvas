@@ -13,7 +13,7 @@ function input(overrides: Partial<MergeInput> = {}): MergeInput {
     mergeable: 'MERGEABLE',
     checks: green,
     unresolvedThreads: 0,
-    isAgentLoop: true,
+    authorized: true,
     isDraft: false,
     ...overrides,
   };
@@ -27,8 +27,8 @@ describe('mergeDecision', () => {
     });
   });
 
-  it('never merges a pull request the loop did not open', () => {
-    expect(mergeDecision(input({ isAgentLoop: false })).merge).toBe(false);
+  it('never merges a pull request that is not authorised', () => {
+    expect(mergeDecision(input({ authorized: false })).merge).toBe(false);
   });
 
   it('never merges a draft', () => {

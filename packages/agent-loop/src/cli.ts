@@ -11,6 +11,11 @@
  *   pnpm loop --no-merge          get PRs green and mergeable, but do not merge (dry run)
  *   pnpm loop --status            print the current run snapshots and exit
  *   pnpm loop --explain 202       say whether issue #202 is eligible, and why not
+ *   pnpm loop --merge-train       drain the open PR backlog: update, wait for green CI, squash-merge
+ *     --dry-run                     with --merge-train: show the plan, change nothing
+ *     --include-tier1               with --merge-train: also merge tier:1 / needs:security-review, unreviewed
+ *     --include-deps                with --merge-train: also merge dependabot PRs
+ *     --prs 1,2,3                   with --merge-train: attempt exactly these numbers, ignoring the label filters
  */
 
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -24,6 +29,7 @@ import { ClaimStore } from './claim';
 import { defaultConfig } from './config';
 import { GitHub } from './gh';
 import * as log from './log';
+import { runMergeTrain } from './merge-train';
 import { FileMutex } from './mutex';
 import { readSnapshots } from './report';
 import { Supervisor } from './supervisor';
@@ -37,16 +43,40 @@ interface Args {
   lane?: Lane;
   issue?: number;
   explain?: number;
+  mergeTrain: boolean;
+  dryRun: boolean;
+  includeTier1: boolean;
+  includeDeps: boolean;
+  prs?: number[];
 }
 
 function parseArgs(argv: readonly string[]): Args {
-  const args: Args = { once: false, noMerge: false, status: false };
+  const args: Args = {
+    once: false,
+    noMerge: false,
+    status: false,
+    mergeTrain: false,
+    dryRun: false,
+    includeTier1: false,
+    includeDeps: false,
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--once') args.once = true;
     else if (arg === '--no-merge') args.noMerge = true;
     else if (arg === '--status') args.status = true;
-    else if (arg === '--lane') {
+    else if (arg === '--merge-train') args.mergeTrain = true;
+    else if (arg === '--dry-run') args.dryRun = true;
+    else if (arg === '--include-tier1') args.includeTier1 = true;
+    else if (arg === '--include-deps') args.includeDeps = true;
+    else if (arg === '--prs') {
+      const value = argv[++i] ?? '';
+      args.prs = value
+        .split(',')
+        .map((n) => Number.parseInt(n.trim(), 10))
+        .filter((n) => !Number.isNaN(n));
+      if (args.prs.length === 0) throw new Error('--prs needs a comma-separated list of numbers');
+    } else if (arg === '--lane') {
       const value = argv[++i];
       if (value === 'A' || value === 'B' || value === 'C') args.lane = value;
       else throw new Error(`--lane must be A, B, or C, got "${value}"`);
@@ -82,6 +112,30 @@ async function main(): Promise<number> {
   }
 
   const github = new GitHub(config.repo);
+
+  if (args.mergeTrain) {
+    const results = await runMergeTrain(github, {
+      filter: {
+        baseBranch: 'main',
+        includeTier1: args.includeTier1,
+        includeDeps: args.includeDeps,
+        // The autonomous issue loop merges its own PRs; the train leaves them be.
+        includeAgentLoop: false,
+        onlyNumbers: args.prs,
+      },
+      dryRun: args.dryRun,
+      // Feature branches carry the full gate suite, so give CI a generous budget;
+      // a check that is still pending after this is treated as not settling.
+      ciTimeoutMs: 30 * 60 * 1000,
+      ciPollMs: 30 * 1000,
+      settleTimeoutMs: 90 * 1000,
+      rerunSettleMs: 30 * 1000,
+      maxSyncs: 4,
+    });
+    const merged = results.filter((r) => r.outcome === 'merged').length;
+    log.info(`merge train done: ${merged}/${results.length} merged`);
+    return 0;
+  }
 
   if (args.explain !== undefined) {
     const supervisor = buildSupervisor(config, github, mainCheckout);

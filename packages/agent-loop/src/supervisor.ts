@@ -439,7 +439,7 @@ export class Supervisor {
       mergeable: state.mergeable,
       checks,
       unresolvedThreads: unresolved,
-      isAgentLoop: true,
+      authorized: true,
       isDraft: state.isDraft,
     });
     if (!decision.merge) {
