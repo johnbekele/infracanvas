@@ -37,6 +37,24 @@ cargo build --bin ic-engine --release
 PATH="$PWD/target/release:$PATH" uv run --directory services/brain pytest tests/test_engine_parity.py -v
 ```
 
+## Local Ollama (no API key)
+
+A contributor with no hosted key, and CI with no secrets, can exercise the whole agent path
+against a local Ollama. The provider registry treats a missing key as expected for Ollama and
+reads `OLLAMA_BASE_URL` (default `http://localhost:11434/v1`).
+
+```bash
+# Install and start Ollama, then pull a model once:
+#   ollama pull llama3.3
+export OLLAMA_BASE_URL=http://localhost:11434/v1
+# ENCRYPTION_KEY is only needed when reading encrypted rows from llm_credentials.
+# Pure Ollama use needs neither ENCRYPTION_KEY nor a credentials row.
+uv run --directory services/brain uvicorn brain.app:create_app --factory --reload
+```
+
+Point the default credential at provider `ollama` (or call `build_model` with an ollama
+`ProviderCredential` and no `api_key`) and the service talks to the local daemon.
+
 ## Checks
 
 These are the same commands the gates run, so a clean run here means a clean run there.
