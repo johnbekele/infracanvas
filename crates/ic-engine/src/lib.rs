@@ -23,6 +23,7 @@
 )]
 
 mod chunk;
+pub mod communities;
 mod merkle;
 mod parse;
 mod tokenise;
@@ -30,6 +31,9 @@ mod walk;
 
 pub use chunk::{
     Chunk, ChunkError, ChunkKind, ChunkOptions, ChunkStats, chunk_file, chunk_manifest,
+};
+pub use communities::{
+    CodeGraph, Communities, Community, LeidenConfig, cpm_quality, detect_communities,
 };
 pub use parse::Language;
 pub use tokenise::{count_tokens, tokenizer, tokenizer_path};
@@ -94,6 +98,10 @@ mod python {
     #[pymodule]
     fn ic_engine(module: &Bound<'_, PyModule>) -> PyResult<()> {
         module.add_function(wrap_pyfunction!(py_version, module)?)?;
+        module.add_function(wrap_pyfunction!(
+            crate::communities::python::detect_communities_json,
+            module
+        )?)?;
         module.add("__version__", super::version())?;
         Ok(())
     }

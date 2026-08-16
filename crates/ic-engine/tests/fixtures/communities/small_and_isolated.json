@@ -1,0 +1,199 @@
+{
+  "nodes": [
+    {
+      "qualified_name": "src/alpha/mod.ts::alpha0",
+      "display_name": "alpha0",
+      "kind": "function",
+      "path": "src/alpha/mod.ts"
+    },
+    {
+      "qualified_name": "src/alpha/mod.ts::alpha1",
+      "display_name": "alpha1",
+      "kind": "function",
+      "path": "src/alpha/mod.ts"
+    },
+    {
+      "qualified_name": "src/alpha/mod.ts::alpha2",
+      "display_name": "alpha2",
+      "kind": "function",
+      "path": "src/alpha/mod.ts"
+    },
+    {
+      "qualified_name": "src/alpha/mod.ts::alpha3",
+      "display_name": "alpha3",
+      "kind": "function",
+      "path": "src/alpha/mod.ts"
+    },
+    {
+      "qualified_name": "src/alpha/mod.ts::alpha4",
+      "display_name": "alpha4",
+      "kind": "function",
+      "path": "src/alpha/mod.ts"
+    },
+    {
+      "qualified_name": "src/beta/mod.ts::beta0",
+      "display_name": "beta0",
+      "kind": "function",
+      "path": "src/beta/mod.ts"
+    },
+    {
+      "qualified_name": "src/beta/mod.ts::beta1",
+      "display_name": "beta1",
+      "kind": "function",
+      "path": "src/beta/mod.ts"
+    },
+    {
+      "qualified_name": "src/beta/mod.ts::beta2",
+      "display_name": "beta2",
+      "kind": "function",
+      "path": "src/beta/mod.ts"
+    },
+    {
+      "qualified_name": "src/beta/mod.ts::beta3",
+      "display_name": "beta3",
+      "kind": "function",
+      "path": "src/beta/mod.ts"
+    },
+    {
+      "qualified_name": "src/beta/mod.ts::beta4",
+      "display_name": "beta4",
+      "kind": "function",
+      "path": "src/beta/mod.ts"
+    },
+    {
+      "qualified_name": "src/pair/mod.ts::pair0",
+      "display_name": "pair0",
+      "kind": "function",
+      "path": "src/pair/mod.ts"
+    },
+    {
+      "qualified_name": "src/pair/mod.ts::pair1",
+      "display_name": "pair1",
+      "kind": "function",
+      "path": "src/pair/mod.ts"
+    },
+    {
+      "qualified_name": "src/zeta/mod.ts::zeta0",
+      "display_name": "zeta0",
+      "kind": "function",
+      "path": "src/zeta/mod.ts"
+    }
+  ],
+  "edges": [
+    {
+      "source": "src/alpha/mod.ts::alpha0",
+      "target": "src/alpha/mod.ts::alpha1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha0",
+      "target": "src/alpha/mod.ts::alpha2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha0",
+      "target": "src/alpha/mod.ts::alpha3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha0",
+      "target": "src/alpha/mod.ts::alpha4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha1",
+      "target": "src/alpha/mod.ts::alpha2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha1",
+      "target": "src/alpha/mod.ts::alpha3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha1",
+      "target": "src/alpha/mod.ts::alpha4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha2",
+      "target": "src/alpha/mod.ts::alpha3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha2",
+      "target": "src/alpha/mod.ts::alpha4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha3",
+      "target": "src/alpha/mod.ts::alpha4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta0",
+      "target": "src/beta/mod.ts::beta1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta0",
+      "target": "src/beta/mod.ts::beta2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta0",
+      "target": "src/beta/mod.ts::beta3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta0",
+      "target": "src/beta/mod.ts::beta4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta1",
+      "target": "src/beta/mod.ts::beta2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta1",
+      "target": "src/beta/mod.ts::beta3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta1",
+      "target": "src/beta/mod.ts::beta4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta2",
+      "target": "src/beta/mod.ts::beta3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta2",
+      "target": "src/beta/mod.ts::beta4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/beta/mod.ts::beta3",
+      "target": "src/beta/mod.ts::beta4",
+      "kind": "imports"
+    },
+    {
+      "source": "src/pair/mod.ts::pair0",
+      "target": "src/pair/mod.ts::pair1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/alpha/mod.ts::alpha0",
+      "target": "src/beta/mod.ts::beta0",
+      "kind": "http_call"
+    },
+    {
+      "source": "src/pair/mod.ts::pair0",
+      "target": "src/alpha/mod.ts::alpha0",
+      "kind": "http_call"
+    }
+  ]
+}

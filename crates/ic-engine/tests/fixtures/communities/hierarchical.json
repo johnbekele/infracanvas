@@ -1,0 +1,385 @@
+{
+  "nodes": [
+    {
+      "qualified_name": "src/api/mod.ts::api0",
+      "display_name": "api0",
+      "kind": "function",
+      "path": "src/api/mod.ts"
+    },
+    {
+      "qualified_name": "src/api/mod.ts::api1",
+      "display_name": "api1",
+      "kind": "function",
+      "path": "src/api/mod.ts"
+    },
+    {
+      "qualified_name": "src/api/mod.ts::api2",
+      "display_name": "api2",
+      "kind": "function",
+      "path": "src/api/mod.ts"
+    },
+    {
+      "qualified_name": "src/api/mod.ts::api3",
+      "display_name": "api3",
+      "kind": "function",
+      "path": "src/api/mod.ts"
+    },
+    {
+      "qualified_name": "src/apx/mod.ts::apx0",
+      "display_name": "apx0",
+      "kind": "function",
+      "path": "src/apx/mod.ts"
+    },
+    {
+      "qualified_name": "src/apx/mod.ts::apx1",
+      "display_name": "apx1",
+      "kind": "function",
+      "path": "src/apx/mod.ts"
+    },
+    {
+      "qualified_name": "src/apx/mod.ts::apx2",
+      "display_name": "apx2",
+      "kind": "function",
+      "path": "src/apx/mod.ts"
+    },
+    {
+      "qualified_name": "src/apx/mod.ts::apx3",
+      "display_name": "apx3",
+      "kind": "function",
+      "path": "src/apx/mod.ts"
+    },
+    {
+      "qualified_name": "src/job/mod.ts::job0",
+      "display_name": "job0",
+      "kind": "function",
+      "path": "src/job/mod.ts"
+    },
+    {
+      "qualified_name": "src/job/mod.ts::job1",
+      "display_name": "job1",
+      "kind": "function",
+      "path": "src/job/mod.ts"
+    },
+    {
+      "qualified_name": "src/job/mod.ts::job2",
+      "display_name": "job2",
+      "kind": "function",
+      "path": "src/job/mod.ts"
+    },
+    {
+      "qualified_name": "src/job/mod.ts::job3",
+      "display_name": "job3",
+      "kind": "function",
+      "path": "src/job/mod.ts"
+    },
+    {
+      "qualified_name": "src/jox/mod.ts::jox0",
+      "display_name": "jox0",
+      "kind": "function",
+      "path": "src/jox/mod.ts"
+    },
+    {
+      "qualified_name": "src/jox/mod.ts::jox1",
+      "display_name": "jox1",
+      "kind": "function",
+      "path": "src/jox/mod.ts"
+    },
+    {
+      "qualified_name": "src/jox/mod.ts::jox2",
+      "display_name": "jox2",
+      "kind": "function",
+      "path": "src/jox/mod.ts"
+    },
+    {
+      "qualified_name": "src/jox/mod.ts::jox3",
+      "display_name": "jox3",
+      "kind": "function",
+      "path": "src/jox/mod.ts"
+    },
+    {
+      "qualified_name": "src/ui/mod.ts::ui0",
+      "display_name": "ui0",
+      "kind": "function",
+      "path": "src/ui/mod.ts"
+    },
+    {
+      "qualified_name": "src/ui/mod.ts::ui1",
+      "display_name": "ui1",
+      "kind": "function",
+      "path": "src/ui/mod.ts"
+    },
+    {
+      "qualified_name": "src/ui/mod.ts::ui2",
+      "display_name": "ui2",
+      "kind": "function",
+      "path": "src/ui/mod.ts"
+    },
+    {
+      "qualified_name": "src/ui/mod.ts::ui3",
+      "display_name": "ui3",
+      "kind": "function",
+      "path": "src/ui/mod.ts"
+    },
+    {
+      "qualified_name": "src/ux/mod.ts::ux0",
+      "display_name": "ux0",
+      "kind": "function",
+      "path": "src/ux/mod.ts"
+    },
+    {
+      "qualified_name": "src/ux/mod.ts::ux1",
+      "display_name": "ux1",
+      "kind": "function",
+      "path": "src/ux/mod.ts"
+    },
+    {
+      "qualified_name": "src/ux/mod.ts::ux2",
+      "display_name": "ux2",
+      "kind": "function",
+      "path": "src/ux/mod.ts"
+    },
+    {
+      "qualified_name": "src/ux/mod.ts::ux3",
+      "display_name": "ux3",
+      "kind": "function",
+      "path": "src/ux/mod.ts"
+    }
+  ],
+  "edges": [
+    {
+      "source": "src/api/mod.ts::api0",
+      "target": "src/api/mod.ts::api1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api0",
+      "target": "src/api/mod.ts::api2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api0",
+      "target": "src/api/mod.ts::api3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api1",
+      "target": "src/api/mod.ts::api2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api1",
+      "target": "src/api/mod.ts::api3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api2",
+      "target": "src/api/mod.ts::api3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx0",
+      "target": "src/apx/mod.ts::apx1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx0",
+      "target": "src/apx/mod.ts::apx2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx0",
+      "target": "src/apx/mod.ts::apx3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx1",
+      "target": "src/apx/mod.ts::apx2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx1",
+      "target": "src/apx/mod.ts::apx3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/apx/mod.ts::apx2",
+      "target": "src/apx/mod.ts::apx3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job0",
+      "target": "src/job/mod.ts::job1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job0",
+      "target": "src/job/mod.ts::job2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job0",
+      "target": "src/job/mod.ts::job3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job1",
+      "target": "src/job/mod.ts::job2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job1",
+      "target": "src/job/mod.ts::job3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/job/mod.ts::job2",
+      "target": "src/job/mod.ts::job3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox0",
+      "target": "src/jox/mod.ts::jox1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox0",
+      "target": "src/jox/mod.ts::jox2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox0",
+      "target": "src/jox/mod.ts::jox3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox1",
+      "target": "src/jox/mod.ts::jox2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox1",
+      "target": "src/jox/mod.ts::jox3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/jox/mod.ts::jox2",
+      "target": "src/jox/mod.ts::jox3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui0",
+      "target": "src/ui/mod.ts::ui1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui0",
+      "target": "src/ui/mod.ts::ui2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui0",
+      "target": "src/ui/mod.ts::ui3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui1",
+      "target": "src/ui/mod.ts::ui2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui1",
+      "target": "src/ui/mod.ts::ui3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ui/mod.ts::ui2",
+      "target": "src/ui/mod.ts::ui3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux0",
+      "target": "src/ux/mod.ts::ux1",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux0",
+      "target": "src/ux/mod.ts::ux2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux0",
+      "target": "src/ux/mod.ts::ux3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux1",
+      "target": "src/ux/mod.ts::ux2",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux1",
+      "target": "src/ux/mod.ts::ux3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/ux/mod.ts::ux2",
+      "target": "src/ux/mod.ts::ux3",
+      "kind": "imports"
+    },
+    {
+      "source": "src/api/mod.ts::api0",
+      "target": "src/apx/mod.ts::apx0",
+      "kind": "calls"
+    },
+    {
+      "source": "src/api/mod.ts::api1",
+      "target": "src/apx/mod.ts::apx1",
+      "kind": "calls"
+    },
+    {
+      "source": "src/api/mod.ts::api2",
+      "target": "src/apx/mod.ts::apx2",
+      "kind": "calls"
+    },
+    {
+      "source": "src/job/mod.ts::job0",
+      "target": "src/jox/mod.ts::jox0",
+      "kind": "calls"
+    },
+    {
+      "source": "src/job/mod.ts::job1",
+      "target": "src/jox/mod.ts::jox1",
+      "kind": "calls"
+    },
+    {
+      "source": "src/job/mod.ts::job2",
+      "target": "src/jox/mod.ts::jox2",
+      "kind": "calls"
+    },
+    {
+      "source": "src/ui/mod.ts::ui0",
+      "target": "src/ux/mod.ts::ux0",
+      "kind": "calls"
+    },
+    {
+      "source": "src/ui/mod.ts::ui1",
+      "target": "src/ux/mod.ts::ux1",
+      "kind": "calls"
+    },
+    {
+      "source": "src/ui/mod.ts::ui2",
+      "target": "src/ux/mod.ts::ux2",
+      "kind": "calls"
+    },
+    {
+      "source": "src/api/mod.ts::api0",
+      "target": "src/job/mod.ts::job0",
+      "kind": "http_call"
+    },
+    {
+      "source": "src/job/mod.ts::job0",
+      "target": "src/ui/mod.ts::ui0",
+      "kind": "http_call"
+    }
+  ]
+}
