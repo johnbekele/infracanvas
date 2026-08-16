@@ -32,6 +32,12 @@ export interface LoopConfig {
     localRepairs: number;
     /** CI repair attempts before blocking the issue. */
     ciRepairs: number;
+    /**
+     * Times to update a branch that fell behind main and re-verify before
+     * giving up. With strict status checks, a sibling PR merging leaves the
+     * others behind, so the loop resyncs and re-runs CI rather than blocking.
+     */
+    branchSyncs: number;
     /** Concurrent issues across all lanes. */
     concurrency: number;
     /** Consecutive failures that pause a lane. */
@@ -58,6 +64,7 @@ export function defaultConfig(overrides: Partial<LoopConfig> = {}): LoopConfig {
       ciMs: 30 * MINUTE,
       localRepairs: 3,
       ciRepairs: 2,
+      branchSyncs: 3,
       concurrency: 3,
       laneFailurePause: 2,
     },

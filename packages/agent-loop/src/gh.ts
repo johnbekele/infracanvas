@@ -233,17 +233,42 @@ export class GitHub {
 
   async pullRequestState(pr: number): Promise<{
     mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+    /** GitHub's composite state: BEHIND means the branch must be updated before merge. */
+    mergeStateStatus: string;
     isDraft: boolean;
     labels: string[];
   }> {
     const raw = await this.json<{
       mergeable: string;
+      mergeStateStatus: string;
       isDraft: boolean;
       labels: { name: string }[];
-    }>(['pr', 'view', String(pr), '--repo', this.repo, '--json', 'mergeable,isDraft,labels']);
+    }>([
+      'pr',
+      'view',
+      String(pr),
+      '--repo',
+      this.repo,
+      '--json',
+      'mergeable,mergeStateStatus,isDraft,labels',
+    ]);
     const mergeable =
       raw.mergeable === 'MERGEABLE' || raw.mergeable === 'CONFLICTING' ? raw.mergeable : 'UNKNOWN';
-    return { mergeable, isDraft: raw.isDraft, labels: raw.labels.map((l) => l.name) };
+    return {
+      mergeable,
+      mergeStateStatus: raw.mergeStateStatus ?? 'UNKNOWN',
+      isDraft: raw.isDraft,
+      labels: raw.labels.map((l) => l.name),
+    };
+  }
+
+  /**
+   * Update a PR branch with its base, for the strict-status-checks case where a
+   * sibling merge left it behind. Best-effort: a 422 ("already up to date" or a
+   * transient race) is not fatal, the caller re-reads the merge state either way.
+   */
+  async updateBranch(pr: number): Promise<void> {
+    await capture('gh', ['api', '-X', 'PUT', `repos/${this.repo}/pulls/${pr}/update-branch`]);
   }
 
   /** Count of unresolved review threads, via GraphQL since REST does not expose it. */

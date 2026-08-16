@@ -327,21 +327,37 @@ export class Supervisor {
       reporter.setPr(prNumber);
       reporter.event('info', 'deliver', `opened PR #${prNumber}`);
 
-      // --- Watch CI, repairing within budget --------------------------------
-      const ciGreen = await this.driveCi(issue, reporter, git, prNumber);
+      // --- Watch CI, resync a behind branch, then merge ---------------------
+      // Strict status checks require the branch to be up to date with main, so
+      // a sibling PR merging first leaves this one BEHIND. Each pass drives CI
+      // to green, and if the branch has since fallen behind, updates it and
+      // re-verifies rather than blocking on a merge GitHub would reject.
+      let merged = false;
+      for (let sync = 0; ; sync += 1) {
+        const ciGreen = await this.driveCi(issue, reporter, git, prNumber);
+        if (!ciGreen) {
+          return await this.block(issue, reporter, 'CI never went green within the repair budget');
+        }
 
-      if (!ciGreen) {
-        return await this.block(issue, reporter, 'CI never went green within the repair budget');
+        if (options.noMerge || !this.config.mergeAllTiers) {
+          reporter.event('info', 'merge', 'merge skipped by configuration; PR left green');
+          reporter.finish('succeeded');
+          return 'delivered';
+        }
+
+        const state = await this.deps.github.pullRequestState(prNumber);
+        if (state.mergeStateStatus === 'BEHIND') {
+          if (sync >= this.config.budgets.branchSyncs) {
+            return await this.block(issue, reporter, 'branch kept falling behind main');
+          }
+          reporter.event('info', 'merge', 'branch behind main; updating and re-verifying');
+          await this.deps.github.updateBranch(prNumber);
+          continue;
+        }
+
+        merged = await this.tryMerge(reporter, prNumber);
+        break;
       }
-
-      if (options.noMerge || !this.config.mergeAllTiers) {
-        reporter.event('info', 'merge', 'merge skipped by configuration; PR left green');
-        reporter.finish('succeeded');
-        return 'delivered';
-      }
-
-      // --- Merge, only when the predicate says so ---------------------------
-      const merged = await this.tryMerge(reporter, prNumber);
       reporter.finish(merged ? 'succeeded' : 'failed');
       return merged ? 'merged' : 'delivered';
     } catch (err) {
