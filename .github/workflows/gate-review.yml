@@ -63,7 +63,7 @@ jobs:
           # Tier is derived from the diff rather than from what the author claims,
           # so nobody can quietly downgrade the risk of their own change.
           tier1=$(git diff --name-only "origin/${BASE_REF}...HEAD" | grep -E \
-            '^(apps/api/src/routes/auth/|apps/api/src/lib/(encryption|jwt)\.ts|apps/api/src/middleware/|infra/|services/brain/src/brain/codegen/|\.github/)' || true)
+            '^(apps/api/src/routes/auth/|apps/api/src/routes/internal/|apps/api/src/lib/(encryption|jwt)\.ts|apps/api/src/middleware/|infra/|services/brain/src/brain/codegen/|\.github/)' || true)
 
           if [ -z "$tier1" ]; then
             echo "No security-sensitive paths touched."
