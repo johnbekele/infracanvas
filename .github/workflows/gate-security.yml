@@ -66,7 +66,13 @@ jobs:
         run: |
           if [ -f Cargo.toml ]; then
             cargo install cargo-audit --locked
-            cargo audit --deny warnings
+            # --deny warnings promotes unmaintained/yanked advisories to failures,
+            # not just vulnerabilities. RUSTSEC-2024-0436 is one such warning: the
+            # `paste` crate is archived, not vulnerable, and reaches us only as a
+            # transitive dependency of tree-sitter, which we cannot drop. Ignore
+            # this single advisory by id so a genuine vulnerability still fails the
+            # gate; revisit if a maintained replacement propagates upstream.
+            cargo audit --deny warnings --ignore RUSTSEC-2024-0436
           else
             echo "::notice::No Cargo workspace yet."
           fi
