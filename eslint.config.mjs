@@ -14,10 +14,18 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/node_modules/**',
+      // A Python virtualenv is the third-party equivalent of node_modules, and
+      // some installed packages ship JavaScript: urllib3 carries an Emscripten
+      // fetch worker. `.gitignore` and `.prettierignore` already exclude it.
+      '**/.venv/**',
       '**/.turbo/**',
       '**/coverage/**',
       '**/*.d.ts',
       'pnpm-lock.yaml',
+      // A worktree created under the repository root is a whole second checkout
+      // of another branch. CI never sees one, so linting it locally reports
+      // failures from code that is not under review.
+      '.claude/worktrees/**',
       // Golden files are expected emitter output compared byte for byte. They
       // reference variables their surrounding project declares, so linting or
       // type-checking them here would be checking a fragment as a program.

@@ -10,6 +10,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./pricing": {
+      "types": "./dist/pricing/snapshot.d.ts",
+      "import": "./dist/pricing/snapshot.mjs",
+      "require": "./dist/pricing/snapshot.js"
     }
   },
   "files": [

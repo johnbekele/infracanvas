@@ -10,5 +10,11 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
     testTimeout: 15_000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['cobertura', 'text-summary'],
+      reportsDirectory: './coverage',
+      enabled: true,
+    },
   },
 });

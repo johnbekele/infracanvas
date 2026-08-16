@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "commitSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "ref": "main",
+  "analysedAt": "2026-08-10T00:00:00Z",
+  "languages": [{ "name": "Python", "bytes": 1200, "share": 1.0 }],
+  "components": [
+    {
+      "path": "apps/api",
+      "name": "api",
+      "kind": "api",
+      "ecosystems": ["pypi"],
+      "manifestPaths": ["apps/api/pyproject.toml"],
+      "dependencyCount": 1,
+      "capabilities": ["http-server"],
+      "dependencies": [
+        {
+          "name": "fastapi",
+          "ecosystem": "pypi",
+          "category": "web-framework",
+          "capability": "http-server",
+          "sourcePath": "apps/api/pyproject.toml"
+        }
+      ],
+      "dockerfiles": ["apps/api/Dockerfile"],
+      "exposedPorts": [8000],
+      "composeService": "api",
+      "deployable": true
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "fastapi",
+      "ecosystem": "pypi",
+      "category": "web-framework",
+      "capability": "http-server",
+      "sourcePath": "apps/api/pyproject.toml"
+    }
+  ],
+  "containerisation": {
+    "dockerfiles": ["apps/api/Dockerfile"],
+    "composeFiles": ["docker-compose.yml"],
+    "exposedPorts": [8000]
+  },
+  "fileCount": 12,
+  "totalBytes": 4096,
+  "notes": []
+}

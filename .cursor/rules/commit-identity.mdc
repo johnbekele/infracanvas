@@ -1,0 +1,35 @@
+---
+description: Commit and GitHub identity for this repository
+alwaysApply: true
+---
+
+# Commit as the personal account, never the work one
+
+This is a personal project. Every commit must be authored by **johnbekele**:
+
+```
+user.name  = John Bekele
+user.email = 164889902+johnbekele@users.noreply.github.com
+```
+
+These are set in the repository's local git config, which every worktree shares. Do not remove them
+and do not let a commit fall through to the global config: that carries
+`yohans.bekele@thomsonreuters.com`, which GitHub resolves to the work account `johnbekele6130593`,
+and attributes personal work to an employer.
+
+Check before your first commit in a session:
+
+```bash
+git config --get user.email   # must be 164889902+johnbekele@users.noreply.github.com
+```
+
+If commits were already made with the wrong address and are not yet merged, rewrite them before the
+pull request is reviewed:
+
+```bash
+git rebase --exec 'git commit --amend --no-edit --reset-author' origin/main
+git log origin/main..HEAD --format='%an <%ae>'   # verify
+```
+
+`gh` is authenticated as `johnbekele` and is the only permitted profile for issues, pull requests
+and any other remote operation. Never add an AI or assistant co-author trailer; Gate 2 rejects them.

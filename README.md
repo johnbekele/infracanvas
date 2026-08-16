@@ -28,29 +28,8 @@ Design cloud infrastructure visually, export as Terraform or Pulumi code, and pu
 
 ### Run Locally
 
-You need Node 20+, pnpm, Docker, and the [GitHub CLI](https://cli.github.com) logged in
-(`gh auth login`). No GitHub OAuth application is required.
-
-```bash
-git clone https://github.com/johnbekele/infracanvas.git
-cd infracanvas
-pnpm install
-
-# Postgres 17 with pgvector, on port 5433
-pnpm db:up
-pnpm db:migrate
-
-# Generate local secrets. AUTH_PROVIDER=token is already set in the example,
-# which means the API borrows the token the gh CLI is holding.
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-sed -i '' "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$(openssl rand -hex 32)/" apps/api/.env
-sed -i '' "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" apps/api/.env
-
-pnpm dev
-```
-
-Open [http://localhost:5173](http://localhost:5173).
+Follow the tested [self-host guide](docs/SELF_HOST.md). The guide is executed nightly from its
+`bash verify` blocks, so startup commands live there instead of being repeated here.
 
 ### How GitHub authentication works
 

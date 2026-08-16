@@ -11,8 +11,7 @@
 //! service calls in-process, so ingesting a repository does not serialise
 //! several hundred megabytes of chunks across a subprocess boundary.
 //!
-//! Parsing, chunking, and embedding land in later issues. What exists here is
-//! the shape both entry points agree on.
+//! Parsing, chunking, and local embeddings land in this crate.
 
 // The engine parses untrusted repository content, where a panic is a denial of
 // service rather than a crash report.
@@ -22,6 +21,24 @@
     clippy::indexing_slicing,
     clippy::panic
 )]
+
+mod chunk;
+mod embed;
+mod merkle;
+mod parse;
+mod tokenise;
+mod walk;
+
+pub use chunk::{
+    Chunk, ChunkError, ChunkKind, ChunkOptions, ChunkStats, chunk_file, chunk_manifest,
+};
+pub use embed::{EmbedError, Embedder, LocalEmbedder, LocalEmbedderOptions};
+pub use parse::Language;
+pub use tokenise::{count_tokens, tokenizer, tokenizer_path};
+pub use walk::{
+    BUILTIN_DENY_PATTERNS, FileRecord, ManifestDiff, RepoManifest, SkipReason, SkippedFile,
+    WalkError, WalkOptions, walk,
+};
 
 /// Limits on a single ingestion run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
