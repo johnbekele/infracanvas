@@ -13,6 +13,7 @@
  *   pnpm loop --explain 202       say whether issue #202 is eligible, and why not
  */
 
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { ClaudeAdapter } from './agents/claude';
@@ -93,6 +94,12 @@ async function main(): Promise<number> {
   // Pinning a single issue is only ever a controlled one-shot; never loop on it.
   const once = args.once || args.issue !== undefined;
 
+  // Record the pid so the dashboard's "running" indicator is accurate however the
+  // loop was started — from the board or from a terminal — and so a second start
+  // can refuse when one is already up. Removed on exit, but only if still ours, so
+  // a crash-and-restart does not delete the successor's file.
+  writePidFile(join(config.stateDir, 'loop.pid'));
+
   // A signal skips the per-issue finally blocks, so release held claims and
   // remove their trees here before exiting, or an interrupted run strands its
   // issues behind a status:in-progress label.
@@ -149,6 +156,18 @@ function buildSupervisor(
 
 function describeLanes(laneAgents: Record<Lane, string>): string {
   return (['A', 'B', 'C'] as Lane[]).map((l) => `${l}=${laneAgents[l]}`).join(' ');
+}
+
+/** Write our pid, and arrange to clear it on exit if it is still ours. */
+function writePidFile(path: string): void {
+  writeFileSync(path, String(process.pid));
+  process.on('exit', () => {
+    try {
+      if (readFileSync(path, 'utf8').trim() === String(process.pid)) rmSync(path);
+    } catch {
+      // Already gone, or replaced by a successor: nothing to clean up.
+    }
+  });
 }
 
 main()
