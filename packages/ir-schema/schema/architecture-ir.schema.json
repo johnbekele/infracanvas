@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://infracanvas.dev/schema/architecture-ir/1.0.0.json",
+  "$id": "https://infracanvas.dev/schema/architecture-ir/1.1.0.json",
   "title": "ArchitectureIr",
   "type": "object",
   "additionalProperties": false,
@@ -16,6 +16,7 @@
         "oneOf": [
           { "$ref": "#/$defs/vpcNode" },
           { "$ref": "#/$defs/subnetNode" },
+          { "$ref": "#/$defs/rdsInstanceNode" },
           { "$ref": "#/$defs/pendingContractNode" }
         ]
       }
@@ -69,7 +70,6 @@
         "cloudfront_distribution",
         "route53_zone",
         "s3_bucket",
-        "rds_instance",
         "dynamodb_table",
         "elasticache_cluster",
         "sns_topic",
@@ -140,6 +140,34 @@
       "properties": {
         "kind": { "const": "subnet" },
         "params": { "$ref": "#/$defs/subnetParams" }
+      }
+    },
+    "rdsEngine": { "enum": ["postgres", "mysql", "mariadb"] },
+    "rdsInstanceParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "instanceClass", "allocatedStorageGb"],
+      "properties": {
+        "engine": { "$ref": "#/$defs/rdsEngine" },
+        "engineVersion": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "instanceClass": { "type": "string", "pattern": "^db\\.[a-z0-9]+\\.[a-z0-9]+$" },
+        "allocatedStorageGb": { "type": "integer", "minimum": 20, "maximum": 65536 },
+        "storageType": { "enum": ["gp2", "gp3", "io1", "io2"], "default": "gp3" },
+        "multiAz": { "type": "boolean", "default": false },
+        "publiclyAccessible": { "type": "boolean", "default": false },
+        "deletionProtection": { "type": "boolean", "default": false },
+        "backupRetentionDays": { "type": "integer", "minimum": 0, "maximum": 35, "default": 7 },
+        "storageEncrypted": { "type": "boolean", "default": true }
+      }
+    },
+    "rdsInstanceNode": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "unevaluatedProperties": false,
+      "required": ["kind", "params"],
+      "properties": {
+        "kind": { "const": "rds_instance" },
+        "params": { "$ref": "#/$defs/rdsInstanceParams" }
       }
     },
     "pendingParams": {

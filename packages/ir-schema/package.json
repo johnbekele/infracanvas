@@ -13,11 +13,13 @@
       "types": "./dist/index.d.ts"
     },
     "./schema": "./schema/architecture-ir.schema.json",
+    "./fixtures/*": "./fixtures/*",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "schema",
+    "fixtures",
     "VERSION"
   ],
   "scripts": {

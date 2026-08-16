@@ -14,7 +14,11 @@ pre-commit:
 
     eslint:
       glob: '*.{ts,tsx}'
-      run: pnpm exec eslint --fix --max-warnings=0 {staged_files}
+      # `--no-warn-ignored` because the hook passes every staged TypeScript file,
+      # including ones eslint.config.mjs deliberately ignores. Without it, staging
+      # a golden file fails the hook with a warning about the file being ignored,
+      # which `--max-warnings=0` then promotes to an error.
+      run: pnpm exec eslint --fix --max-warnings=0 --no-warn-ignored {staged_files}
       stage_fixed: true
 
     ruff-format:

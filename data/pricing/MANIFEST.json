@@ -1,0 +1,1642 @@
+{
+  "payload": {
+    "file": "aws-prices.v1.json.gz",
+    "gzipBytes": 860818,
+    "inflatedBytes": 7851624,
+    "rates": 36023,
+    "sha256": "c8272b5930dac186a903c024e31f90b3e0ad2200863d9b006afafdeedde6b707"
+  },
+  "regions": [
+    "eu-central-1",
+    "eu-west-1",
+    "us-east-1",
+    "us-west-2"
+  ],
+  "snapshotVersion": 1,
+  "sources": [
+    {
+      "bytes": 10317,
+      "offerCode": "AWSAmplify",
+      "publicationDate": "2025-06-20T17:10:23Z",
+      "region": "eu-central-1",
+      "sha256": "d56242d724043338718e069996e293073445d5b5face7d8da080fce48ff76341",
+      "version": "20250620171023"
+    },
+    {
+      "bytes": 10202,
+      "offerCode": "AWSAmplify",
+      "publicationDate": "2025-06-20T17:10:23Z",
+      "region": "eu-west-1",
+      "sha256": "14b49ab4f36b5024f14d8a6cc39e2e0c10da0adc385595aae4048b6227c05c1f",
+      "version": "20250620171023"
+    },
+    {
+      "bytes": 10319,
+      "offerCode": "AWSAmplify",
+      "publicationDate": "2025-06-20T17:10:23Z",
+      "region": "us-east-1",
+      "sha256": "480b90dce90720a52f2050afcfa3f837e974479ce903b733fffe3375ba3ccaef",
+      "version": "20250620171023"
+    },
+    {
+      "bytes": 10264,
+      "offerCode": "AWSAmplify",
+      "publicationDate": "2025-06-20T17:10:23Z",
+      "region": "us-west-2",
+      "sha256": "3ed327cd2e877ccc32b8dc743ba5d754174477d84b2f7a588bbd065c67b8def8",
+      "version": "20250620171023"
+    },
+    {
+      "bytes": 6739,
+      "offerCode": "AWSAppRunner",
+      "publicationDate": "2024-01-26T16:57:19Z",
+      "region": "eu-central-1",
+      "sha256": "596b15527f1b3ebc545e49b8981b1e5898020f2ea372e0a7d542ef91199b8c80",
+      "version": "20240126165719"
+    },
+    {
+      "bytes": 6573,
+      "offerCode": "AWSAppRunner",
+      "publicationDate": "2024-01-26T16:57:19Z",
+      "region": "eu-west-1",
+      "sha256": "b1594c6e37de6eeb5b015ca6f4909a41fb7ece8ad66ae7f3ce85cce97219a59f",
+      "version": "20240126165719"
+    },
+    {
+      "bytes": 6673,
+      "offerCode": "AWSAppRunner",
+      "publicationDate": "2024-01-26T16:57:19Z",
+      "region": "us-east-1",
+      "sha256": "ebe0ea08190c0b1cb511a9c1b171c09816924ba1fc6a845c5349baae4661fb5f",
+      "version": "20240126165719"
+    },
+    {
+      "bytes": 6622,
+      "offerCode": "AWSAppRunner",
+      "publicationDate": "2024-01-26T16:57:19Z",
+      "region": "us-west-2",
+      "sha256": "ace3801f5fa09d2a49381197c2a17afc831ddc101fcae541675801e0f8a53506",
+      "version": "20240126165719"
+    },
+    {
+      "bytes": 16790,
+      "offerCode": "AWSAppSync",
+      "publicationDate": "2025-06-23T15:53:22Z",
+      "region": "eu-central-1",
+      "sha256": "72a2ee32483993d10bf10e350a71cbc8b4352d467ef975c30ff0bdf3f2c2e8c5",
+      "version": "20250623155322"
+    },
+    {
+      "bytes": 16673,
+      "offerCode": "AWSAppSync",
+      "publicationDate": "2025-06-23T15:53:22Z",
+      "region": "eu-west-1",
+      "sha256": "90a82bea831ef1b24fc18c13382e5cd0c6dad1d5d913753d3e3fc786eb08210b",
+      "version": "20250623155322"
+    },
+    {
+      "bytes": 16933,
+      "offerCode": "AWSAppSync",
+      "publicationDate": "2025-06-23T15:53:22Z",
+      "region": "us-east-1",
+      "sha256": "e94285f5048476f0c23c1e65c9003d448c8320384f7652f5f06c5fae64a43824",
+      "version": "20250623155322"
+    },
+    {
+      "bytes": 16803,
+      "offerCode": "AWSAppSync",
+      "publicationDate": "2025-06-23T15:53:22Z",
+      "region": "us-west-2",
+      "sha256": "1dfb005686f325bc5362a9eb34cab72f3c8f866c8f0332f3efdfe38f1466a040",
+      "version": "20250623155322"
+    },
+    {
+      "bytes": 11206,
+      "offerCode": "AWSCertificateManager",
+      "publicationDate": "2025-08-28T15:37:21Z",
+      "region": "eu-central-1",
+      "sha256": "f4b826bd3c676f9a27f3471dc626d9690ba1e0f20961cd9c0788cfadde38a183",
+      "version": "20250828153721"
+    },
+    {
+      "bytes": 11139,
+      "offerCode": "AWSCertificateManager",
+      "publicationDate": "2025-08-28T15:37:21Z",
+      "region": "eu-west-1",
+      "sha256": "005d21a104bc800397e9b3c6db318cc60b37fdfe9e2929b808cfe83a3f1d4105",
+      "version": "20250828153721"
+    },
+    {
+      "bytes": 11256,
+      "offerCode": "AWSCertificateManager",
+      "publicationDate": "2025-08-28T15:37:21Z",
+      "region": "us-east-1",
+      "sha256": "2099a69dc55c028ec5a49eae44cba3913bc065b188d516e11115789f41713897",
+      "version": "20250828153721"
+    },
+    {
+      "bytes": 11181,
+      "offerCode": "AWSCertificateManager",
+      "publicationDate": "2025-08-28T15:37:21Z",
+      "region": "us-west-2",
+      "sha256": "9fe37fe82746d9bd00f5a00c68b22d909e46183d3300ffc71d4d83ff2cc9b2e9",
+      "version": "20250828153721"
+    },
+    {
+      "bytes": 19056,
+      "offerCode": "AWSELB",
+      "publicationDate": "2026-07-20T18:49:50Z",
+      "region": "eu-central-1",
+      "sha256": "ce50b3edc90ef5d1d52e5194300dc1eb4643fe69d35911b69b6af408637136c6",
+      "version": "20260720184950"
+    },
+    {
+      "bytes": 18952,
+      "offerCode": "AWSELB",
+      "publicationDate": "2026-07-20T18:49:50Z",
+      "region": "eu-west-1",
+      "sha256": "2f321218907db74a502f93a2880422a35010e8b547b52f9047e99437ae8c0125",
+      "version": "20260720184950"
+    },
+    {
+      "bytes": 19068,
+      "offerCode": "AWSELB",
+      "publicationDate": "2026-07-20T18:49:50Z",
+      "region": "us-east-1",
+      "sha256": "bcc8ee93418e84688892bfb6e1fd1db3190d6f6fd52586aa042a09643360fc58",
+      "version": "20260720184950"
+    },
+    {
+      "bytes": 19052,
+      "offerCode": "AWSELB",
+      "publicationDate": "2026-07-20T18:49:50Z",
+      "region": "us-west-2",
+      "sha256": "0b163d95bfdd059342d9069f11f0b5a536fba9ba6c9b4b68f5cef57c168bb5e6",
+      "version": "20260720184950"
+    },
+    {
+      "bytes": 16696,
+      "offerCode": "AWSEvents",
+      "publicationDate": "2026-05-29T20:53:01Z",
+      "region": "eu-central-1",
+      "sha256": "b78007ebe48af4282c60c8b96668204b1dc46a6c1004568397f5df4afd0d6534",
+      "version": "20260529205301"
+    },
+    {
+      "bytes": 16596,
+      "offerCode": "AWSEvents",
+      "publicationDate": "2026-05-29T20:53:01Z",
+      "region": "eu-west-1",
+      "sha256": "8e185f22c23869fb48e4bf90b46ba40fd3acf0b6b4ee0c0ee29795788bb0825e",
+      "version": "20260529205301"
+    },
+    {
+      "bytes": 16812,
+      "offerCode": "AWSEvents",
+      "publicationDate": "2026-05-29T20:53:01Z",
+      "region": "us-east-1",
+      "sha256": "d88e1661b83c2062b57f0a5220b3679f53118dc3e278d1ba81b132133a44c868",
+      "version": "20260529205301"
+    },
+    {
+      "bytes": 16702,
+      "offerCode": "AWSEvents",
+      "publicationDate": "2026-05-29T20:53:01Z",
+      "region": "us-west-2",
+      "sha256": "1a25f79c9d662f74147260bb34825c76165eb45ad2fa32bdd16029d5b12b23aa",
+      "version": "20260529205301"
+    },
+    {
+      "bytes": 24054,
+      "offerCode": "AWSGlue",
+      "publicationDate": "2026-07-20T16:38:39Z",
+      "region": "eu-central-1",
+      "sha256": "7eaa75ff4b8518d4b562e062a755da175352950f9f4e7d5a56b57b96e177cbfe",
+      "version": "20260720163839"
+    },
+    {
+      "bytes": 26450,
+      "offerCode": "AWSGlue",
+      "publicationDate": "2026-07-20T16:38:39Z",
+      "region": "eu-west-1",
+      "sha256": "c7487671be8721b8d1e587801d061736ac68e3f8089db7462cfd4de2b75e1d6f",
+      "version": "20260720163839"
+    },
+    {
+      "bytes": 26684,
+      "offerCode": "AWSGlue",
+      "publicationDate": "2026-07-20T16:38:39Z",
+      "region": "us-east-1",
+      "sha256": "c5dc5baf72ffc10acd01b0739d4c34dc175626dba3b387377da2c7b0bec11655",
+      "version": "20260720163839"
+    },
+    {
+      "bytes": 26574,
+      "offerCode": "AWSGlue",
+      "publicationDate": "2026-07-20T16:38:39Z",
+      "region": "us-west-2",
+      "sha256": "b9df7f8400428086fa60974934ee00aa1430e05996260bd0615ca0033c1515bf",
+      "version": "20260720163839"
+    },
+    {
+      "bytes": 655316,
+      "offerCode": "AWSLambda",
+      "publicationDate": "2026-07-17T07:52:16Z",
+      "region": "eu-central-1",
+      "sha256": "b17fc6a10a873d24bb51088a2a60b827219c7f30cdac3264e1927666e48c50fc",
+      "version": "20260717075216"
+    },
+    {
+      "bytes": 667934,
+      "offerCode": "AWSLambda",
+      "publicationDate": "2026-07-17T07:52:16Z",
+      "region": "eu-west-1",
+      "sha256": "17bb1699c8ae92d69fc8fc460644f64496b4aad6f15bb268917bb0b84508a798",
+      "version": "20260717075216"
+    },
+    {
+      "bytes": 675747,
+      "offerCode": "AWSLambda",
+      "publicationDate": "2026-07-17T07:52:16Z",
+      "region": "us-east-1",
+      "sha256": "69e431ae25652bee8bf0291399bc9d26efc89dff9b88f53053c5437bba797a67",
+      "version": "20260717075216"
+    },
+    {
+      "bytes": 673103,
+      "offerCode": "AWSLambda",
+      "publicationDate": "2026-07-17T07:52:16Z",
+      "region": "us-west-2",
+      "sha256": "4bc980db3c3c964ae559813bfb3adf747e098c2ac3e63c9b2eeccf36ef5a914a",
+      "version": "20260717075216"
+    },
+    {
+      "bytes": 9458,
+      "offerCode": "AWSQueueService",
+      "publicationDate": "2025-08-28T20:07:13Z",
+      "region": "eu-central-1",
+      "sha256": "9ffa339add24e37f38ee5d76dcc41088f6f145abdbe0e4723d8db5787bea399e",
+      "version": "20250828200713"
+    },
+    {
+      "bytes": 9423,
+      "offerCode": "AWSQueueService",
+      "publicationDate": "2025-08-28T20:07:13Z",
+      "region": "eu-west-1",
+      "sha256": "354fed99e19a85c3d7a9a0ce7cae686691f283261efd0224b6ffa25568f0eb1e",
+      "version": "20250828200713"
+    },
+    {
+      "bytes": 9492,
+      "offerCode": "AWSQueueService",
+      "publicationDate": "2025-08-28T20:07:13Z",
+      "region": "us-east-1",
+      "sha256": "73a1c581272b91ca02fb2a37f0f7919ecf6d051e47cd2f94fd4513dd31c273a3",
+      "version": "20250828200713"
+    },
+    {
+      "bytes": 9469,
+      "offerCode": "AWSQueueService",
+      "publicationDate": "2025-08-28T20:07:13Z",
+      "region": "us-west-2",
+      "sha256": "536288ae3ff651e7f1a23bb32f3301b3bfb957f6925bd5f89633d6a5bd5c6c9e",
+      "version": "20250828200713"
+    },
+    {
+      "bytes": 2896,
+      "offerCode": "AWSSecretsManager",
+      "publicationDate": "2025-08-28T15:38:04Z",
+      "region": "eu-central-1",
+      "sha256": "b4412abe63d444582968781c6caae22a0c5240cf66c042a1907c4b83da7c7525",
+      "version": "20250828153804"
+    },
+    {
+      "bytes": 2884,
+      "offerCode": "AWSSecretsManager",
+      "publicationDate": "2025-08-28T15:38:04Z",
+      "region": "eu-west-1",
+      "sha256": "45f0d6408f086d4e58c777ed59da36334a5edc4f64c3da7d040e8eae99b467f8",
+      "version": "20250828153804"
+    },
+    {
+      "bytes": 2904,
+      "offerCode": "AWSSecretsManager",
+      "publicationDate": "2025-08-28T15:38:04Z",
+      "region": "us-east-1",
+      "sha256": "0f65d88246e23a34c858a409e1ca9e380504f08fb7b2f7e31ea73c80430f47f5",
+      "version": "20250828153804"
+    },
+    {
+      "bytes": 2894,
+      "offerCode": "AWSSecretsManager",
+      "publicationDate": "2025-08-28T15:38:04Z",
+      "region": "us-west-2",
+      "sha256": "e2e7f590b85c2c6bd8e4e1da1e1907475746eb42c09d73d1a94b57021c67d490",
+      "version": "20250828153804"
+    },
+    {
+      "bytes": 10557,
+      "offerCode": "AWSXRay",
+      "publicationDate": "2025-08-28T15:38:10Z",
+      "region": "eu-central-1",
+      "sha256": "a910d7d1a3c5f7bbc1c952f5a169bb39bec75af47536389e002cc228a5b91ad2",
+      "version": "20250828153810"
+    },
+    {
+      "bytes": 10529,
+      "offerCode": "AWSXRay",
+      "publicationDate": "2025-08-28T15:38:10Z",
+      "region": "eu-west-1",
+      "sha256": "d86d411b0009f2abe674229ad35055f3b148469718d0d19a948856b65fc29f34",
+      "version": "20250828153810"
+    },
+    {
+      "bytes": 10610,
+      "offerCode": "AWSXRay",
+      "publicationDate": "2025-08-28T15:38:10Z",
+      "region": "us-east-1",
+      "sha256": "555202fea0590947dc0a5b0d961bc274549e107fecb3479e18a06ae25fc66bd5",
+      "version": "20250828153810"
+    },
+    {
+      "bytes": 10561,
+      "offerCode": "AWSXRay",
+      "publicationDate": "2025-08-28T15:38:10Z",
+      "region": "us-west-2",
+      "sha256": "ac25939f7599f1bd93f1868ea443e54802f2c83a6e7fc2138211010ce82481ae",
+      "version": "20250828153810"
+    },
+    {
+      "bytes": 20126,
+      "offerCode": "AmazonApiGateway",
+      "publicationDate": "2026-07-24T00:46:02Z",
+      "region": "eu-central-1",
+      "sha256": "3f24127d982853cba8c4cabd80604cbb3f75fe25aaa30cc95635197b68e429e2",
+      "version": "20260724004602"
+    },
+    {
+      "bytes": 20006,
+      "offerCode": "AmazonApiGateway",
+      "publicationDate": "2026-07-24T00:46:02Z",
+      "region": "eu-west-1",
+      "sha256": "3fbcccea854c097e487e26bf2c380a17d7f297421e3ec5325509fc42a5e3920e",
+      "version": "20260724004602"
+    },
+    {
+      "bytes": 20292,
+      "offerCode": "AmazonApiGateway",
+      "publicationDate": "2026-07-24T00:46:02Z",
+      "region": "us-east-1",
+      "sha256": "39c4789adb344d0de454b5923c938e305ec02fa6828a6a22d86ee599cff684d5",
+      "version": "20260724004602"
+    },
+    {
+      "bytes": 20124,
+      "offerCode": "AmazonApiGateway",
+      "publicationDate": "2026-07-24T00:46:02Z",
+      "region": "us-west-2",
+      "sha256": "418c77068148eace43518da1dac5eda8c9fb4e46eb5e328555f88a885be5e654",
+      "version": "20260724004602"
+    },
+    {
+      "bytes": 4447,
+      "offerCode": "AmazonAthena",
+      "publicationDate": "2026-03-27T17:22:19Z",
+      "region": "eu-central-1",
+      "sha256": "af5746bbafc97131143c7d196213fab918f0cf074c5c70c10b11f341b215fd55",
+      "version": "20260327172219"
+    },
+    {
+      "bytes": 4413,
+      "offerCode": "AmazonAthena",
+      "publicationDate": "2026-03-27T17:22:19Z",
+      "region": "eu-west-1",
+      "sha256": "e96f82c0680dfd40bc1e962304b101ac90f16f7ede196bd0ebede88c31607f54",
+      "version": "20260327172219"
+    },
+    {
+      "bytes": 4473,
+      "offerCode": "AmazonAthena",
+      "publicationDate": "2026-03-27T17:22:19Z",
+      "region": "us-east-1",
+      "sha256": "8c7503e7dd90de014d33ee4b9408c22e9053525232d5e1878e78b7192e5c9151",
+      "version": "20260327172219"
+    },
+    {
+      "bytes": 4443,
+      "offerCode": "AmazonAthena",
+      "publicationDate": "2026-03-27T17:22:19Z",
+      "region": "us-west-2",
+      "sha256": "414d108a75a457dcb039ec36bebb6543c1ab92da2a5feb8d0515661474865ce2",
+      "version": "20260327172219"
+    },
+    {
+      "bytes": 847658,
+      "offerCode": "AmazonBedrock",
+      "publicationDate": "2026-08-04T16:55:49Z",
+      "region": "eu-central-1",
+      "sha256": "1dc8c83d08b5796004d82bd9b47473275e14f492806ae609e2da7d4c91d0c3d9",
+      "version": "20260804165549"
+    },
+    {
+      "bytes": 932025,
+      "offerCode": "AmazonBedrock",
+      "publicationDate": "2026-08-04T16:55:49Z",
+      "region": "eu-west-1",
+      "sha256": "83ac4771fcb8390083858efed72564bd6ea29d029d3a614662ba4489b05ca9bf",
+      "version": "20260804165549"
+    },
+    {
+      "bytes": 1395894,
+      "offerCode": "AmazonBedrock",
+      "publicationDate": "2026-08-04T16:55:49Z",
+      "region": "us-east-1",
+      "sha256": "d50b870350e9540e4db4f1d012e089a8306cfd2c31f8b184e5b7f7d340080e0e",
+      "version": "20260804165549"
+    },
+    {
+      "bytes": 1379816,
+      "offerCode": "AmazonBedrock",
+      "publicationDate": "2026-08-04T16:55:49Z",
+      "region": "us-west-2",
+      "sha256": "fd4727e4a60451e4a10ab81c6814758b45f09c8b4674232c9f3135ac1eeade82",
+      "version": "20260804165549"
+    },
+    {
+      "bytes": 7104,
+      "offerCode": "AmazonCloudFront",
+      "publicationDate": "2025-07-01T21:16:47Z",
+      "region": "eu-central-1",
+      "sha256": "51d6125c59277bfebfcfca744babb62a2fdc96fc7f0de447ee9b0bbbb3823f3a",
+      "version": "20250701211647"
+    },
+    {
+      "bytes": 7065,
+      "offerCode": "AmazonCloudFront",
+      "publicationDate": "2025-07-01T21:16:47Z",
+      "region": "eu-west-1",
+      "sha256": "6163ce7905ad7499425f114c65286599a57f9df260f7377c1df7892ac5088cf3",
+      "version": "20250701211647"
+    },
+    {
+      "bytes": 7089,
+      "offerCode": "AmazonCloudFront",
+      "publicationDate": "2025-07-01T21:16:47Z",
+      "region": "us-east-1",
+      "sha256": "78323ecd79c7a76c59781e79c4fd1738fb35527cb1b7dffa752b5b1ed23d2c37",
+      "version": "20250701211647"
+    },
+    {
+      "bytes": 7104,
+      "offerCode": "AmazonCloudFront",
+      "publicationDate": "2025-07-01T21:16:47Z",
+      "region": "us-west-2",
+      "sha256": "7f2985db71218c0f9b4b07e80e2a0def0ecc0f68332ebc2f3f77a4ed4dce0ed2",
+      "version": "20250701211647"
+    },
+    {
+      "bytes": 199582,
+      "offerCode": "AmazonCloudWatch",
+      "publicationDate": "2026-08-06T20:18:40Z",
+      "region": "eu-central-1",
+      "sha256": "5a71b2f6bc7913ca714f6d6f0fe26a67649a790905dc1f7781ef268243452c82",
+      "version": "20260806201840"
+    },
+    {
+      "bytes": 198595,
+      "offerCode": "AmazonCloudWatch",
+      "publicationDate": "2026-08-06T20:18:40Z",
+      "region": "eu-west-1",
+      "sha256": "03e1aa2ed3c9675c54acaf13acaee21d8d37363ec90d664a77a9aee484c833a9",
+      "version": "20260806201840"
+    },
+    {
+      "bytes": 203909,
+      "offerCode": "AmazonCloudWatch",
+      "publicationDate": "2026-08-06T20:18:40Z",
+      "region": "us-east-1",
+      "sha256": "bfaa71e25c609f722077bc97e9580fd53f912effbec79df77d996e11e4363679",
+      "version": "20260806201840"
+    },
+    {
+      "bytes": 199728,
+      "offerCode": "AmazonCloudWatch",
+      "publicationDate": "2026-08-06T20:18:40Z",
+      "region": "us-west-2",
+      "sha256": "32b3561669f9443a19fcdd64da98f305735b5158495ffdc8dc029a95993cfeca",
+      "version": "20260806201840"
+    },
+    {
+      "bytes": 71466,
+      "offerCode": "AmazonCognito",
+      "publicationDate": "2026-06-22T20:47:07Z",
+      "region": "eu-central-1",
+      "sha256": "f33034724cf5d6b6787267ea4748ad5bca3c0753fee5d1ead7faa0c12290589e",
+      "version": "20260622204707"
+    },
+    {
+      "bytes": 71030,
+      "offerCode": "AmazonCognito",
+      "publicationDate": "2026-06-22T20:47:07Z",
+      "region": "eu-west-1",
+      "sha256": "7ae317aff876fb32edeb2fd739c334b70eeab1b99d561f7ce20025cda4d1411d",
+      "version": "20260622204707"
+    },
+    {
+      "bytes": 71852,
+      "offerCode": "AmazonCognito",
+      "publicationDate": "2026-06-22T20:47:07Z",
+      "region": "us-east-1",
+      "sha256": "14db9a811dbbc08fe483c77c4904a0111cf96ff39eaaf75b5cccfd686d3edc3e",
+      "version": "20260622204707"
+    },
+    {
+      "bytes": 71422,
+      "offerCode": "AmazonCognito",
+      "publicationDate": "2026-06-22T20:47:07Z",
+      "region": "us-west-2",
+      "sha256": "03db8ab9b83d91c1a080bd0080818ddb0091af16bae7c52178cb5215d806c06a",
+      "version": "20260622204707"
+    },
+    {
+      "bytes": 147400,
+      "offerCode": "AmazonDocDB",
+      "publicationDate": "2026-07-10T17:22:57Z",
+      "region": "eu-central-1",
+      "sha256": "f48d66f6fa21fbc246eb64ec46582587fc61785adb8439d75190abdb937434c3",
+      "version": "20260710172257"
+    },
+    {
+      "bytes": 173651,
+      "offerCode": "AmazonDocDB",
+      "publicationDate": "2026-07-10T17:22:57Z",
+      "region": "eu-west-1",
+      "sha256": "db8b84dcafc6e03e0290bc0b0e3c6576b01f2426cf5f0a468913803e1ca4b661",
+      "version": "20260710172257"
+    },
+    {
+      "bytes": 174478,
+      "offerCode": "AmazonDocDB",
+      "publicationDate": "2026-07-10T17:22:57Z",
+      "region": "us-east-1",
+      "sha256": "e76dcf99b285232cb3ab3380355e69503a20eb6903f42b6f39b8859ce58b1df6",
+      "version": "20260710172257"
+    },
+    {
+      "bytes": 174328,
+      "offerCode": "AmazonDocDB",
+      "publicationDate": "2026-07-10T17:22:57Z",
+      "region": "us-west-2",
+      "sha256": "9c8d5c70b110c1a980bb376b95d925703777647213ca506843aa046bbe642780",
+      "version": "20260710172257"
+    },
+    {
+      "bytes": 41600,
+      "offerCode": "AmazonDynamoDB",
+      "publicationDate": "2026-08-04T20:40:51Z",
+      "region": "eu-central-1",
+      "sha256": "0943d898453afcb3b02a7e9f6e817e088ceb4e34b118edf52f0ab2cf45bca995",
+      "version": "20260804204051"
+    },
+    {
+      "bytes": 42663,
+      "offerCode": "AmazonDynamoDB",
+      "publicationDate": "2026-08-04T20:40:51Z",
+      "region": "eu-west-1",
+      "sha256": "85540f363f16430d6c62b11e445820bb5ed89548c0bce335e786a802a90c0d2f",
+      "version": "20260804204051"
+    },
+    {
+      "bytes": 43018,
+      "offerCode": "AmazonDynamoDB",
+      "publicationDate": "2026-08-04T20:40:51Z",
+      "region": "us-east-1",
+      "sha256": "94a0579ae9a4a47f564b5b31d03d327d4ff5662e6884fd8295a27b3154491614",
+      "version": "20260804204051"
+    },
+    {
+      "bytes": 42848,
+      "offerCode": "AmazonDynamoDB",
+      "publicationDate": "2026-08-04T20:40:51Z",
+      "region": "us-west-2",
+      "sha256": "569569117bba1fd8458b07c228f9039c8c93a1d2931194484f883fbc6b43bca0",
+      "version": "20260804204051"
+    },
+    {
+      "bytes": 431219700,
+      "offerCode": "AmazonEC2",
+      "publicationDate": "2026-08-10T18:54:19Z",
+      "region": "eu-central-1",
+      "sha256": "31238e25d1eb701e33ed18259d442baaa7e73e8f8b620a1d2e6cbfc958e6a359",
+      "version": "20260810185419"
+    },
+    {
+      "bytes": 435868309,
+      "offerCode": "AmazonEC2",
+      "publicationDate": "2026-08-10T18:54:19Z",
+      "region": "eu-west-1",
+      "sha256": "4ec585f76f4cdcd20ffdd18adbcdfedd6732a6686ea871175b7443fc66b634ea",
+      "version": "20260810185419"
+    },
+    {
+      "bytes": 480073725,
+      "offerCode": "AmazonEC2",
+      "publicationDate": "2026-08-10T18:54:19Z",
+      "region": "us-east-1",
+      "sha256": "eca375d05eb94ecce6e48505f4c4c566d3271346b887fed74e60a84bc00f6ee8",
+      "version": "20260810185419"
+    },
+    {
+      "bytes": 473500283,
+      "offerCode": "AmazonEC2",
+      "publicationDate": "2026-08-10T18:54:19Z",
+      "region": "us-west-2",
+      "sha256": "be36ddcb5209d58c30592e7dda5a0aefc4f84e38b9bd23f1b07e1f255cefb010",
+      "version": "20260810185419"
+    },
+    {
+      "bytes": 5797,
+      "offerCode": "AmazonECR",
+      "publicationDate": "2025-11-21T15:36:39Z",
+      "region": "eu-central-1",
+      "sha256": "46bd8abd8475054575f03b03efc1155dde0e03c54583a1f6afaf5d825758a722",
+      "version": "20251121153639"
+    },
+    {
+      "bytes": 5761,
+      "offerCode": "AmazonECR",
+      "publicationDate": "2025-11-21T15:36:39Z",
+      "region": "eu-west-1",
+      "sha256": "88890f9ec7802981629d18c35741b459736613079ad50908d7fe71bb7bae1886",
+      "version": "20251121153639"
+    },
+    {
+      "bytes": 5836,
+      "offerCode": "AmazonECR",
+      "publicationDate": "2025-11-21T15:36:39Z",
+      "region": "us-east-1",
+      "sha256": "bf3d11d6fda351dfa317d2a7fc25bd849e5810c949808d7a22d0871eb6355771",
+      "version": "20251121153639"
+    },
+    {
+      "bytes": 5801,
+      "offerCode": "AmazonECR",
+      "publicationDate": "2025-11-21T15:36:39Z",
+      "region": "us-west-2",
+      "sha256": "52c1e792bde0152136832b6eae9b612e8e394d4a09d3aeb125c34ef0fd35470c",
+      "version": "20251121153639"
+    },
+    {
+      "bytes": 1079719,
+      "offerCode": "AmazonECS",
+      "publicationDate": "2026-07-07T16:06:51Z",
+      "region": "eu-central-1",
+      "sha256": "4733f10102325b44ac1a24453fd58dd26bed2377952e14d3a24b975ce9a3ead8",
+      "version": "20260707160651"
+    },
+    {
+      "bytes": 1002143,
+      "offerCode": "AmazonECS",
+      "publicationDate": "2026-07-07T16:06:51Z",
+      "region": "eu-west-1",
+      "sha256": "b59421ea848fb7d6ba9a67c902cdcb9670208987d8375bcdb9a80212414b8ca3",
+      "version": "20260707160651"
+    },
+    {
+      "bytes": 1206040,
+      "offerCode": "AmazonECS",
+      "publicationDate": "2026-07-07T16:06:51Z",
+      "region": "us-east-1",
+      "sha256": "2f8417d426f229120c64e8d5a33982ff6c2e58530fdbcde78aabaf0db12866e6",
+      "version": "20260707160651"
+    },
+    {
+      "bytes": 1257378,
+      "offerCode": "AmazonECS",
+      "publicationDate": "2026-07-07T16:06:51Z",
+      "region": "us-west-2",
+      "sha256": "db5a05fa1abb3cf172413e9cf978b166750c79f0062b4c91dbacf7b5c2df10f9",
+      "version": "20260707160651"
+    },
+    {
+      "bytes": 22866,
+      "offerCode": "AmazonEFS",
+      "publicationDate": "2026-07-08T15:10:26Z",
+      "region": "eu-central-1",
+      "sha256": "c4fe40a495595c81cf126f87ae834bf49878896e92dcfa63b05211babb27d874",
+      "version": "20260708151026"
+    },
+    {
+      "bytes": 18889,
+      "offerCode": "AmazonEFS",
+      "publicationDate": "2026-07-08T15:10:26Z",
+      "region": "eu-west-1",
+      "sha256": "788c3580ff4635b93dcff99ddb609fa19e328d7d89ffe6c3fe9c1453f6578978",
+      "version": "20260708151026"
+    },
+    {
+      "bytes": 19093,
+      "offerCode": "AmazonEFS",
+      "publicationDate": "2026-07-08T15:10:26Z",
+      "region": "us-east-1",
+      "sha256": "b3b5de983a7a54d67d436f4f4398528655070a3caddcefff7a6da12b95188436",
+      "version": "20260708151026"
+    },
+    {
+      "bytes": 19008,
+      "offerCode": "AmazonEFS",
+      "publicationDate": "2026-07-08T15:10:26Z",
+      "region": "us-west-2",
+      "sha256": "5c83eb5dcf8a75d92d7921dc967d1a01b23eda79d61f0836b9c0cb1b9122eafa",
+      "version": "20260708151026"
+    },
+    {
+      "bytes": 1333692,
+      "offerCode": "AmazonEKS",
+      "publicationDate": "2026-08-04T22:48:32Z",
+      "region": "eu-central-1",
+      "sha256": "4155816c514808fc5070ad679a6066a206bafa07e4e3d1b58a820b4137a958e6",
+      "version": "20260804224832"
+    },
+    {
+      "bytes": 1312857,
+      "offerCode": "AmazonEKS",
+      "publicationDate": "2026-08-04T22:48:32Z",
+      "region": "eu-west-1",
+      "sha256": "ec8549e4ab9b5204434c3fe7e77c9e53bbf214521a8d83d177134f9965fe69ce",
+      "version": "20260804224832"
+    },
+    {
+      "bytes": 1475612,
+      "offerCode": "AmazonEKS",
+      "publicationDate": "2026-08-04T22:48:32Z",
+      "region": "us-east-1",
+      "sha256": "3f2657508b2a2a91d46fba0135c7a4f1400cdf27a14c3afda463daaf132eead6",
+      "version": "20260804224832"
+    },
+    {
+      "bytes": 1464636,
+      "offerCode": "AmazonEKS",
+      "publicationDate": "2026-08-04T22:48:32Z",
+      "region": "us-west-2",
+      "sha256": "9bbad071ccb9f7abe7a4fab6647584e13fdc5ad719a36c2ae765de4261bfb529",
+      "version": "20260804224832"
+    },
+    {
+      "bytes": 1774949,
+      "offerCode": "AmazonES",
+      "publicationDate": "2026-07-09T09:08:58Z",
+      "region": "eu-central-1",
+      "sha256": "7119a97eab6fc2e083b677cdccd6560d5ab69cea1e343cb2c09cf102f7a4d869",
+      "version": "20260709090858"
+    },
+    {
+      "bytes": 1775856,
+      "offerCode": "AmazonES",
+      "publicationDate": "2026-07-09T09:08:58Z",
+      "region": "eu-west-1",
+      "sha256": "a43bf81d8dff1e1a60415ccb33da2f5ff867717e02502b6ac9c475f36b78671a",
+      "version": "20260709090858"
+    },
+    {
+      "bytes": 1824425,
+      "offerCode": "AmazonES",
+      "publicationDate": "2026-07-09T09:08:58Z",
+      "region": "us-east-1",
+      "sha256": "f1645e8999e9d0632e97cdb3873561289f68b404e94c2c97b2fcd870e2e7a38c",
+      "version": "20260709090858"
+    },
+    {
+      "bytes": 1824123,
+      "offerCode": "AmazonES",
+      "publicationDate": "2026-07-09T09:08:58Z",
+      "region": "us-west-2",
+      "sha256": "b3108a18490fe588cd8b411cc9e51634581400bdfe7b820fcd4d7887cbb3744d",
+      "version": "20260709090858"
+    },
+    {
+      "bytes": 1905875,
+      "offerCode": "AmazonElastiCache",
+      "publicationDate": "2026-08-07T21:35:17Z",
+      "region": "eu-central-1",
+      "sha256": "b1d89777f72c394743b4a58537fef9ca99ee575859fe15c011ad20997049c36a",
+      "version": "20260807213517"
+    },
+    {
+      "bytes": 2098709,
+      "offerCode": "AmazonElastiCache",
+      "publicationDate": "2026-08-07T21:35:17Z",
+      "region": "eu-west-1",
+      "sha256": "dbf95e041470affe8bfaec91708d1cc07454bb0be4a411882e70c90932c4fbb9",
+      "version": "20260807213517"
+    },
+    {
+      "bytes": 2104812,
+      "offerCode": "AmazonElastiCache",
+      "publicationDate": "2026-08-07T21:35:17Z",
+      "region": "us-east-1",
+      "sha256": "1db3ae079ab624a33d0ee61aaa4460e08c711febeda75340eeae2a473f09eeeb",
+      "version": "20260807213517"
+    },
+    {
+      "bytes": 2102547,
+      "offerCode": "AmazonElastiCache",
+      "publicationDate": "2026-08-07T21:35:17Z",
+      "region": "us-west-2",
+      "sha256": "4ef9fef282f8cbe0acc17614ca253a622c129de942bd1d61574b59ffaa24df41",
+      "version": "20260807213517"
+    },
+    {
+      "bytes": 15134,
+      "offerCode": "AmazonKendra",
+      "publicationDate": "2025-03-28T20:45:53Z",
+      "region": "eu-west-1",
+      "sha256": "6740fc51d5e2918e6efa96458a34d6351b99cc6eac2c7dc6fff42c73b9b27b5e",
+      "version": "20250328204553"
+    },
+    {
+      "bytes": 20763,
+      "offerCode": "AmazonKendra",
+      "publicationDate": "2025-03-28T20:45:53Z",
+      "region": "us-east-1",
+      "sha256": "cb72370a254518ff2eafb750cf360a86e6e4eb3d8becf3b0f86528a0fcfb0150",
+      "version": "20250328204553"
+    },
+    {
+      "bytes": 20612,
+      "offerCode": "AmazonKendra",
+      "publicationDate": "2025-03-28T20:45:53Z",
+      "region": "us-west-2",
+      "sha256": "88f8ea45103b50c7e72fb94c208ca548e59735fc9ab3fcaff1f36855a0b70dae",
+      "version": "20250328204553"
+    },
+    {
+      "bytes": 27444,
+      "offerCode": "AmazonKinesis",
+      "publicationDate": "2026-07-17T05:48:56Z",
+      "region": "eu-central-1",
+      "sha256": "27e3c9c4fa6504535ea88130b7855480a452cedd9bcc3fec80d47008383cb369",
+      "version": "20260717054856"
+    },
+    {
+      "bytes": 27362,
+      "offerCode": "AmazonKinesis",
+      "publicationDate": "2026-07-17T05:48:56Z",
+      "region": "eu-west-1",
+      "sha256": "5814e0b2e49deaf2453ad51b516632bf2d91267cb019fdabc1e61b0a73da6649",
+      "version": "20260717054856"
+    },
+    {
+      "bytes": 27474,
+      "offerCode": "AmazonKinesis",
+      "publicationDate": "2026-07-17T05:48:56Z",
+      "region": "us-east-1",
+      "sha256": "ca31be762c6175bf770a3bb3505b943dd2e96da34c636895e8787f73b7243e74",
+      "version": "20260717054856"
+    },
+    {
+      "bytes": 27429,
+      "offerCode": "AmazonKinesis",
+      "publicationDate": "2026-07-17T05:48:56Z",
+      "region": "us-west-2",
+      "sha256": "1244d21579544c2669fe50c0591917a329307485eba27830d5f116ac5df9a349",
+      "version": "20260717054856"
+    },
+    {
+      "bytes": 35558,
+      "offerCode": "AmazonKinesisFirehose",
+      "publicationDate": "2026-07-29T23:16:52Z",
+      "region": "eu-central-1",
+      "sha256": "c0314d10fe3b25b9db5ae4f9458590ae5fa13e7ad672d1f73907700002359f57",
+      "version": "20260729231652"
+    },
+    {
+      "bytes": 35465,
+      "offerCode": "AmazonKinesisFirehose",
+      "publicationDate": "2026-07-29T23:16:52Z",
+      "region": "eu-west-1",
+      "sha256": "8843a5fb51135e4ebe63f63634e8e053c1d2c6059b827a360815bc6ec975e743",
+      "version": "20260729231652"
+    },
+    {
+      "bytes": 35674,
+      "offerCode": "AmazonKinesisFirehose",
+      "publicationDate": "2026-07-29T23:16:52Z",
+      "region": "us-east-1",
+      "sha256": "1efdfb43e8a93db63d8420ee72cb1daeec83d9026d9fe15c5297a6fb382efac7",
+      "version": "20260729231652"
+    },
+    {
+      "bytes": 35546,
+      "offerCode": "AmazonKinesisFirehose",
+      "publicationDate": "2026-07-29T23:16:52Z",
+      "region": "us-west-2",
+      "sha256": "23b772cdaf090eeee480fa7ecdb0a00d965602d86fd7ea8f805be6ae5cd35429",
+      "version": "20260729231652"
+    },
+    {
+      "bytes": 11971,
+      "offerCode": "AmazonMCS",
+      "publicationDate": "2026-08-05T19:38:21Z",
+      "region": "eu-central-1",
+      "sha256": "44a615f6f5678dfc7a74bb8beba65396ca307f7dc07b468e9edd209257689f40",
+      "version": "20260805193821"
+    },
+    {
+      "bytes": 11879,
+      "offerCode": "AmazonMCS",
+      "publicationDate": "2026-08-05T19:38:21Z",
+      "region": "eu-west-1",
+      "sha256": "b85e96eacddc2e6c14412b70d578b38b55ca74917446fad13480061ff5f188df",
+      "version": "20260805193821"
+    },
+    {
+      "bytes": 12037,
+      "offerCode": "AmazonMCS",
+      "publicationDate": "2026-08-05T19:38:21Z",
+      "region": "us-east-1",
+      "sha256": "f6c49d0d3ccdbccb8b8bf489159ee4f53fb7c8b3f018d2343ac7efbeeb7fa93c",
+      "version": "20260805193821"
+    },
+    {
+      "bytes": 11971,
+      "offerCode": "AmazonMCS",
+      "publicationDate": "2026-08-05T19:38:21Z",
+      "region": "us-west-2",
+      "sha256": "56aa8de02e834ffc8d773327cbb77f575b072fdb88dc54bfbfca9da514ad8418",
+      "version": "20260805193821"
+    },
+    {
+      "bytes": 70898,
+      "offerCode": "AmazonMQ",
+      "publicationDate": "2026-06-18T18:24:04Z",
+      "region": "eu-central-1",
+      "sha256": "a96e8cf9f0954971e4f58a94fc0e1c2600cc9d256fc35d0743fddbfafd6ce60e",
+      "version": "20260618182404"
+    },
+    {
+      "bytes": 67452,
+      "offerCode": "AmazonMQ",
+      "publicationDate": "2026-06-18T18:24:04Z",
+      "region": "eu-west-1",
+      "sha256": "f7aad0402cfacfa53fceee1d9a186583c8836f43ef3cde2859cea2e7bb3c3029",
+      "version": "20260618182404"
+    },
+    {
+      "bytes": 77978,
+      "offerCode": "AmazonMQ",
+      "publicationDate": "2026-06-18T18:24:04Z",
+      "region": "us-east-1",
+      "sha256": "42b78006ec9fda611fd4b23be679bf05c4798378973afe98dd6a249df101c3d6",
+      "version": "20260618182404"
+    },
+    {
+      "bytes": 77512,
+      "offerCode": "AmazonMQ",
+      "publicationDate": "2026-06-18T18:24:04Z",
+      "region": "us-west-2",
+      "sha256": "bf077fb592e13e6600a404d009aa7fe517bc4b441d5fdcc08cb1f88fa80e4982",
+      "version": "20260618182404"
+    },
+    {
+      "bytes": 57654,
+      "offerCode": "AmazonMSK",
+      "publicationDate": "2026-07-29T21:14:08Z",
+      "region": "eu-central-1",
+      "sha256": "dd7ba1173280b830ff9a841d47ffc936e19757d06e5b984a216769599752a865",
+      "version": "20260729211408"
+    },
+    {
+      "bytes": 57269,
+      "offerCode": "AmazonMSK",
+      "publicationDate": "2026-07-29T21:14:08Z",
+      "region": "eu-west-1",
+      "sha256": "b97356dad50cb8b52258e1e2d0e878440ca822edf404bb205bec8b8ce7b21bad",
+      "version": "20260729211408"
+    },
+    {
+      "bytes": 58091,
+      "offerCode": "AmazonMSK",
+      "publicationDate": "2026-07-29T21:14:08Z",
+      "region": "us-east-1",
+      "sha256": "f1a513a4ae25e06ee3486d250e3dcee647505e26bca764ec1164d2b43bf21144",
+      "version": "20260729211408"
+    },
+    {
+      "bytes": 57671,
+      "offerCode": "AmazonMSK",
+      "publicationDate": "2026-07-29T21:14:08Z",
+      "region": "us-west-2",
+      "sha256": "a231345b61207f1db935e899a77f4784c3579bbbdfb8b6700753602ba86bb8a5",
+      "version": "20260729211408"
+    },
+    {
+      "bytes": 186417,
+      "offerCode": "AmazonMemoryDB",
+      "publicationDate": "2026-07-17T17:56:40Z",
+      "region": "eu-central-1",
+      "sha256": "26cf76020ec1a375ef7acb33eddc36c41212d1274e1261c9f4e54c33d1c78413",
+      "version": "20260717175640"
+    },
+    {
+      "bytes": 186006,
+      "offerCode": "AmazonMemoryDB",
+      "publicationDate": "2026-07-17T17:56:40Z",
+      "region": "eu-west-1",
+      "sha256": "adce1e9c3ed6ffcd671de218648dc5037386b20015df069211c20b191ed1688f",
+      "version": "20260717175640"
+    },
+    {
+      "bytes": 186910,
+      "offerCode": "AmazonMemoryDB",
+      "publicationDate": "2026-07-17T17:56:40Z",
+      "region": "us-east-1",
+      "sha256": "9ea3e90add78da1f9c260c16caecc2ce17e5bb7199956cfd86ca3b53f5240123",
+      "version": "20260717175640"
+    },
+    {
+      "bytes": 186455,
+      "offerCode": "AmazonMemoryDB",
+      "publicationDate": "2026-07-17T17:56:40Z",
+      "region": "us-west-2",
+      "sha256": "4278748300d1c6a95d7b2580f115503157a0e9c57b0326fe2f092ba6e460f577",
+      "version": "20260717175640"
+    },
+    {
+      "bytes": 293050,
+      "offerCode": "AmazonNeptune",
+      "publicationDate": "2026-08-06T22:34:59Z",
+      "region": "eu-central-1",
+      "sha256": "8367a93883e1393bb71dd82a12420c04bb86585fba0fc8cd62270ace49504696",
+      "version": "20260806223459"
+    },
+    {
+      "bytes": 342463,
+      "offerCode": "AmazonNeptune",
+      "publicationDate": "2026-08-06T22:34:59Z",
+      "region": "eu-west-1",
+      "sha256": "8cba7bb6e8716296ba0bf1511cbd310f786d9349c00c155ace979ae37b77bc42",
+      "version": "20260806223459"
+    },
+    {
+      "bytes": 370841,
+      "offerCode": "AmazonNeptune",
+      "publicationDate": "2026-08-06T22:34:59Z",
+      "region": "us-east-1",
+      "sha256": "e112c06b2becd09fb9f31117c33d03c6b8d62ce03b8678a59139364cf833b777",
+      "version": "20260806223459"
+    },
+    {
+      "bytes": 370175,
+      "offerCode": "AmazonNeptune",
+      "publicationDate": "2026-08-06T22:34:59Z",
+      "region": "us-west-2",
+      "sha256": "901c7b0329109a7032018228cfd3175cb89af6c577dffcb845e0ffe7697e6e10",
+      "version": "20260806223459"
+    },
+    {
+      "bytes": 5422,
+      "offerCode": "AmazonPolly",
+      "publicationDate": "2026-05-28T21:07:55Z",
+      "region": "eu-central-1",
+      "sha256": "9c1233500fb9c45f7fc41c616e5878bbe9bb220980ac3462e379ff8589872542",
+      "version": "20260528210755"
+    },
+    {
+      "bytes": 2895,
+      "offerCode": "AmazonPolly",
+      "publicationDate": "2026-05-28T21:07:55Z",
+      "region": "eu-west-1",
+      "sha256": "fc819151aa9a463883e4cb1f92db69fb6f3d628d170ef15c27762a28321dc6aa",
+      "version": "20260528210755"
+    },
+    {
+      "bytes": 6718,
+      "offerCode": "AmazonPolly",
+      "publicationDate": "2026-05-28T21:07:55Z",
+      "region": "us-east-1",
+      "sha256": "f5635f7a2d9ea9a084883780b331103b715f5fa69a68a976e10f0e5b09584777",
+      "version": "20260528210755"
+    },
+    {
+      "bytes": 5418,
+      "offerCode": "AmazonPolly",
+      "publicationDate": "2026-05-28T21:07:55Z",
+      "region": "us-west-2",
+      "sha256": "941ca0215a786e0f1cb804c517a678b41e12ec8cbdb847316bd7639c9cb51964",
+      "version": "20260528210755"
+    },
+    {
+      "bytes": 21625604,
+      "offerCode": "AmazonRDS",
+      "publicationDate": "2026-08-06T02:29:30Z",
+      "region": "eu-central-1",
+      "sha256": "41644efe83bb96059a9dc5f42c7ca464363ce1058326e464975c8d6ecc0eaa90",
+      "version": "20260806022930"
+    },
+    {
+      "bytes": 25251394,
+      "offerCode": "AmazonRDS",
+      "publicationDate": "2026-08-06T02:29:30Z",
+      "region": "eu-west-1",
+      "sha256": "85d27688d908f99196c470bd3589dba8de2f154269f617379709ab41d3b33c7e",
+      "version": "20260806022930"
+    },
+    {
+      "bytes": 26933790,
+      "offerCode": "AmazonRDS",
+      "publicationDate": "2026-08-06T02:29:30Z",
+      "region": "us-east-1",
+      "sha256": "b75873704d3752a52dd0123c49c1e4bfb981d14b0c516a426af591181e6a0642",
+      "version": "20260806022930"
+    },
+    {
+      "bytes": 26922621,
+      "offerCode": "AmazonRDS",
+      "publicationDate": "2026-08-06T02:29:30Z",
+      "region": "us-west-2",
+      "sha256": "47668b1859062a2cddd04f90aeb0a58469f454a5e1621e538145b6beb636b256",
+      "version": "20260806022930"
+    },
+    {
+      "bytes": 122328,
+      "offerCode": "AmazonRedshift",
+      "publicationDate": "2026-07-23T20:45:27Z",
+      "region": "eu-central-1",
+      "sha256": "e06e3ad54dd42055712a10837a594537d56676ae22880afff9fa4bb57a72ae45",
+      "version": "20260723204527"
+    },
+    {
+      "bytes": 127373,
+      "offerCode": "AmazonRedshift",
+      "publicationDate": "2026-07-23T20:45:27Z",
+      "region": "eu-west-1",
+      "sha256": "85d1094bd237b333347894eb5822015afc013a17fe8b58f59c780bc19ff5cc81",
+      "version": "20260723204527"
+    },
+    {
+      "bytes": 127843,
+      "offerCode": "AmazonRedshift",
+      "publicationDate": "2026-07-23T20:45:27Z",
+      "region": "us-east-1",
+      "sha256": "4786866e7a69e2880da01cd74f89354010de075b6f35c8ff9c27659a38795387",
+      "version": "20260723204527"
+    },
+    {
+      "bytes": 127727,
+      "offerCode": "AmazonRedshift",
+      "publicationDate": "2026-07-23T20:45:27Z",
+      "region": "us-west-2",
+      "sha256": "8efbcb53d9842ad9176133072736cbd5318867c33a8e6449c57e18e749f87d96",
+      "version": "20260723204527"
+    },
+    {
+      "bytes": 33338,
+      "offerCode": "AmazonRekognition",
+      "publicationDate": "2026-06-09T16:27:08Z",
+      "region": "eu-central-1",
+      "sha256": "dc27becb54fa12034a12d247188a905980de5adefa3e64eacc24a26a2b676533",
+      "version": "20260609162708"
+    },
+    {
+      "bytes": 36856,
+      "offerCode": "AmazonRekognition",
+      "publicationDate": "2026-06-09T16:27:08Z",
+      "region": "eu-west-1",
+      "sha256": "0dd8a8a84c4157aa5df91021e3fd67a33e24acbc3268fff1766a39bae4e5fcc9",
+      "version": "20260609162708"
+    },
+    {
+      "bytes": 37176,
+      "offerCode": "AmazonRekognition",
+      "publicationDate": "2026-06-09T16:27:08Z",
+      "region": "us-east-1",
+      "sha256": "ed1c21eb57d386d8b4fd15cd7d3603e33d4e012f72b529402074250c10c521bd",
+      "version": "20260609162708"
+    },
+    {
+      "bytes": 34181,
+      "offerCode": "AmazonRekognition",
+      "publicationDate": "2026-06-09T16:27:08Z",
+      "region": "us-west-2",
+      "sha256": "7e583082321b7188bad746e3550bf971b2177b11ab4aaf1b31270eeab2eea08b",
+      "version": "20260609162708"
+    },
+    {
+      "bytes": 12498,
+      "offerCode": "AmazonRoute53",
+      "publicationDate": "2026-05-27T09:24:59Z",
+      "region": "eu-central-1",
+      "sha256": "08af8897b8987591bda7e1db3890edab699ee0a8038cd5e802b0691780225138",
+      "version": "20260527092459"
+    },
+    {
+      "bytes": 12427,
+      "offerCode": "AmazonRoute53",
+      "publicationDate": "2026-05-27T09:24:59Z",
+      "region": "eu-west-1",
+      "sha256": "cfeb58aaf5a448259c6ad97ccfbdb7b5d4592a82abcafab2d87eb2c019f3114f",
+      "version": "20260527092459"
+    },
+    {
+      "bytes": 12554,
+      "offerCode": "AmazonRoute53",
+      "publicationDate": "2026-05-27T09:24:59Z",
+      "region": "us-east-1",
+      "sha256": "a911cf3872297c9500051a776ba8901685717f933bdb06d6e9a77e8c8cbefa2d",
+      "version": "20260527092459"
+    },
+    {
+      "bytes": 12489,
+      "offerCode": "AmazonRoute53",
+      "publicationDate": "2026-05-27T09:24:59Z",
+      "region": "us-west-2",
+      "sha256": "676c5f6335236d92d4633ccc63a6e6fd026db7095847506be0caa90b2b0712f0",
+      "version": "20260527092459"
+    },
+    {
+      "bytes": 519396,
+      "offerCode": "AmazonS3",
+      "publicationDate": "2026-08-07T18:59:15Z",
+      "region": "eu-central-1",
+      "sha256": "2fe34bfd9ef90d2e926715dff05be0931516709ac35f145bc8a6f2eb610f4b60",
+      "version": "20260807185915"
+    },
+    {
+      "bytes": 516206,
+      "offerCode": "AmazonS3",
+      "publicationDate": "2026-08-07T18:59:15Z",
+      "region": "eu-west-1",
+      "sha256": "3273e2a06f32d4d1b80aed4d690fd7f38b095f8aa39a575d496b20a844db9504",
+      "version": "20260807185915"
+    },
+    {
+      "bytes": 473422,
+      "offerCode": "AmazonS3",
+      "publicationDate": "2026-08-07T18:59:15Z",
+      "region": "us-east-1",
+      "sha256": "999bdf24b0621272ff9d3b970b48d4b85332793e3da32908fa89b267949ec235",
+      "version": "20260807185915"
+    },
+    {
+      "bytes": 518073,
+      "offerCode": "AmazonS3",
+      "publicationDate": "2026-08-07T18:59:15Z",
+      "region": "us-west-2",
+      "sha256": "29716ac40adfcac7c967a3b6b967bc60177ce0f9ae692a926667358728d358da",
+      "version": "20260807185915"
+    },
+    {
+      "bytes": 105391,
+      "offerCode": "AmazonSES",
+      "publicationDate": "2026-07-22T17:20:54Z",
+      "region": "eu-central-1",
+      "sha256": "5c43d6af156a960056e32709d143fc5d1e92e41ce96e32362a5f0208a649ba81",
+      "version": "20260722172054"
+    },
+    {
+      "bytes": 104740,
+      "offerCode": "AmazonSES",
+      "publicationDate": "2026-07-22T17:20:54Z",
+      "region": "eu-west-1",
+      "sha256": "ba58d9a1b47a2678171297b4afef29109bdbd377e3ab5263b6ffaa6811492e91",
+      "version": "20260722172054"
+    },
+    {
+      "bytes": 124966,
+      "offerCode": "AmazonSES",
+      "publicationDate": "2026-07-22T17:20:54Z",
+      "region": "us-east-1",
+      "sha256": "9a306fdaeee4e7b767c502ed54b049f4b4208f1679b05cc2c32cac36e959d6ff",
+      "version": "20260722172054"
+    },
+    {
+      "bytes": 105501,
+      "offerCode": "AmazonSES",
+      "publicationDate": "2026-07-22T17:20:54Z",
+      "region": "us-west-2",
+      "sha256": "845874e2047991f6e809b5db3b97a25860741ae975b8a13a53474405ca9d912b",
+      "version": "20260722172054"
+    },
+    {
+      "bytes": 51903,
+      "offerCode": "AmazonSNS",
+      "publicationDate": "2026-02-11T00:02:29Z",
+      "region": "eu-central-1",
+      "sha256": "c0ca1e643c52a72be0163874aff1f389ff67720df8c75f56ba7659a774c243e9",
+      "version": "20260211000229"
+    },
+    {
+      "bytes": 51651,
+      "offerCode": "AmazonSNS",
+      "publicationDate": "2026-02-11T00:02:29Z",
+      "region": "eu-west-1",
+      "sha256": "f1232e8f24185205beff68f73857cb67afa8a9862739cf699f36aff887b3ca96",
+      "version": "20260211000229"
+    },
+    {
+      "bytes": 51968,
+      "offerCode": "AmazonSNS",
+      "publicationDate": "2026-02-11T00:02:29Z",
+      "region": "us-east-1",
+      "sha256": "b73dfa6f4a333ac5ba5a52b202a4bda73328ad402c2a8a1c7982c021f332bc5e",
+      "version": "20260211000229"
+    },
+    {
+      "bytes": 51883,
+      "offerCode": "AmazonSNS",
+      "publicationDate": "2026-02-11T00:02:29Z",
+      "region": "us-west-2",
+      "sha256": "2a18d1c8bd6855872213e5cd04af10133ba22ccc1aed39c94615f289197edb9c",
+      "version": "20260211000229"
+    },
+    {
+      "bytes": 3310499,
+      "offerCode": "AmazonSageMaker",
+      "publicationDate": "2026-08-10T18:46:44Z",
+      "region": "eu-central-1",
+      "sha256": "5222ed237cabbb38215c14011eb29726200ef444140bff1897e44b5c6d4040cc",
+      "version": "20260810184644"
+    },
+    {
+      "bytes": 3624841,
+      "offerCode": "AmazonSageMaker",
+      "publicationDate": "2026-08-10T18:46:44Z",
+      "region": "eu-west-1",
+      "sha256": "23246d1cbaf4b3b8ba1410bdb309d8f1eb9c80594c319709855f78cf4eef5972",
+      "version": "20260810184644"
+    },
+    {
+      "bytes": 4402082,
+      "offerCode": "AmazonSageMaker",
+      "publicationDate": "2026-08-10T18:46:44Z",
+      "region": "us-east-1",
+      "sha256": "4ea1a5883ec83c52c0a013b39e8ed7ed18c46fa4c86a66cdd3d1df52e8e75ae6",
+      "version": "20260810184644"
+    },
+    {
+      "bytes": 4313229,
+      "offerCode": "AmazonSageMaker",
+      "publicationDate": "2026-08-10T18:46:44Z",
+      "region": "us-west-2",
+      "sha256": "bab0471b5356fea9bc5d23828f2a7214a93c319a7409cfcad8f7e838a94984ef",
+      "version": "20260810184644"
+    },
+    {
+      "bytes": 7384,
+      "offerCode": "AmazonStates",
+      "publicationDate": "2025-08-28T15:39:04Z",
+      "region": "eu-central-1",
+      "sha256": "8e950ccaefc76f29027b92e0277f32fde2ddbef78ac3c64c2c7967e6c0092184",
+      "version": "20250828153904"
+    },
+    {
+      "bytes": 7363,
+      "offerCode": "AmazonStates",
+      "publicationDate": "2025-08-28T15:39:04Z",
+      "region": "eu-west-1",
+      "sha256": "efa2154025c08db50ff811d7155a6482dd1ee05617a2d990401310f6a7ca397b",
+      "version": "20250828153904"
+    },
+    {
+      "bytes": 7396,
+      "offerCode": "AmazonStates",
+      "publicationDate": "2025-08-28T15:39:04Z",
+      "region": "us-east-1",
+      "sha256": "084cfd2a03239cb3a2d03044e80946d64ddb91ecb3ba6432d6a753f672d8a588",
+      "version": "20250828153904"
+    },
+    {
+      "bytes": 7381,
+      "offerCode": "AmazonStates",
+      "publicationDate": "2025-08-28T15:39:04Z",
+      "region": "us-west-2",
+      "sha256": "c5b4bc945884098ca691481acb53aff346fc83db041368429e3d7a916a5c89ac",
+      "version": "20250828153904"
+    },
+    {
+      "bytes": 60082,
+      "offerCode": "AmazonTextract",
+      "publicationDate": "2024-10-29T16:40:50Z",
+      "region": "eu-central-1",
+      "sha256": "fedcd2df0934644dc1c226e022c73a5b4ed43faf8a10981d2f1aa73d7de1238c",
+      "version": "20241029164050"
+    },
+    {
+      "bytes": 59776,
+      "offerCode": "AmazonTextract",
+      "publicationDate": "2024-10-29T16:40:50Z",
+      "region": "eu-west-1",
+      "sha256": "2b34219a75c82ba3f3c5d4358b17b2a6348e5910bf4622be212ed68ed591350d",
+      "version": "20241029164050"
+    },
+    {
+      "bytes": 60484,
+      "offerCode": "AmazonTextract",
+      "publicationDate": "2024-10-29T16:40:50Z",
+      "region": "us-east-1",
+      "sha256": "0eaf9f066a0004b0c68c88d19bd2d8d99180a2c8682a495bf23a7bdcf88faf2c",
+      "version": "20241029164050"
+    },
+    {
+      "bytes": 60124,
+      "offerCode": "AmazonTextract",
+      "publicationDate": "2024-10-29T16:40:50Z",
+      "region": "us-west-2",
+      "sha256": "3cc98706324be679d202a6ff8f004902319c5605784e58a4d531dd72e4cb5bd7",
+      "version": "20241029164050"
+    },
+    {
+      "bytes": 76382,
+      "offerCode": "AmazonVPC",
+      "publicationDate": "2026-07-24T15:42:25Z",
+      "region": "eu-central-1",
+      "sha256": "41ba036c40bd552367f7cdfcda8e317cdb9607b493b16fe2cb18d9c5b3688fdb",
+      "version": "20260724154225"
+    },
+    {
+      "bytes": 75907,
+      "offerCode": "AmazonVPC",
+      "publicationDate": "2026-07-24T15:42:25Z",
+      "region": "eu-west-1",
+      "sha256": "9a0fe18a9f0d0d823ad3dabbd4676ecc2ab8bcacdf0bde620f2243fc0fbde40f",
+      "version": "20260724154225"
+    },
+    {
+      "bytes": 76769,
+      "offerCode": "AmazonVPC",
+      "publicationDate": "2026-07-24T15:42:25Z",
+      "region": "us-east-1",
+      "sha256": "a029ae364dcb575dc189d8fdf5e2eb13fc4a806a41a349c93856047d13ae67bf",
+      "version": "20260724154225"
+    },
+    {
+      "bytes": 76339,
+      "offerCode": "AmazonVPC",
+      "publicationDate": "2026-07-24T15:42:25Z",
+      "region": "us-west-2",
+      "sha256": "17f54df51ef784466d76b8458c027cee4cb9e9589d7fff81331dff5aac085879",
+      "version": "20260724154225"
+    },
+    {
+      "bytes": 10069,
+      "offerCode": "awskms",
+      "publicationDate": "2025-08-28T15:39:13Z",
+      "region": "eu-central-1",
+      "sha256": "ebbaf4e10470b1290d47e323d00c8abfbdb8034c3e4f0d4a76028a1438ea4ba9",
+      "version": "20250828153913"
+    },
+    {
+      "bytes": 10009,
+      "offerCode": "awskms",
+      "publicationDate": "2025-08-28T15:39:13Z",
+      "region": "eu-west-1",
+      "sha256": "4bf0a0a69120fe2d3fd1f5a25aedc7f0f79b9a95d69822f9b611da89ecfe48d7",
+      "version": "20250828153913"
+    },
+    {
+      "bytes": 10116,
+      "offerCode": "awskms",
+      "publicationDate": "2025-08-28T15:39:13Z",
+      "region": "us-east-1",
+      "sha256": "4a51a0e9b42704058683dbd183fe319fb89d2537e1ff388954a1f549ebf91d4b",
+      "version": "20250828153913"
+    },
+    {
+      "bytes": 10057,
+      "offerCode": "awskms",
+      "publicationDate": "2025-08-28T15:39:13Z",
+      "region": "us-west-2",
+      "sha256": "6180313f6ed45aff0bf32921ce96dd18d917c5b48376103773455e1aa478f905",
+      "version": "20250828153913"
+    },
+    {
+      "bytes": 78077,
+      "offerCode": "awswaf",
+      "publicationDate": "2026-01-07T21:34:53Z",
+      "region": "eu-central-1",
+      "sha256": "df986817591864f2c56c84cf6f9507135ee36cc5fcd4335af3a9db32abea21b1",
+      "version": "20260107213453"
+    },
+    {
+      "bytes": 77680,
+      "offerCode": "awswaf",
+      "publicationDate": "2026-01-07T21:34:53Z",
+      "region": "eu-west-1",
+      "sha256": "2b5c3d76d2c09fc78c1b3d9476fae61bfa74ae74e1430677122d7751ddb634c2",
+      "version": "20260107213453"
+    },
+    {
+      "bytes": 78380,
+      "offerCode": "awswaf",
+      "publicationDate": "2026-01-07T21:34:53Z",
+      "region": "us-east-1",
+      "sha256": "5ff916c02a748a3108459a1fbccf41d1f5cde02ec6e1ab04324adba2b0e87f0e",
+      "version": "20260107213453"
+    },
+    {
+      "bytes": 78050,
+      "offerCode": "awswaf",
+      "publicationDate": "2026-01-07T21:34:53Z",
+      "region": "us-west-2",
+      "sha256": "632d96495232888f9e30add989d01d8e8516d21779de45058ed9c1ab9598b28d",
+      "version": "20260107213453"
+    },
+    {
+      "bytes": 37636,
+      "offerCode": "comprehend",
+      "publicationDate": "2026-01-16T16:02:58Z",
+      "region": "eu-central-1",
+      "sha256": "2ac33848736331595da2745b13ea0e66f2f3cb3d14d9607a902dfa24c51438c1",
+      "version": "20260116160258"
+    },
+    {
+      "bytes": 42846,
+      "offerCode": "comprehend",
+      "publicationDate": "2026-01-16T16:02:58Z",
+      "region": "eu-west-1",
+      "sha256": "8b7f63caeb0794f872ee4e7ac6324eed3d0b94f0ea88644e74187bc1221d53d9",
+      "version": "20260116160258"
+    },
+    {
+      "bytes": 43303,
+      "offerCode": "comprehend",
+      "publicationDate": "2026-01-16T16:02:58Z",
+      "region": "us-east-1",
+      "sha256": "7c94a28e2900b393ef625eb96eb0bf291a171f9f22a09f0da9f45575f0fdc940",
+      "version": "20260116160258"
+    },
+    {
+      "bytes": 43078,
+      "offerCode": "comprehend",
+      "publicationDate": "2026-01-16T16:02:58Z",
+      "region": "us-west-2",
+      "sha256": "c9f02a3be86c7727a70a4cc5a5ec91843d8da90505ea7b61963b5176f8408db1",
+      "version": "20260116160258"
+    },
+    {
+      "bytes": 19090,
+      "offerCode": "transcribe",
+      "publicationDate": "2026-06-17T21:59:34Z",
+      "region": "eu-central-1",
+      "sha256": "2d37ee86ec05410b75407bb149141bfe6c10adea7e7e521d64a3c8b8b40ed459",
+      "version": "20260617215934"
+    },
+    {
+      "bytes": 19417,
+      "offerCode": "transcribe",
+      "publicationDate": "2026-06-17T21:59:34Z",
+      "region": "eu-west-1",
+      "sha256": "b3b1e1b24bb811131d0468361823c6dd3409a38e251fa3abcdede536e1871a4a",
+      "version": "20260617215934"
+    },
+    {
+      "bytes": 29354,
+      "offerCode": "transcribe",
+      "publicationDate": "2026-06-17T21:59:34Z",
+      "region": "us-east-1",
+      "sha256": "c8383fce6b09a86018f329e2b054fd0e5bf34017cc63935d9f8e495da2d87039",
+      "version": "20260617215934"
+    },
+    {
+      "bytes": 27857,
+      "offerCode": "transcribe",
+      "publicationDate": "2026-06-17T21:59:34Z",
+      "region": "us-west-2",
+      "sha256": "4abe4c5885c6b2923c05f7b1a4cfec491eab2c8a3691b2b99a278de399da9566",
+      "version": "20260617215934"
+    },
+    {
+      "bytes": 5648,
+      "offerCode": "translate",
+      "publicationDate": "2023-07-20T00:55:17Z",
+      "region": "eu-central-1",
+      "sha256": "3346243aa88e518dd2a0e0f2a30bc4243ba306173c720a9c49aacd7250b233cc",
+      "version": "20230720005517"
+    },
+    {
+      "bytes": 6876,
+      "offerCode": "translate",
+      "publicationDate": "2023-07-20T00:55:17Z",
+      "region": "eu-west-1",
+      "sha256": "e9c87f099bfad83797404c8371d32e11c43c656889db9124e86bc45aaf3da8ab",
+      "version": "20230720005517"
+    },
+    {
+      "bytes": 6976,
+      "offerCode": "translate",
+      "publicationDate": "2023-07-20T00:55:17Z",
+      "region": "us-east-1",
+      "sha256": "9f2986e0db77a33bce4f5522335e15dac222b3b33d6961d64c170f73f7627e4f",
+      "version": "20230720005517"
+    },
+    {
+      "bytes": 6926,
+      "offerCode": "translate",
+      "publicationDate": "2023-07-20T00:55:17Z",
+      "region": "us-west-2",
+      "sha256": "19125598ff853b8d6505bcf363ead9eefe488180305041d323aa44532552fb9d",
+      "version": "20230720005517"
+    }
+  ]
+}

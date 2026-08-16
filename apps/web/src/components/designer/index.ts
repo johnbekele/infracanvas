@@ -9,3 +9,4 @@ export { PropertiesPanel } from './PropertiesPanel';
 export { CodePanel } from './CodePanel';
 export { DesignerToolbar } from './DesignerToolbar';
 export { DeletableEdge } from './DeletableEdge';
+export { EstimatePanel } from './estimate/EstimatePanel';

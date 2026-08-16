@@ -1,5 +1,5 @@
 {
-  "irVersion": "1.0.0",
+  "irVersion": "1.1.0",
   "name": "Minimal",
   "provider": "aws",
   "region": "eu-west-1",
@@ -8,7 +8,9 @@
       "id": "vpc-main",
       "kind": "vpc",
       "name": "Main VPC",
-      "params": { "cidrBlock": "10.0.0.0/16" }
+      "params": {
+        "cidrBlock": "10.0.0.0/16"
+      }
     }
   ],
   "edges": []
