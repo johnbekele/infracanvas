@@ -39,6 +39,14 @@ class ResourceKind(
             "cognito_user_pool",
             "cloudwatch_log_group",
             "secretsmanager_secret",
+            "sagemaker_endpoint",
+            "amazon_mq_broker",
+            "eventbridge_rule",
+            "kinesis_stream",
+            "msk_cluster",
+            "ses_identity",
+            "step_functions_state_machine",
+            "textract_processor",
         ]
     ]
 ):
@@ -67,6 +75,14 @@ class ResourceKind(
         "cognito_user_pool",
         "cloudwatch_log_group",
         "secretsmanager_secret",
+        "sagemaker_endpoint",
+        "amazon_mq_broker",
+        "eventbridge_rule",
+        "kinesis_stream",
+        "msk_cluster",
+        "ses_identity",
+        "step_functions_state_machine",
+        "textract_processor",
     ]
 
 
@@ -191,6 +207,14 @@ class PendingContractNode(NodeBase):
             "cognito_user_pool",
             "cloudwatch_log_group",
             "secretsmanager_secret",
+            "sagemaker_endpoint",
+            "amazon_mq_broker",
+            "eventbridge_rule",
+            "kinesis_stream",
+            "msk_cluster",
+            "ses_identity",
+            "step_functions_state_machine",
+            "textract_processor",
         ],
         Field(
             description="Kinds whose parameters are not typed yet, awaiting a resource contract."

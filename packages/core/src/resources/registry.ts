@@ -15,13 +15,22 @@ import type { ResourceContract } from './contract';
 const contracts = new Map<ResourceKind, ResourceContract<ResourceKind>>();
 
 /**
- * Throws on a duplicate rather than replacing. Two contracts for one kind means
- * whichever module imported last decides what a database costs, and that is a
- * bug worth failing at startup for rather than discovering in a price.
+ * Throws on a conflict rather than replacing. Two *different* contracts for one
+ * kind means whichever module imported last decides what a database costs, and
+ * that is a bug worth failing at startup for rather than discovering in a price.
+ *
+ * Registering the same contract again is not that bug, and is a no-op. Several
+ * independent entry points populate the registry before use - the preview
+ * plane, the internal preview route, the browser's estimate - and each has to
+ * assume it might be first. Making the second call fatal would mean the process
+ * survived or died on which of them was imported, which is exactly the kind of
+ * order dependence this module exists to avoid.
  */
 export function registerResource<K extends ResourceKind>(contract: ResourceContract<K>): void {
-  if (contracts.has(contract.kind)) {
-    throw new Error(`A resource contract for ${contract.kind} is already registered.`);
+  const existing = contracts.get(contract.kind);
+  if (existing === (contract as unknown as ResourceContract<ResourceKind>)) return;
+  if (existing !== undefined) {
+    throw new Error(`A different resource contract for ${contract.kind} is already registered.`);
   }
   contracts.set(contract.kind, contract as unknown as ResourceContract<ResourceKind>);
 }

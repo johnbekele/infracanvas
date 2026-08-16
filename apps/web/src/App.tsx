@@ -29,6 +29,14 @@ const SettingsPage = lazy(() =>
   import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage }))
 );
 
+/**
+ * The dashboard pulls in all four prediction models and the chart components,
+ * and it is reached from the canvas rather than from a cold start.
+ */
+const SimulationPage = lazy(() =>
+  import('@/pages/SimulationPage').then((module) => ({ default: module.SimulationPage }))
+);
+
 function Loading({ what }: { what: string }) {
   return (
     <div className="flex h-screen items-center justify-center text-sm text-gray-500">
@@ -65,6 +73,14 @@ function App() {
           element={
             <Suspense fallback={<Loading what="the designer" />}>
               <DesignerPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/simulation"
+          element={
+            <Suspense fallback={<Loading what="the simulation" />}>
+              <SimulationPage />
             </Suspense>
           }
         />

@@ -184,7 +184,9 @@ export function emitTerraform(node: EmitNode, options: EmitOptions = {}): string
     lines.push(`  ${reference}`);
   }
 
-  lines.push(`  tags = ${options.tags ?? 'local.common_tags'}`);
+  if (service.iac.taggable !== false) {
+    lines.push(`  tags = ${options.tags ?? 'local.common_tags'}`);
+  }
 
   return [`resource "${service.iac.terraformResource}" "${name}" {`, ...lines, '}', ''].join('\n');
 }
@@ -203,31 +205,25 @@ export function emitPulumi(
   const args = argumentsFor(service, node, target);
   const tags = options.tags ?? 'tags';
 
+  const taggable = service.iac.taggable !== false;
+
   if (language === 'python') {
     const lines = args.map((argument) => `    ${argument.name}=${pythonValue(argument.value)},`);
     for (const reference of parentArguments(service, options, target)) {
       lines.push(`    ${reference.replace(' = ', '=')},`);
     }
+    if (taggable) lines.push(`    tags={**${tags}, "Name": "${name}"},`);
 
-    return [
-      `${name} = ${service.iac.pulumiClass}("${name}",`,
-      ...lines,
-      `    tags={**${tags}, "Name": "${name}"},`,
-      ')',
-      '',
-    ].join('\n');
+    return [`${name} = ${service.iac.pulumiClass}("${name}",`, ...lines, ')', ''].join('\n');
   }
 
   const lines = args.map((argument) => `  ${argument.name}: ${JSON.stringify(argument.value)},`);
   for (const reference of parentArguments(service, options, target)) {
     lines.push(`  ${reference.replace(' = ', ': ')},`);
   }
+  if (taggable) lines.push(`  tags: { ...${tags}, Name: "${name}" },`);
 
-  return [
-    `const ${name} = new ${service.iac.pulumiClass}("${name}", {`,
-    ...lines,
-    `  tags: { ...${tags}, Name: "${name}" },`,
-    '});',
-    '',
-  ].join('\n');
+  return [`const ${name} = new ${service.iac.pulumiClass}("${name}", {`, ...lines, '});', ''].join(
+    '\n'
+  );
 }

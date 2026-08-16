@@ -40,6 +40,17 @@ export interface AnalyzeInput {
   owner: string;
   repo: string;
   ref: string;
+  /**
+   * Called as the analysis advances, with a fraction from 0 to 1.
+   *
+   * Reported rather than inferred from elapsed time: the fetch phase dominates
+   * and its length depends on how many manifests the repository has, so a clock
+   * would be guessing at exactly the point a user most wants to know whether
+   * anything is happening.
+   */
+  onProgress?: (fraction: number, message: string) => void | Promise<void>;
+  /** Abort a run whose result nobody is waiting for any more. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -98,7 +109,8 @@ function isComposeFile(name: string): boolean {
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
-  task: (item: T) => Promise<R>
+  task: (item: T) => Promise<R>,
+  onSettled?: () => void
 ): Promise<R[]> {
   const results: R[] = new Array<R>(items.length);
   let next = 0;
@@ -107,6 +119,7 @@ async function mapWithConcurrency<T, R>(
     while (next < items.length) {
       const index = next++;
       results[index] = await task(items[index]);
+      onSettled?.();
     }
   });
 
@@ -248,17 +261,52 @@ function pickName(names: string[], path: string, repo: string): string {
   return names[0] ?? (path === '.' ? repo : fileName(path));
 }
 
-export async function analyzeRepository(input: AnalyzeInput): Promise<AppProfile> {
-  const { token, owner, repo, ref } = input;
+/**
+ * How far through the run each phase is considered to be.
+ *
+ * Fetching file contents is the only phase whose length varies with the
+ * repository, so it gets the widest band and reports inside itself. The rest are
+ * fixed points, which is honest: they either happened or they did not.
+ */
+const PHASE = {
+  resolved: 0.05,
+  listed: 0.1,
+  fetchStart: 0.15,
+  fetchEnd: 0.85,
+  built: 0.95,
+} as const;
 
-  const commitSha = await resolveCommit({ token, owner, repo, ref });
+export async function analyzeRepository(input: AnalyzeInput): Promise<AppProfile> {
+  const { token, owner, repo, ref, signal } = input;
+
+  // Reporting must never be the reason an analysis fails, and a caller that is
+  // not watching should not pay for a progress channel it never reads.
+  const report = async (fraction: number, message: string) => {
+    if (!input.onProgress) return;
+    await input.onProgress(fraction, message);
+  };
+
+  const stopIfAbandoned = () => {
+    if (signal?.aborted) throw new Error('Analysis was cancelled.');
+  };
+
+  const commitSha = await resolveCommit({ token, owner, repo, ref, signal });
+  await report(PHASE.resolved, `Resolved ${ref} to ${commitSha.slice(0, 7)}.`);
+  stopIfAbandoned();
 
   const [tree, languages] = await Promise.all([
-    fetchTree({ token, owner, repo, commitSha }),
-    fetchLanguages({ token, owner, repo }),
+    fetchTree({ token, owner, repo, commitSha, signal }),
+    fetchLanguages({ token, owner, repo, signal }),
   ]);
 
   const { manifests, dockerfiles, composeFiles, notes } = selectCandidates(tree.entries);
+
+  const fileCount = manifests.length + dockerfiles.length + composeFiles.length;
+  await report(
+    PHASE.listed,
+    `Listed ${tree.entries.length} files; ${fileCount} describe how this repository is built.`
+  );
+  stopIfAbandoned();
 
   if (tree.truncated) {
     notes.push(
@@ -266,14 +314,38 @@ export async function analyzeRepository(input: AnalyzeInput): Promise<AppProfile
     );
   }
 
-  const fetchText = (candidate: CandidateFile) =>
-    fetchBlobText({ token, owner, repo, sha: candidate.entry.sha });
+  const fetchText = (candidate: CandidateFile) => {
+    stopIfAbandoned();
+    return fetchBlobText({ token, owner, repo, sha: candidate.entry.sha, signal });
+  };
+
+  // Reported from a shared counter rather than per phase, because the three
+  // phases run concurrently and a user watching wants one number, not three that
+  // each restart at zero.
+  let fetched = 0;
+  const span = PHASE.fetchEnd - PHASE.fetchStart;
+  const countFetch = () => {
+    fetched += 1;
+    // One line per file would write 170 rows for a large monorepo to say the same
+    // thing 170 times. A tenth of the way through is the granularity a progress
+    // bar can actually show.
+    const step = Math.max(1, Math.ceil(fileCount / 10));
+    if (fetched % step !== 0 && fetched !== fileCount) return;
+
+    // Awaiting a database write here would serialise the fetches it is measuring.
+    void report(
+      PHASE.fetchStart + (fileCount === 0 ? span : (fetched / fileCount) * span),
+      `Read ${fetched} of ${fileCount} files.`
+    );
+  };
 
   const [manifestTexts, dockerfileTexts, composeTexts] = await Promise.all([
-    mapWithConcurrency(manifests, FETCH_CONCURRENCY, fetchText),
-    mapWithConcurrency(dockerfiles, FETCH_CONCURRENCY, fetchText),
-    mapWithConcurrency(composeFiles, FETCH_CONCURRENCY, fetchText),
+    mapWithConcurrency(manifests, FETCH_CONCURRENCY, fetchText, countFetch),
+    mapWithConcurrency(dockerfiles, FETCH_CONCURRENCY, fetchText, countFetch),
+    mapWithConcurrency(composeFiles, FETCH_CONCURRENCY, fetchText, countFetch),
   ]);
+
+  stopIfAbandoned();
 
   // One draft per directory. Two manifests side by side -- a `pyproject.toml`
   // for the service and a `package.json` for the assets it serves -- describe
@@ -425,6 +497,11 @@ export async function analyzeRepository(input: AnalyzeInput): Promise<AppProfile
   }
 
   const blobs = tree.entries.filter((entry) => entry.type === 'blob');
+
+  await report(
+    PHASE.built,
+    `Found ${components.length} component(s) and ${dependencies.length} notable dependency(s).`
+  );
 
   return {
     schemaVersion: PROFILE_SCHEMA_VERSION,

@@ -1,31 +1,61 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://infracanvas.dev/schema/architecture-ir/1.1.0.json",
+  "$id": "https://infracanvas.dev/schema/architecture-ir/1.2.0.json",
   "title": "ArchitectureIr",
   "type": "object",
   "additionalProperties": false,
   "required": ["irVersion", "name", "provider", "region", "nodes", "edges"],
   "properties": {
-    "irVersion": { "type": "string", "pattern": "^1\\.\\d+\\.\\d+$" },
-    "name": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "provider": { "const": "aws" },
-    "region": { "type": "string", "pattern": "^[a-z]{2}(-gov)?-[a-z]+-[0-9]$" },
+    "irVersion": {
+      "type": "string",
+      "pattern": "^1\\.\\d+\\.\\d+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "provider": {
+      "const": "aws"
+    },
+    "region": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-gov)?-[a-z]+-[0-9]$"
+    },
     "nodes": {
       "type": "array",
       "items": {
         "oneOf": [
-          { "$ref": "#/$defs/vpcNode" },
-          { "$ref": "#/$defs/subnetNode" },
-          { "$ref": "#/$defs/rdsInstanceNode" },
-          { "$ref": "#/$defs/pendingContractNode" }
+          {
+            "$ref": "#/$defs/vpcNode"
+          },
+          {
+            "$ref": "#/$defs/subnetNode"
+          },
+          {
+            "$ref": "#/$defs/rdsInstanceNode"
+          },
+          {
+            "$ref": "#/$defs/pendingContractNode"
+          }
         ]
       }
     },
-    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
-    "presentation": { "$ref": "#/$defs/presentation" }
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "presentation": {
+      "$ref": "#/$defs/presentation"
+    }
   },
   "$defs": {
-    "resourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+    "resourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
     "resourceKind": {
       "enum": [
         "vpc",
@@ -51,7 +81,15 @@
         "iam_role",
         "cognito_user_pool",
         "cloudwatch_log_group",
-        "secretsmanager_secret"
+        "secretsmanager_secret",
+        "sagemaker_endpoint",
+        "amazon_mq_broker",
+        "eventbridge_rule",
+        "kinesis_stream",
+        "msk_cluster",
+        "ses_identity",
+        "step_functions_state_machine",
+        "textract_processor"
       ]
     },
     "pendingContractKind": {
@@ -77,7 +115,15 @@
         "iam_role",
         "cognito_user_pool",
         "cloudwatch_log_group",
-        "secretsmanager_secret"
+        "secretsmanager_secret",
+        "sagemaker_endpoint",
+        "amazon_mq_broker",
+        "eventbridge_rule",
+        "kinesis_stream",
+        "msk_cluster",
+        "ses_identity",
+        "step_functions_state_machine",
+        "textract_processor"
       ]
     },
     "layout": {
@@ -85,20 +131,47 @@
       "additionalProperties": false,
       "required": ["x", "y"],
       "properties": {
-        "x": { "type": "integer" },
-        "y": { "type": "integer" },
-        "width": { "type": "integer", "minimum": 1 },
-        "height": { "type": "integer", "minimum": 1 }
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "nodeBase": {
       "type": "object",
       "required": ["id", "name"],
       "properties": {
-        "id": { "$ref": "#/$defs/resourceId" },
-        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "parent": { "oneOf": [{ "$ref": "#/$defs/resourceId" }, { "type": "null" }] },
-        "layout": { "$ref": "#/$defs/layout" }
+        "id": {
+          "$ref": "#/$defs/resourceId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "parent": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/resourceId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "layout": {
+          "$ref": "#/$defs/layout"
+        }
       }
     },
     "vpcParams": {
@@ -106,98 +179,203 @@
       "additionalProperties": false,
       "required": ["cidrBlock"],
       "properties": {
-        "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
-        "enableDnsHostnames": { "type": "boolean", "default": true },
-        "enableDnsSupport": { "type": "boolean", "default": true }
+        "cidrBlock": {
+          "type": "string",
+          "format": "ipv4-cidr"
+        },
+        "enableDnsHostnames": {
+          "type": "boolean",
+          "default": true
+        },
+        "enableDnsSupport": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "vpcNode": {
       "type": "object",
-      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/nodeBase"
+        }
+      ],
       "unevaluatedProperties": false,
       "required": ["kind", "params"],
       "properties": {
-        "kind": { "const": "vpc" },
-        "params": { "$ref": "#/$defs/vpcParams" }
+        "kind": {
+          "const": "vpc"
+        },
+        "params": {
+          "$ref": "#/$defs/vpcParams"
+        }
       }
     },
-    "subnetTier": { "enum": ["public", "private"] },
+    "subnetTier": {
+      "enum": ["public", "private"]
+    },
     "subnetParams": {
       "type": "object",
       "additionalProperties": false,
       "required": ["tier", "cidrBlock", "availabilityZone"],
       "properties": {
-        "tier": { "$ref": "#/$defs/subnetTier" },
-        "cidrBlock": { "type": "string", "format": "ipv4-cidr" },
-        "availabilityZone": { "type": "string", "minLength": 1 }
+        "tier": {
+          "$ref": "#/$defs/subnetTier"
+        },
+        "cidrBlock": {
+          "type": "string",
+          "format": "ipv4-cidr"
+        },
+        "availabilityZone": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "subnetNode": {
       "type": "object",
-      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/nodeBase"
+        }
+      ],
       "unevaluatedProperties": false,
       "required": ["kind", "params"],
       "properties": {
-        "kind": { "const": "subnet" },
-        "params": { "$ref": "#/$defs/subnetParams" }
+        "kind": {
+          "const": "subnet"
+        },
+        "params": {
+          "$ref": "#/$defs/subnetParams"
+        }
       }
     },
-    "rdsEngine": { "enum": ["postgres", "mysql", "mariadb"] },
+    "rdsEngine": {
+      "enum": ["postgres", "mysql", "mariadb"]
+    },
     "rdsInstanceParams": {
       "type": "object",
       "additionalProperties": false,
       "required": ["engine", "instanceClass", "allocatedStorageGb"],
       "properties": {
-        "engine": { "$ref": "#/$defs/rdsEngine" },
-        "engineVersion": { "type": "string", "minLength": 1, "maxLength": 32 },
-        "instanceClass": { "type": "string", "pattern": "^db\\.[a-z0-9]+\\.[a-z0-9]+$" },
-        "allocatedStorageGb": { "type": "integer", "minimum": 20, "maximum": 65536 },
-        "storageType": { "enum": ["gp2", "gp3", "io1", "io2"], "default": "gp3" },
-        "multiAz": { "type": "boolean", "default": false },
-        "publiclyAccessible": { "type": "boolean", "default": false },
-        "deletionProtection": { "type": "boolean", "default": false },
-        "backupRetentionDays": { "type": "integer", "minimum": 0, "maximum": 35, "default": 7 },
-        "storageEncrypted": { "type": "boolean", "default": true }
+        "engine": {
+          "$ref": "#/$defs/rdsEngine"
+        },
+        "engineVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "instanceClass": {
+          "type": "string",
+          "pattern": "^db\\.[a-z0-9]+\\.[a-z0-9]+$"
+        },
+        "allocatedStorageGb": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 65536
+        },
+        "storageType": {
+          "enum": ["gp2", "gp3", "io1", "io2"],
+          "default": "gp3"
+        },
+        "multiAz": {
+          "type": "boolean",
+          "default": false
+        },
+        "publiclyAccessible": {
+          "type": "boolean",
+          "default": false
+        },
+        "deletionProtection": {
+          "type": "boolean",
+          "default": false
+        },
+        "backupRetentionDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 35,
+          "default": 7
+        },
+        "storageEncrypted": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "rdsInstanceNode": {
       "type": "object",
-      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/nodeBase"
+        }
+      ],
       "unevaluatedProperties": false,
       "required": ["kind", "params"],
       "properties": {
-        "kind": { "const": "rds_instance" },
-        "params": { "$ref": "#/$defs/rdsInstanceParams" }
+        "kind": {
+          "const": "rds_instance"
+        },
+        "params": {
+          "$ref": "#/$defs/rdsInstanceParams"
+        }
       }
     },
     "pendingParams": {
       "description": "An untyped parameter bag, replaced by typed parameters when the kind gains a contract.",
       "type": "object",
-      "additionalProperties": { "type": ["string", "number", "boolean"] }
+      "additionalProperties": {
+        "type": ["string", "number", "boolean"]
+      }
     },
     "pendingContractNode": {
       "type": "object",
-      "allOf": [{ "$ref": "#/$defs/nodeBase" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/nodeBase"
+        }
+      ],
       "unevaluatedProperties": false,
       "required": ["kind", "params"],
       "properties": {
-        "kind": { "$ref": "#/$defs/pendingContractKind" },
-        "params": { "$ref": "#/$defs/pendingParams" }
+        "kind": {
+          "$ref": "#/$defs/pendingContractKind"
+        },
+        "params": {
+          "$ref": "#/$defs/pendingParams"
+        }
       }
     },
-    "edgeKind": { "enum": ["connects", "depends_on", "routes_to"] },
+    "edgeKind": {
+      "enum": ["connects", "depends_on", "routes_to"]
+    },
     "edge": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "kind", "source", "target"],
       "properties": {
-        "id": { "$ref": "#/$defs/resourceId" },
-        "kind": { "$ref": "#/$defs/edgeKind" },
-        "source": { "$ref": "#/$defs/resourceId" },
-        "target": { "$ref": "#/$defs/resourceId" },
-        "label": { "type": "string", "maxLength": 64 },
-        "sourceHandle": { "type": "string" },
-        "targetHandle": { "type": "string" }
+        "id": {
+          "$ref": "#/$defs/resourceId"
+        },
+        "kind": {
+          "$ref": "#/$defs/edgeKind"
+        },
+        "source": {
+          "$ref": "#/$defs/resourceId"
+        },
+        "target": {
+          "$ref": "#/$defs/resourceId"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "sourceHandle": {
+          "type": "string"
+        },
+        "targetHandle": {
+          "type": "string"
+        }
       }
     },
     "viewport": {
@@ -205,16 +383,25 @@
       "additionalProperties": false,
       "required": ["x", "y", "zoom"],
       "properties": {
-        "x": { "type": "number" },
-        "y": { "type": "number" },
-        "zoom": { "type": "number", "exclusiveMinimum": 0 }
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "zoom": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
       }
     },
     "presentation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "viewport": { "$ref": "#/$defs/viewport" }
+        "viewport": {
+          "$ref": "#/$defs/viewport"
+        }
       }
     }
   }

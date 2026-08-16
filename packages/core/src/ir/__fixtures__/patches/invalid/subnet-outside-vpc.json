@@ -1,0 +1,10 @@
+{
+  "document": "three-tier",
+  "summary": "Move a subnet inside the API service",
+  "ops": [{ "op": "move_node", "nodeId": "subnet-public-a", "parent": "ecs-api" }],
+  "expect": {
+    "opIndex": -1,
+    "source": "reference",
+    "why": "Every precondition passes: the node exists, the new parent exists, and the chain has no cycle. Only the finished document is wrong, and only validateIr can say so, which is why validation runs once at the end rather than per operation."
+  }
+}

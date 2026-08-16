@@ -114,4 +114,26 @@ describe('verifyCredential', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toMatch(/Check the base URL/);
   });
+
+  it('reports a TLS trust failure distinctly from a generic connection problem', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        const cause = new Error('unable to get issuer certificate');
+        throw new TypeError('fetch failed', { cause });
+      })
+    );
+
+    const result = await verifyCredential({
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-5',
+      apiKey: KEY,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/TLS connection/);
+      expect(result.error).toMatch(/NODE_EXTRA_CA_CERTS/);
+    }
+  });
 });

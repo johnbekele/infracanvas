@@ -20,8 +20,22 @@ beforeEach(() => {
 });
 
 describe('the registry', () => {
-  it('refuses to register the same resource kind twice', () => {
-    expect(() => registerResource(rdsInstanceContract)).toThrow(/already registered/);
+  it('refuses a second, different contract for a kind that already has one', () => {
+    const impostor = {
+      ...rdsInstanceContract,
+      kind: 'rds_instance',
+    } as ResourceContract<'rds_instance'>;
+
+    expect(() => registerResource(impostor)).toThrow(/already registered/);
+  });
+
+  it('accepts the same contract twice, because several entry points may register it', () => {
+    // The preview plane, the internal preview route and the browser's estimate
+    // each populate the registry before use, and each has to assume it might be
+    // first. If the second call threw, whether the process started would depend
+    // on which of them was imported.
+    expect(() => registerResource(rdsInstanceContract)).not.toThrow();
+    expect(getResourceContract('rds_instance')).toBe(rdsInstanceContract);
   });
 
   it('reports every kind without a contract, matching the schema pending list', () => {

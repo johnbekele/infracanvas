@@ -1,16 +1,17 @@
 /**
- * Databases, caches, and analytical stores beyond the core three.
+ * Databases, caches, and file systems beyond the core three.
  *
  * A repository that runs MongoDB or Cassandra had nowhere to go before this:
  * the analyser detected it and the proposal reported a gap, which is honest but
  * not useful. These are the managed equivalents, with the properties that decide
  * what they cost -- instance class, node count, whether storage is provisioned.
+ *
+ * Warehouses and catalogs live in `analytics.ts`.
  */
 import type { AWSService } from '../aws-services';
 import { bool, num, select, text } from './props';
 
 const DB_COLOUR = '#4053D6';
-const ANALYTICS_COLOUR = '#8C4FFF';
 
 /** Sits in a private subnet and is reached from inside the VPC only. */
 const privateOnly = {
@@ -27,7 +28,7 @@ export const dataServices: AWSService[] = [
     category: 'database',
     description: 'MySQL and PostgreSQL compatible cluster',
     color: DB_COLOUR,
-    icon: 'database',
+    icon: 'database-zap',
     allowedConnections: ['ec2', 'ecs', 'lambda', 'eks-cluster'],
     subnetPlacement: privateOnly,
     allowedParents: ['private-subnet'],
@@ -85,7 +86,7 @@ export const dataServices: AWSService[] = [
     category: 'database',
     description: 'Managed Elasticsearch-compatible search cluster',
     color: DB_COLOUR,
-    icon: 'search',
+    icon: 'opensearch',
     allowedConnections: ['ec2', 'ecs', 'lambda', 'kinesis'],
     subnetPlacement: privateOnly,
     allowedParents: ['private-subnet'],
@@ -152,7 +153,7 @@ export const dataServices: AWSService[] = [
     category: 'database',
     description: 'Durable Redis-compatible store',
     color: DB_COLOUR,
-    icon: 'zap',
+    icon: 'memory-stick',
     allowedConnections: ['ec2', 'ecs', 'lambda', 'eks-cluster'],
     subnetPlacement: privateOnly,
     allowedParents: ['private-subnet'],
@@ -182,65 +183,5 @@ export const dataServices: AWSService[] = [
       bool('encrypted', 'Encrypt at Rest', true),
     ],
     iac: { terraformResource: 'aws_efs_file_system', pulumiClass: 'aws.efs.FileSystem' },
-  },
-  {
-    id: 'redshift',
-    name: 'Redshift',
-    shortName: 'Redshift',
-    category: 'analytics',
-    description: 'Columnar data warehouse',
-    color: ANALYTICS_COLOUR,
-    icon: 'bar-chart-3',
-    allowedConnections: ['s3', 'glue', 'athena', 'ecs', 'lambda'],
-    subnetPlacement: privateOnly,
-    allowedParents: ['private-subnet'],
-    properties: [
-      text('namespaceName', 'Namespace', 'my-warehouse', true),
-      select('deployment', 'Deployment', [
-        ['serverless', 'Serverless'],
-        ['provisioned', 'Provisioned cluster'],
-      ]),
-      num('baseCapacityRpu', 'Base Capacity (RPU)', 8),
-      select('nodeType', 'Node Type', ['ra3.large', 'ra3.xlplus', 'ra3.4xlarge']),
-      num('nodeCount', 'Nodes', 2),
-    ],
-    iac: {
-      terraformResource: 'aws_redshiftserverless_namespace',
-      pulumiClass: 'aws.redshiftserverless.Namespace',
-      overrides: { deployment: null, nodeType: null, nodeCount: null },
-    },
-  },
-  {
-    id: 'athena',
-    name: 'Athena',
-    shortName: 'Athena',
-    category: 'analytics',
-    description: 'SQL over files in S3',
-    color: ANALYTICS_COLOUR,
-    icon: 'terminal',
-    allowedConnections: ['s3', 'glue', 'lambda', 'ecs'],
-    properties: [
-      text('workgroupName', 'Workgroup', 'primary', true),
-      select('engineVersion', 'Engine', ['Athena engine version 3', 'Athena engine version 2']),
-      num('bytesScannedCutoffPerQuery', 'Per-Query Scan Limit (GB)', 100),
-    ],
-    iac: { terraformResource: 'aws_athena_workgroup', pulumiClass: 'aws.athena.Workgroup' },
-  },
-  {
-    id: 'glue',
-    name: 'Glue',
-    shortName: 'Glue',
-    category: 'analytics',
-    description: 'Catalog and serverless ETL jobs',
-    color: ANALYTICS_COLOUR,
-    icon: 'layers',
-    allowedConnections: ['s3', 'redshift', 'athena', 'rds'],
-    properties: [
-      text('jobName', 'Job Name', 'my-etl-job', true),
-      select('workerType', 'Worker Type', ['G.1X', 'G.2X', 'G.4X', 'G.025X']),
-      num('numberOfWorkers', 'Workers', 2),
-      select('glueVersion', 'Glue Version', ['4.0', '3.0']),
-    ],
-    iac: { terraformResource: 'aws_glue_job', pulumiClass: 'aws.glue.Job' },
   },
 ];

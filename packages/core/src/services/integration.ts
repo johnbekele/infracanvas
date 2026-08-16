@@ -44,6 +44,20 @@ export const integrationServices: AWSService[] = [
     color: INTEGRATION_COLOUR,
     icon: 'workflow',
     allowedConnections: ['lambda', 'ecs', 'batch', 'sqs', 'sns', 'bedrock', 'sagemaker-endpoint'],
+    // AWS draws a workflow as a box around the steps it orchestrates. Being a
+    // container does not change what it emits: the state machine is still a
+    // resource. The parents are stated explicitly because a container that names
+    // none is treated as one that never nests.
+    isContainer: true,
+    allowedParents: [
+      'aws-cloud',
+      'region',
+      'aws-account',
+      'vpc-environment',
+      'public-subnet',
+      'private-subnet',
+    ],
+    group: { stroke: '#CD2264', border: 'solid', showIcon: true },
     properties: [
       text('stateMachineName', 'State Machine Name', 'my-workflow', true),
       select('stateMachineType', 'Type', [
@@ -66,8 +80,8 @@ export const integrationServices: AWSService[] = [
     category: 'integration',
     description: 'Ordered, replayable event stream',
     color: INTEGRATION_COLOUR,
-    icon: 'waves',
-    allowedConnections: ['lambda', 'ecs', 'firehose', 'opensearch', 's3'],
+    icon: 'kinesis',
+    allowedConnections: ['lambda', 'ecs', 'firehose', 'opensearch', 's3', 'managed-flink'],
     properties: [
       text('streamName', 'Stream Name', 'my-stream', true),
       select('streamMode', 'Capacity Mode', [
@@ -86,7 +100,7 @@ export const integrationServices: AWSService[] = [
     category: 'integration',
     description: 'Buffered delivery of streams to storage',
     color: INTEGRATION_COLOUR,
-    icon: 'radio',
+    icon: 'firehose',
     allowedConnections: ['s3', 'redshift', 'opensearch', 'kinesis'],
     properties: [
       text('deliveryStreamName', 'Delivery Stream Name', 'my-delivery', true),
@@ -106,8 +120,8 @@ export const integrationServices: AWSService[] = [
     category: 'integration',
     description: 'Managed Kafka cluster',
     color: INTEGRATION_COLOUR,
-    icon: 'git-fork',
-    allowedConnections: ['ecs', 'ec2', 'lambda', 'eks'],
+    icon: 'msk',
+    allowedConnections: ['ecs', 'ec2', 'lambda', 'eks', 'managed-flink'],
     subnetPlacement: { allowedInPublic: false, allowedInPrivate: true, requiresSubnet: true },
     allowedParents: ['private-subnet'],
     properties: [
@@ -131,13 +145,52 @@ export const integrationServices: AWSService[] = [
     },
   },
   {
+    id: 'kinesis-video-streams',
+    name: 'Kinesis Video Streams',
+    shortName: 'Video',
+    category: 'integration',
+    description: 'Ingests and replays media from devices',
+    color: INTEGRATION_COLOUR,
+    icon: 'kinesis-video-streams',
+    allowedConnections: ['lambda', 'ecs', 's3', 'rekognition'],
+    properties: [
+      text('name', 'Stream Name', 'my-video-stream', true),
+      num('dataRetentionInHours', 'Retention (hours)', 24),
+      text('mediaType', 'Media Type', 'video/h264'),
+    ],
+    iac: {
+      terraformResource: 'aws_kinesis_video_stream',
+      pulumiClass: 'aws.kinesis.VideoStream',
+    },
+  },
+  {
+    id: 'managed-flink',
+    name: 'Managed Service for Apache Flink',
+    shortName: 'Flink',
+    category: 'integration',
+    description: 'Stateful stream processing over Kinesis and Kafka',
+    color: INTEGRATION_COLOUR,
+    icon: 'managed-flink',
+    allowedConnections: ['kinesis', 'firehose', 'msk', 's3', 'opensearch'],
+    properties: [
+      text('name', 'Application Name', 'my-flink-app', true),
+      select('runtimeEnvironment', 'Runtime', ['FLINK-1_20', 'FLINK-1_19', 'FLINK-1_18']),
+      text('description', 'Description', ''),
+      bool('startApplication', 'Start on Deploy', true),
+    ],
+    iac: {
+      terraformResource: 'aws_kinesisanalyticsv2_application',
+      pulumiClass: 'aws.kinesisanalyticsv2.Application',
+    },
+  },
+  {
     id: 'amazon-mq',
     name: 'Amazon MQ',
     shortName: 'MQ',
     category: 'integration',
     description: 'Managed RabbitMQ or ActiveMQ broker',
     color: INTEGRATION_COLOUR,
-    icon: 'inbox',
+    icon: 'rabbit',
     allowedConnections: ['ecs', 'ec2', 'lambda'],
     subnetPlacement: { allowedInPublic: false, allowedInPrivate: true, requiresSubnet: true },
     allowedParents: ['private-subnet'],
@@ -180,7 +233,7 @@ export const integrationServices: AWSService[] = [
     category: 'integration',
     description: 'Managed GraphQL API',
     color: INTEGRATION_COLOUR,
-    icon: 'git-merge',
+    icon: 'braces',
     allowedConnections: ['lambda', 'dynamodb', 'rds', 'opensearch', 'cognito'],
     properties: [
       text('apiName', 'API Name', 'my-graphql-api', true),

@@ -11,7 +11,7 @@ import { logError } from '../../lib/log.js';
 import { getGitHubToken } from '../../lib/db/tokens.js';
 import {
   connectRepository,
-  listRepositories,
+  listRepositoriesWithState,
   findRepository,
   disconnectRepository,
 } from '../../lib/db/repositories.js';
@@ -38,11 +38,16 @@ interface GitHubRepo {
 
 /**
  * GET /repositories
- * The caller's connected repositories, newest first.
+ * The caller's connected repositories, most recently worked on first.
+ *
+ * Each carries the state the home page shows: the newest run whatever became of
+ * it, and the newest one that produced an architecture. Both, because they are
+ * often different runs and a failure this morning should not blank the proposal
+ * from yesterday.
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const repositories = await listRepositories(req.session!.userId);
+    const repositories = await listRepositoriesWithState(req.session!.userId);
     res.json({ repositories });
   } catch (error) {
     logError('Failed to list repositories', error);

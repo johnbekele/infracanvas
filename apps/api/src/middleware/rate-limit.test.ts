@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiRateLimit, signInRateLimit } from './rate-limit.js';
+import { apiRateLimit, copilotTurnRateLimit, signInRateLimit } from './rate-limit.js';
 
 /** A minimal app carrying one limiter, so each test starts with a fresh counter. */
 function appWith(limiter: express.RequestHandler) {
@@ -85,5 +85,60 @@ describe('the key a caller is counted against', () => {
     const refused = await request(app).get('/').set('X-Forwarded-For', '203.0.113.9');
 
     expect(refused.status).toBe(429);
+  });
+});
+
+describe('copilotTurnRateLimit', () => {
+  /** The limiter behind a session, as the copilot router mounts it. */
+  function appAs(userId: string | null) {
+    const app = express();
+    app.set('trust proxy', 0);
+    app.get(
+      '/',
+      (req, _res, next) => {
+        if (userId !== null) req.session = { userId, sessionId: 'test' } as never;
+        next();
+      },
+      copilotTurnRateLimit,
+      (_req, res) => {
+        res.json({ ok: true });
+      }
+    );
+    return app;
+  }
+
+  it('limits turns per user rather than per address', async () => {
+    // Two users behind one address: spending one budget must not spend the
+    // other's, which is the whole reason this limiter exists.
+    const mine = appAs('11111111-1111-4111-8111-111111111111');
+    const theirs = appAs('22222222-2222-4222-8222-222222222222');
+
+    for (let i = 0; i < 40; i++) {
+      expect((await request(mine).get('/')).status).toBe(200);
+    }
+
+    expect((await request(mine).get('/')).status).toBe(429);
+    expect((await request(theirs).get('/')).status).toBe(200);
+  });
+
+  it('refuses with the same body shape as the other limiters', async () => {
+    const app = appAs('33333333-3333-4333-8333-333333333333');
+    for (let i = 0; i < 40; i++) await request(app).get('/');
+
+    const refused = await request(app).get('/');
+
+    expect(refused.body).toEqual({ error: 'Too many requests', retryAfter: 3600 });
+  });
+
+  it('falls back to the ip key for a request with no session', async () => {
+    // Not `req.ip`: this module already explains that a hand-rolled key gives
+    // every IPv6 client a whole /64 of its own.
+    const app = appAs(null);
+
+    for (let i = 0; i < 40; i++) {
+      expect((await request(app).get('/')).status).toBe(200);
+    }
+
+    expect((await request(app).get('/')).status).toBe(429);
   });
 });

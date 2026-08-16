@@ -75,7 +75,15 @@ export type PendingContractKind =
   | 'iam_role'
   | 'cognito_user_pool'
   | 'cloudwatch_log_group'
-  | 'secretsmanager_secret';
+  | 'secretsmanager_secret'
+  | 'sagemaker_endpoint'
+  | 'amazon_mq_broker'
+  | 'eventbridge_rule'
+  | 'kinesis_stream'
+  | 'msk_cluster'
+  | 'ses_identity'
+  | 'step_functions_state_machine'
+  | 'textract_processor';
 /**
  * This interface was referenced by `ArchitectureIr`'s JSON-Schema
  * via the `definition` "edgeKind".
@@ -109,7 +117,15 @@ export type ResourceKind =
   | 'iam_role'
   | 'cognito_user_pool'
   | 'cloudwatch_log_group'
-  | 'secretsmanager_secret';
+  | 'secretsmanager_secret'
+  | 'sagemaker_endpoint'
+  | 'amazon_mq_broker'
+  | 'eventbridge_rule'
+  | 'kinesis_stream'
+  | 'msk_cluster'
+  | 'ses_identity'
+  | 'step_functions_state_machine'
+  | 'textract_processor';
 
 export interface ArchitectureIr {
   irVersion: string;

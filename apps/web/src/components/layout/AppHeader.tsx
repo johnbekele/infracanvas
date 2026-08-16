@@ -7,6 +7,11 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { to: '/repositories', label: 'Repositories' },
   { to: '/designer', label: 'Designer' },
+  { to: '/simulation', label: 'Simulation' },
+  // In the nav rather than only in the account menu: this is where the model
+  // key lives, and until there is one the copilot refuses every turn. A setting
+  // that gates the headline feature is not an account preference.
+  { to: '/settings', label: 'Settings' },
 ];
 
 /**
@@ -18,11 +23,13 @@ export function AppHeader() {
   const { pathname } = useLocation();
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+    <header className="border-border bg-card flex h-14 shrink-0 items-center justify-between border-b px-4">
       <div className="flex items-center gap-6">
         <Link to="/" className="flex items-center gap-2">
-          <LogoIcon className="h-8 w-8" />
-          <span className="text-lg font-semibold text-gray-900 dark:text-white">InfraCanvas</span>
+          <LogoIcon className="h-7 w-7" />
+          <span className="font-heading text-lg font-semibold uppercase tracking-wide">
+            InfraCanvas
+          </span>
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -31,10 +38,10 @@ export function AppHeader() {
               key={item.to}
               to={item.to}
               className={cn(
-                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'border-b-2 px-3 py-1.5 text-sm font-medium transition-colors',
                 pathname.startsWith(item.to)
-                  ? 'bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+                  ? 'border-primary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground border-transparent'
               )}
             >
               {item.label}

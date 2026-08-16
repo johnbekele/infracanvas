@@ -2,9 +2,9 @@
  * Compute, containers, security, and observability.
  *
  * The container entries matter more than they look. A cluster is a box that
- * holds services, an availability zone is a box that holds subnets, and without
- * them a diagram of nine services is nine boxes in a row with no statement about
- * what shares capacity or what survives losing a zone.
+ * holds services, an availability zone is the box everything else sits in, and
+ * without them a diagram of nine services is nine boxes in a row with no
+ * statement about what shares capacity or what survives losing a zone.
  */
 import type { AWSService } from '../aws-services';
 import { bool, num, select, text } from './props';
@@ -13,6 +13,11 @@ const COMPUTE_COLOUR = '#FF9900';
 const SECURITY_COLOUR = '#DD344C';
 const NETWORK_COLOUR = '#8C4FFF';
 const OBSERVABILITY_COLOUR = '#E7157B';
+
+/** Group stroke colours, from the AWS architecture group palette. */
+const GROUP_COMPUTE = '#D86613';
+const GROUP_REGION = '#147EBA';
+const GROUP_SECURITY = '#DD3522';
 
 const anySubnet = {
   allowedInPublic: true,
@@ -32,8 +37,11 @@ export const platformServices: AWSService[] = [
     icon: 'boxes',
     allowedConnections: [],
     isContainer: true,
-    allowedParents: ['private-subnet', 'public-subnet', 'availability-zone'],
+    // Not the zone itself: the zone now holds the network, so a cluster placed
+    // straight into one would be a cluster in no subnet, which cannot be emitted.
+    allowedParents: ['private-subnet', 'public-subnet'],
     subnetPlacement: anySubnet,
+    group: { stroke: GROUP_COMPUTE, border: 'solid', showIcon: true },
     properties: [
       text('clusterName', 'Cluster Name', 'my-cluster', true),
       select('capacityProvider', 'Capacity', [
@@ -59,8 +67,9 @@ export const platformServices: AWSService[] = [
     icon: 'hexagon',
     allowedConnections: ['rds', 'elasticache', 's3', 'efs', 'msk'],
     isContainer: true,
-    allowedParents: ['private-subnet', 'availability-zone'],
+    allowedParents: ['private-subnet'],
     subnetPlacement: anySubnet,
+    group: { stroke: GROUP_COMPUTE, border: 'solid', showIcon: true },
     properties: [
       text('clusterName', 'Cluster Name', 'my-eks', true),
       text('version', 'Kubernetes Version', '1.31'),
@@ -82,19 +91,23 @@ export const platformServices: AWSService[] = [
     name: 'Availability Zone',
     shortName: 'AZ',
     category: 'networking',
-    description: 'Isolated failure domain holding subnets',
+    description: 'Isolated failure domain holding a network',
     color: NETWORK_COLOUR,
     icon: 'layout-grid',
     allowedConnections: [],
     isContainer: true,
-    parentRequired: 'vpc-environment',
-    allowedParents: ['vpc-environment'],
+    // A zone is where the racks are, and the networks drawn inside it are what
+    // happens to be running there. Only a region encloses it: naming no other
+    // parent is what keeps it out of a VPC.
+    allowedParents: ['region', 'aws-cloud', 'aws-account'],
+    // AWS labels a zone with text alone, with no corner icon.
+    group: { stroke: GROUP_REGION, border: 'dashed', showIcon: false },
     properties: [
       text('zoneName', 'Zone', 'us-east-1a', true),
       bool('primary', 'Primary Zone', true),
     ],
     // A zone is a placement constraint rather than a resource: it becomes the
-    // `availability_zone` argument on the subnets drawn inside it.
+    // `availability_zone` argument on the subnets drawn anywhere inside it.
     iac: {
       terraformResource: '',
       pulumiClass: '',
@@ -110,7 +123,7 @@ export const platformServices: AWSService[] = [
     category: 'compute',
     description: 'Container service with no instances to manage',
     color: COMPUTE_COLOUR,
-    icon: 'container',
+    icon: 'cloud-cog',
     allowedConnections: ['rds', 'elasticache', 's3', 'sqs', 'efs', 'secrets-manager'],
     allowedParents: ['ecs-cluster', 'private-subnet', 'public-subnet'],
     subnetPlacement: anySubnet,
@@ -208,7 +221,7 @@ export const platformServices: AWSService[] = [
     category: 'compute',
     description: 'Build and host a front end from a repository',
     color: COMPUTE_COLOUR,
-    icon: 'globe',
+    icon: 'app-window',
     allowedConnections: ['api-gateway', 'appsync', 'cognito', 's3'],
     properties: [
       text('appName', 'App Name', 'my-site', true),
@@ -308,9 +321,16 @@ export const platformServices: AWSService[] = [
     category: 'security',
     description: 'Stateful firewall rules for a resource',
     color: SECURITY_COLOUR,
-    icon: 'shield',
+    icon: 'brick-wall',
     allowedConnections: ['ec2', 'ecs', 'rds', 'alb', 'elasticache', 'fargate'],
     allowedParents: ['vpc-environment'],
+    // AWS draws a security group as a box around what it protects, and the
+    // grouping is the useful part: the reader sees which resources share the
+    // rules. It still emits its own `aws_security_group`.
+    isContainer: true,
+    // Labelled without an icon, as AWS draws it: the box is usually small and
+    // tight around one resource, and a badge crowds the name out of it.
+    group: { stroke: GROUP_SECURITY, border: 'solid', showIcon: false },
     properties: [
       text('groupName', 'Group Name', 'my-sg', true),
       text('ingressPorts', 'Allowed Inbound Ports', '443'),
@@ -383,7 +403,7 @@ export const platformServices: AWSService[] = [
     category: 'observability',
     description: 'Distributed traces across services',
     color: OBSERVABILITY_COLOUR,
-    icon: 'git-compare',
+    icon: 'footprints',
     allowedConnections: ['ecs', 'lambda', 'api-gateway', 'appsync', 'ec2'],
     properties: [
       text('groupName', 'Group Name', 'my-app-traces', true),

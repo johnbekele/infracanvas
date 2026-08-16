@@ -1,0 +1,5 @@
+{
+  "document": "three-tier",
+  "summary": "Make the primary database Multi-AZ",
+  "ops": [{ "op": "set_param", "nodeId": "rds-primary", "param": "multiAz", "value": true }]
+}

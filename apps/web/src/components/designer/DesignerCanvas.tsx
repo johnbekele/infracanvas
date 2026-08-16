@@ -19,45 +19,28 @@ import {
   absolutePosition,
   canNest,
   containerAt,
+  containerZIndex,
+  flowTypeFor,
   grownSize,
   positionWithin,
   sizeOf,
 } from '@/lib/designer/containment';
 import { ServiceNode } from './ServiceNode';
-import { VpcEnvironmentNode } from './VpcEnvironmentNode';
-import { SubnetNode } from './SubnetNode';
-import { ClusterNode } from './ClusterNode';
+import { GroupNode } from './GroupNode';
 import { ServicePalette } from './ServicePalette';
-import { PropertiesPanel } from './PropertiesPanel';
-import { EstimatePanel } from './estimate/EstimatePanel';
-import { CodePanel } from './CodePanel';
+import { WorkspaceDock } from './dock/WorkspaceDock';
 import { DesignerToolbar } from './DesignerToolbar';
 import { DeletableEdge } from './DeletableEdge';
 import { Button } from '@/components/ui/button';
 
 const nodeTypes = {
   serviceNode: ServiceNode,
-  vpcEnvironment: VpcEnvironmentNode,
-  subnet: SubnetNode,
-  cluster: ClusterNode,
-};
-
-/** Which React Flow component draws a service. */
-function nodeTypeFor(serviceId: string): string {
-  if (serviceId === 'vpc-environment') return 'vpcEnvironment';
-  if (serviceId === 'public-subnet' || serviceId === 'private-subnet') return 'subnet';
-  if (serviceId in CONTAINER_DEFAULT_SIZE) return 'cluster';
-  return 'serviceNode';
-}
-
-/** Containers render behind their children, outermost furthest back. */
-const CONTAINER_Z: Record<string, number> = {
-  'vpc-environment': -4,
-  'availability-zone': -3,
-  'public-subnet': -2,
-  'private-subnet': -2,
-  'ecs-cluster': -1,
-  'eks-cluster': -1,
+  group: GroupNode,
+  // A design saved before the containers became one component carries one of
+  // these three types, and React Flow renders nothing for a type it cannot find.
+  vpcEnvironment: GroupNode,
+  subnet: GroupNode,
+  cluster: GroupNode,
 };
 
 const edgeTypes = {
@@ -163,7 +146,7 @@ function DesignerCanvasInner() {
         properties[prop.name] = prop.default;
       });
 
-      const nodeType = nodeTypeFor(service.id);
+      const nodeType = flowTypeFor(service.id);
       const newNode: Parameters<typeof addNode>[0] = {
         id: getNodeId(),
         type: nodeType,
@@ -188,7 +171,7 @@ function DesignerCanvasInner() {
           style: { width: defaultSize.width, height: defaultSize.height },
           width: defaultSize.width,
           height: defaultSize.height,
-          zIndex: CONTAINER_Z[service.id] ?? -1,
+          zIndex: containerZIndex(service.id),
         });
       }
 
@@ -432,16 +415,10 @@ function DesignerCanvasInner() {
             </div>
           )}
         </div>
-
-        {/* Code Panel */}
-        <CodePanel isMobile={isMobile} />
       </div>
 
-      {/* Properties Panel */}
-      <PropertiesPanel isMobile={isMobile} />
-
-      {/* Estimate Panel */}
-      <EstimatePanel isMobile={isMobile} />
+      {/* Simulation, properties and generated code, one at a time down the right edge. */}
+      <WorkspaceDock isMobile={isMobile} />
     </div>
   );
 }

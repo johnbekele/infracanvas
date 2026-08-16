@@ -38,6 +38,14 @@ const SERVICE_BY_KIND: Record<ResourceKind, string | undefined> = {
   cognito_user_pool: 'cognito',
   cloudwatch_log_group: 'cloudwatch',
   secretsmanager_secret: 'secrets-manager',
+  sagemaker_endpoint: 'sagemaker-endpoint',
+  amazon_mq_broker: 'amazon-mq',
+  eventbridge_rule: 'eventbridge',
+  kinesis_stream: 'kinesis',
+  msk_cluster: 'msk',
+  ses_identity: 'ses',
+  step_functions_state_machine: 'step-functions',
+  textract_processor: 'textract',
 };
 
 /**
@@ -72,6 +80,14 @@ const KIND_BY_SERVICE: Record<string, ResourceKind> = {
   cognito: 'cognito_user_pool',
   cloudwatch: 'cloudwatch_log_group',
   'secrets-manager': 'secretsmanager_secret',
+  'sagemaker-endpoint': 'sagemaker_endpoint',
+  'amazon-mq': 'amazon_mq_broker',
+  eventbridge: 'eventbridge_rule',
+  kinesis: 'kinesis_stream',
+  msk: 'msk_cluster',
+  ses: 'ses_identity',
+  'step-functions': 'step_functions_state_machine',
+  textract: 'textract_processor',
 };
 
 /** Undefined for a kind the canvas has no catalogue entry for. */

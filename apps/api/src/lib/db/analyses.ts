@@ -1,5 +1,5 @@
-// Analysis runs and the profiles they produce.
-import type { AppProfile } from '@infracanvas/core';
+// Analysis runs, the profiles they produce, and the architecture proposed from them.
+import type { AppProfile, ArchitectureProposal } from '@infracanvas/core';
 import { query } from './client.js';
 
 export type AnalysisStatus = 'pending' | 'running' | 'succeeded' | 'failed';
@@ -11,6 +11,12 @@ export interface Analysis {
   commitSha: string | null;
   status: AnalysisStatus;
   profile: AppProfile | null;
+  /**
+   * The architecture synthesised from `profile`, with every decision, its
+   * rationale, and the repository paths it was drawn from. Null for a run that
+   * failed, and for a run that succeeded before the proposal was stored.
+   */
+  architecture: ArchitectureProposal | null;
   error: string | null;
   startedAt: Date | null;
   finishedAt: Date | null;
@@ -25,6 +31,7 @@ interface AnalysisRow {
   commit_sha: string | null;
   status: AnalysisStatus;
   profile: AppProfile | null;
+  architecture: ArchitectureProposal | null;
   error: string | null;
   started_at: Date | null;
   finished_at: Date | null;
@@ -40,6 +47,7 @@ function toAnalysis(row: AnalysisRow): Analysis {
     commitSha: row.commit_sha,
     status: row.status,
     profile: row.profile,
+    architecture: row.architecture,
     error: row.error,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
@@ -61,17 +69,25 @@ function isUniqueViolation(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
 }
 
-export async function startAnalysis(repositoryId: string, ref: string): Promise<Analysis> {
+/**
+ * Record an analysis that has been asked for but not started.
+ *
+ * `pending` rather than `running`, and `started_at` left null, because the run
+ * has not begun: it is a row in a queue waiting for a worker. Saying `running`
+ * here would make "how long has this been going" unanswerable, and it is the
+ * question asked precisely when something has gone wrong.
+ */
+export async function queueAnalysis(repositoryId: string, ref: string): Promise<Analysis> {
   try {
     const result = await query<AnalysisRow>(
-      `INSERT INTO analyses (repository_id, ref, status, started_at)
-       VALUES ($1, $2, 'running', now())
+      `INSERT INTO analyses (repository_id, ref, status)
+       VALUES ($1, $2, 'pending')
        RETURNING *`,
       [repositoryId, ref]
     );
 
     const row = result.rows[0];
-    if (!row) throw new Error('Failed to start analysis');
+    if (!row) throw new Error('Failed to queue analysis');
     return toAnalysis(row);
   } catch (error) {
     // Translated rather than surfaced raw, so the caller can answer with a 409
@@ -81,17 +97,51 @@ export async function startAnalysis(repositoryId: string, ref: string): Promise<
   }
 }
 
-export async function completeAnalysis(id: string, profile: AppProfile): Promise<Analysis> {
+/**
+ * Move an analysis to `running` as a worker picks it up.
+ *
+ * Returns null when the run already reached a terminal state, which is how a
+ * worker that claimed a job whose lease had lapsed -- while the first worker was
+ * in fact finishing it -- learns not to redo the work or reopen the result.
+ *
+ * `started_at` is only set once. A retry is a second attempt at the same run, and
+ * moving the start time each time would make the elapsed time shown to the user
+ * reset every few seconds while the queue backs off.
+ */
+export async function beginAnalysis(id: string): Promise<Analysis | null> {
   const result = await query<AnalysisRow>(
     `UPDATE analyses
-        SET status      = 'succeeded',
-            profile     = $2,
-            commit_sha  = $3,
-            finished_at = now(),
-            error       = NULL
+        SET status = 'running', started_at = COALESCE(started_at, now())
+      WHERE id = $1 AND status IN ('pending', 'running')
+      RETURNING *`,
+    [id]
+  );
+
+  return result.rows[0] ? toAnalysis(result.rows[0]) : null;
+}
+
+/**
+ * Record a successful run, its profile, and the architecture proposed from it.
+ *
+ * The proposal is written in the same statement as the profile so the two can
+ * never disagree about which commit they describe.
+ */
+export async function completeAnalysis(
+  id: string,
+  profile: AppProfile,
+  architecture: ArchitectureProposal
+): Promise<Analysis> {
+  const result = await query<AnalysisRow>(
+    `UPDATE analyses
+        SET status       = 'succeeded',
+            profile      = $2,
+            architecture = $4,
+            commit_sha   = $3,
+            finished_at  = now(),
+            error        = NULL
       WHERE id = $1
       RETURNING *`,
-    [id, JSON.stringify(profile), profile.commitSha]
+    [id, JSON.stringify(profile), profile.commitSha, JSON.stringify(architecture)]
   );
 
   const row = result.rows[0];

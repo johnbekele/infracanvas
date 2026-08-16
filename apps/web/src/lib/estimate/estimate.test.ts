@@ -57,6 +57,38 @@ describe('converting the canvas store to the IR', () => {
     expect(() => assertValidIr(document)).not.toThrow();
   });
 
+  it('accepts the ids the palette actually generates', () => {
+    // The fixtures above were written by hand and happened to be legal, so for
+    // a long time nothing here exercised what the designer produces: React Flow
+    // numbers a dropped service `node_0`, and the schema forbids underscores.
+    // Every hand-drawn architecture was rejected by the API on that alone.
+    const { document } = canvasStoreToIr(
+      [
+        node('node_0', 'vpc-environment', { cidrBlock: '10.0.0.0/16' }),
+        node(
+          'node_1',
+          'private-subnet',
+          { cidrBlock: '10.0.1.0/24', availabilityZone: 'us-east-1a' },
+          'node_0'
+        ),
+        node('node_2', 'rds', database, 'node_1'),
+      ],
+      [
+        {
+          id: 'reactflow__edge-node_1-node_2',
+          source: 'node_1',
+          target: 'node_2',
+        } as Edge,
+      ]
+    );
+
+    expect(() => assertValidIr(document)).not.toThrow();
+    // The nesting has to survive the renaming, or the subnet stops containing
+    // the database and the availability model stops seeing a zone.
+    expect(document.nodes[2]?.parent).toBe(document.nodes[1]?.id);
+    expect(document.edges[0]?.source).toBe(document.nodes[1]?.id);
+  });
+
   it('reads a subnet tier from which shape the canvas drew', () => {
     const { document } = canvasStoreToIr(
       [
@@ -208,6 +240,49 @@ describe('estimating an architecture', () => {
     );
   });
 
+  it('predicts latency along the same path availability reasoned about', () => {
+    const estimate = estimateArchitecture(threeTierStore());
+
+    // One path or none: two models disagreeing about which resources a request
+    // passes through would be two answers about one architecture.
+    expect(estimate.latency?.value.path).toEqual(
+      estimate.availability.value.nodes.map((node) => node.resourceId)
+    );
+    expect(estimate.latency?.value.p95Ms).toBeGreaterThan(estimate.latency!.value.p50Ms);
+  });
+
+  it('proposes a latency objective once a path has been modelled', () => {
+    const estimate = estimateArchitecture(threeTierStore());
+
+    const latencySlo = estimate.slos.value.find((proposal) => proposal.objective === 'latency');
+    expect(latencySlo).toBeDefined();
+    expect(latencySlo!.target).toBeGreaterThan(0);
+  });
+
+  it('predicts no latency when nothing on the path carries a service time', () => {
+    const { document } = canvasStoreToIr(
+      [node('vpc-1', 'vpc-environment', { cidrBlock: '10.0.0.0/16' })],
+      []
+    );
+
+    const estimate = estimateArchitecture(document);
+
+    expect(estimate.latency).toBeNull();
+    // And no objective is invented from the absence.
+    expect(estimate.slos.value.some((proposal) => proposal.objective === 'latency')).toBe(false);
+  });
+
+  it('names the resource that gives way first and the rate it gives way at', () => {
+    const estimate = estimateArchitecture(threeTierStore());
+
+    const { first } = estimate.bottleneck.value;
+    if (first !== null) {
+      expect(first.resourceId).not.toBe('');
+      expect(first.breakingRps).toBeGreaterThan(0);
+      expect(first.remedy).not.toBe('');
+    }
+  });
+
   it('recomputes an estimate for a 40 node architecture in under 50ms', () => {
     const nodes = [node('vpc-1', 'vpc-environment', { cidrBlock: '10.0.0.0/16' })];
     while (nodes.length < 40) nodes.push(node(`rds-${nodes.length}`, 'rds', database, 'vpc-1'));
@@ -223,6 +298,11 @@ describe('estimating an architecture', () => {
     }
     samples.sort((a, b) => a - b);
 
+    // 1.8ms here with cost, availability, latency and the bottleneck sweep all
+    // included. The ceiling is far above it because CI runs every package's
+    // suite at once on a small runner; what a budget can still catch at this
+    // distance is the order-of-magnitude kind, such as re-reading the price
+    // snapshot per node.
     expect(samples[5]).toBeLessThan(50);
   });
 });

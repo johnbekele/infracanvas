@@ -32,6 +32,37 @@ describe('the catalog', () => {
     expect(emitTerraform(zone)).toBe('');
   });
 
+  it('emits nothing for the groups that only organise a diagram', () => {
+    // A region or an account is a boundary the reader needs and the provider does
+    // not. Drawing one has to stay free of consequences for the generated code.
+    for (const id of [
+      'aws-cloud',
+      'region',
+      'aws-account',
+      'corporate-data-center',
+      'auto-scaling-group',
+      'spot-fleet',
+      'elastic-beanstalk-container',
+      'server-contents',
+      'ec2-instance-contents',
+      'iot-greengrass',
+      'iot-greengrass-deployment',
+    ]) {
+      expect(getServiceById(id), `${id} is not in the catalog`).toBeDefined();
+      expect(emitTerraform({ id, serviceId: id, properties: {} }), `${id} emitted`).toBe('');
+    }
+  });
+
+  // Both are drawn as boxes now, and being a box is a canvas concern: it must not
+  // reach the provider.
+  it('still emits the resources for the groups that are also resources', () => {
+    const sg = emitTerraform({ id: 'sg', serviceId: 'security-group', properties: {} });
+    expect(sg).toContain('aws_security_group');
+
+    const workflow = emitTerraform({ id: 'wf', serviceId: 'step-functions', properties: {} });
+    expect(workflow).toContain('aws_sfn_state_machine');
+  });
+
   it('offers a service for every AI capability the analyser detects', () => {
     const aiServiceIds = awsServices
       .filter((service) => service.category === 'ai-ml')
@@ -58,6 +89,33 @@ describe('argument naming', () => {
   it('drops a property that configures the canvas rather than the resource', () => {
     const service = getServiceById('ecs-cluster')!;
     expect(argumentNameFor(service.iac, 'capacityProvider', 'terraform')).toBeNull();
+  });
+});
+
+describe('tagging', () => {
+  const untagged = { id: 'lake', serviceId: 'lake-formation', properties: {} };
+
+  it('tags a resource by default', () => {
+    const node = { id: 'warehouse', serviceId: 'redshift', properties: {} };
+
+    expect(emitTerraform(node)).toContain('tags = local.common_tags');
+    expect(emitPulumi(node, 'python')).toContain('tags={**tags');
+    expect(emitPulumi(node, 'typescript')).toContain('tags: { ...tags');
+  });
+
+  it('omits tags where the provider has no such argument', () => {
+    // Lake Formation registrations take no tags, and an argument the provider
+    // does not recognise fails the plan for the whole file rather than for the
+    // one resource.
+    expect(emitTerraform(untagged)).not.toContain('tags');
+    expect(emitPulumi(untagged, 'python')).not.toContain('tags');
+    expect(emitPulumi(untagged, 'typescript')).not.toContain('tags');
+  });
+
+  it('still closes the block it left the tags out of', () => {
+    expect(emitTerraform(untagged).trimEnd().endsWith('}')).toBe(true);
+    expect(emitPulumi(untagged, 'python').trimEnd().endsWith(')')).toBe(true);
+    expect(emitPulumi(untagged, 'typescript').trimEnd().endsWith('});')).toBe(true);
   });
 });
 

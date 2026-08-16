@@ -172,6 +172,28 @@ describe('validateIr', () => {
       expect.objectContaining({ pointer: '/nodes/3/kind', source: 'schema' })
     );
   });
+
+  it('dispatches every typed kind to its own branch', () => {
+    // The dispatch table used to be a list written beside the schema, and when
+    // `rds_instance` was given typed parameters the branch was added to the
+    // schema and not to the list. Every document containing a database was then
+    // rejected as an unknown kind -- the one kind the cost and reliability
+    // models are built on. Asserting over the schema's own branches is what
+    // stops the next typed kind from repeating it.
+    for (const kind of typedContractKinds()) {
+      const result = validateIr(
+        threeTierWith((document) => {
+          (document.nodes[3] as { kind: string }).kind = kind;
+        })
+      );
+
+      const unknownKind = result.valid
+        ? []
+        : result.problems.filter((problem) => problem.message.includes('is not a resource kind'));
+
+      expect(unknownKind, `${kind} should reach a branch`).toEqual([]);
+    }
+  });
 });
 
 describe('assertValidIr', () => {
