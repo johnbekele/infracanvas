@@ -18,6 +18,10 @@ export default tseslint.config(
       '**/coverage/**',
       '**/*.d.ts',
       'pnpm-lock.yaml',
+      // A worktree created under the repository root is a whole second checkout
+      // of another branch. CI never sees one, so linting it locally reports
+      // failures from code that is not under review.
+      '.claude/worktrees/**',
       // Golden files are expected emitter output compared byte for byte. They
       // reference variables their surrounding project declares, so linting or
       // type-checking them here would be checking a fragment as a program.
