@@ -32,6 +32,15 @@ export class Worktrees {
 
   /** Create a tree on `branch`, installing dependencies. Idempotent-hostile: fails if it exists. */
   async create(slug: string, branch: string): Promise<Worktree> {
+    // A previous attempt at this issue can leave its branch behind: `remove`
+    // deletes the worktree, but a run killed before that, or an old build, may
+    // not have. The loop's branches are ephemeral per attempt, so a leftover is
+    // always stale — clear it, or new-worktree.sh aborts on the duplicate name.
+    // `git branch -D` refuses a branch checked out in another tree, so a genuine
+    // concurrent collision still surfaces as the script's loud failure below.
+    await capture('git', ['-C', this.mainCheckout, 'worktree', 'prune']);
+    await capture('git', ['-C', this.mainCheckout, 'branch', '-D', branch]);
+
     const script = join(this.mainCheckout, 'scripts/agent/new-worktree.sh');
     const result = await run('bash', [script, slug, branch], { cwd: this.mainCheckout });
     if (result.code !== 0) {
@@ -44,11 +53,19 @@ export class Worktrees {
     return { slug, branch, path };
   }
 
-  /** Remove a tree and prune the administrative entry, after its PR merges or the issue is abandoned. */
-  async remove(slug: string): Promise<void> {
+  /**
+   * Remove a tree and prune the administrative entry, after its PR merges or the
+   * issue is abandoned. Also deletes the branch when given, because the loop
+   * makes a fresh branch per attempt and a leftover one collides with the next.
+   * A branch already merged or already gone makes `-D` fail harmlessly.
+   */
+  async remove(slug: string, branch?: string): Promise<void> {
     const path = this.pathFor(slug);
     await capture('git', ['-C', this.mainCheckout, 'worktree', 'remove', '--force', path]);
     await capture('git', ['-C', this.mainCheckout, 'worktree', 'prune']);
+    if (branch) {
+      await capture('git', ['-C', this.mainCheckout, 'branch', '-D', branch]);
+    }
   }
 }
 

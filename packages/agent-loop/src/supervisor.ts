@@ -54,7 +54,7 @@ export type IssueOutcome = 'merged' | 'delivered' | 'blocked' | 'failed';
 
 export class Supervisor {
   /** Issues currently held, so a signal can release them before the process dies. */
-  private readonly active = new Map<number, { slug: string }>();
+  private readonly active = new Map<number, { slug: string; branch: string }>();
 
   constructor(
     private readonly config: LoopConfig,
@@ -74,13 +74,13 @@ export class Supervisor {
    */
   async shutdown(): Promise<void> {
     const held = [...this.active.entries()];
-    for (const [issue, { slug }] of held) {
+    for (const [issue, { slug, branch }] of held) {
       log.warn(`shutdown: releasing #${issue}`);
       await this.deps.claims
         .release(issue)
         .catch((e) => log.warn(`release failed: ${describe(e)}`));
       await this.deps.worktrees
-        .remove(slug)
+        .remove(slug, branch)
         .catch((e) => log.warn(`worktree remove failed: ${describe(e)}`));
       this.active.delete(issue);
     }
@@ -190,7 +190,7 @@ export class Supervisor {
         startedAt: new Date().toISOString(),
       });
       claimed = true;
-      this.active.set(issue.number, { slug });
+      this.active.set(issue.number, { slug, branch });
       reporter.event('info', 'claim', `claimed #${issue.number}`);
 
       if (this.stopRequested()) return await this.abandon(issue, reporter, 'kill switch');
@@ -347,7 +347,7 @@ export class Supervisor {
       }
       if (treeCreated) {
         await this.deps.worktrees
-          .remove(slug)
+          .remove(slug, branch)
           .catch((e) => log.warn(`worktree remove failed: ${describe(e)}`));
       }
       this.active.delete(issue.number);
