@@ -14,6 +14,10 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/node_modules/**',
+      // A Python virtualenv is the third-party equivalent of node_modules, and
+      // some installed packages ship JavaScript: urllib3 carries an Emscripten
+      // fetch worker. `.gitignore` and `.prettierignore` already exclude it.
+      '**/.venv/**',
       '**/.turbo/**',
       '**/coverage/**',
       '**/*.d.ts',
