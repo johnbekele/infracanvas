@@ -34,6 +34,13 @@ export const CONFIGURED_PROVIDER_HOSTS = [
 
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
+/**
+ * GitHub's private vulnerability reporting endpoint for this repository. Kept as a
+ * literal so the reachability probe never sends a value read out of a file, and
+ * checked against package.json below so it cannot drift if the repository moves.
+ */
+export const REPORTING_URL = 'https://github.com/johnbekele/infracanvas/security/advisories/new';
+
 const HOST_RE = /https?:\/\/([^/\s'"`]+)(?:[/\s'"`]|$)/g;
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -188,7 +195,7 @@ function selfTestAllowlist() {
     const unlisted = validate([{ host: 'evil.example', file: 'apps/api/src/evil.ts', line: 1 }]);
     assert(
       'an outbound request to an unlisted host fails the allowlist check',
-      unlisted.some((e) => e.includes('evil.example'))
+      unlisted.includes('outbound host "evil.example" is not in the allowlist (apps/api/src/evil.ts:1)')
     );
 
     const authBad = validate([
@@ -196,13 +203,19 @@ function selfTestAllowlist() {
     ]);
     assert(
       'an authorization header to a non credential host fails the allowlist check',
-      authBad.some((e) => e.includes('Authorization') && e.includes('api.openai.com'))
+      authBad.includes(
+        'Authorization header targets non-credential host "api.openai.com" (x.ts:1); ' +
+          'CREDENTIAL_HOSTS is api.github.com'
+      )
     );
 
+    const evil = hosts.find((h) => h.host === 'evil.example');
     assert(
       'the allowlist check fails when a new fetch host is introduced into the source',
-      hosts.some((h) => h.host === 'evil.example') &&
-        validate(prepareSourceFindings(hosts)).some((e) => e.includes('evil.example'))
+      evil !== undefined &&
+        validate(prepareSourceFindings(hosts)).includes(
+          `outbound host "evil.example" is not in the allowlist (${evil.file}:${evil.line})`
+        )
     );
 
     const authOk = validate([
@@ -233,15 +246,28 @@ function resolveDocLinks(filePath) {
   return broken;
 }
 
+function repositoryUrl() {
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+  return String(manifest.repository?.url ?? '').replace(/\.git$/, '');
+}
+
 async function checkReportingEndpoint() {
   const policy = readFileSync(join(ROOT, 'SECURITY.md'), 'utf8');
-  const urlMatch = policy.match(/https:\/\/github\.com\/[^\s)]+\/security\/advisories\/new/);
-  assert('SECURITY.md names a private reporting URL', Boolean(urlMatch));
-  const url = urlMatch[0];
-  const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+  assert(
+    'SECURITY.md names a private reporting URL',
+    policy.split('\n').some((line) => line.trim() === REPORTING_URL)
+  );
+  assert(
+    'the private reporting URL belongs to this repository',
+    REPORTING_URL === `${repositoryUrl()}/security/advisories/new`
+  );
+
+  const response = await fetch(REPORTING_URL, { method: 'GET', redirect: 'follow' });
   assert(
     'the private reporting endpoint named in the policy responds',
-    response.status > 0 && response.status < 600
+    // An unauthenticated GET lands on the sign-in page; a repository or a
+    // reporting form that does not exist answers 404.
+    response.status !== 404
   );
 }
 
