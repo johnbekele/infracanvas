@@ -1,0 +1,36 @@
+{
+  "document": "three-tier",
+  "summary": "Put a session cache between the API and the database",
+  "ops": [
+    {
+      "op": "add_node",
+      "node": {
+        "id": "cache-sessions",
+        "kind": "elasticache_cluster",
+        "name": "Session cache",
+        "parent": "subnet-private-a",
+        "layout": { "x": 432, "y": 48 },
+        "params": { "engine": "redis", "nodeType": "cache.t4g.micro", "numCacheNodes": 1 }
+      }
+    },
+    {
+      "op": "add_edge",
+      "edge": {
+        "id": "api-to-cache",
+        "kind": "connects",
+        "source": "ecs-api",
+        "target": "cache-sessions",
+        "label": "6379"
+      }
+    },
+    {
+      "op": "add_edge",
+      "edge": {
+        "id": "cache-to-db",
+        "kind": "depends_on",
+        "source": "cache-sessions",
+        "target": "rds-primary"
+      }
+    }
+  ]
+}
