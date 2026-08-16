@@ -1,0 +1,26 @@
+---
+description: Rules for editing the gates themselves
+globs: .github/workflows/**,scripts/ci/**,.github/rulesets/**
+alwaysApply: false
+---
+
+# Changing a gate is tier 1
+
+These files judge every other change in the repository, so a mistake here is invisible until it waves
+a real failure through.
+
+- **Every job always runs and decides internally whether it has work to do.** Never add a job-level
+  `if`. A skipped job reports a `skipped` conclusion, and a skipped job that the ruleset requires
+  leaves pull requests permanently unmergeable. Guard *inside* the job and log a notice instead.
+- **A guard names the artefact the job actually consumes**, not a neighbouring directory. Guarding an
+  OpenAPI drift check on `services/brain` existing, rather than on the generator script existing,
+  turned a green gate red the moment an empty Python skeleton landed — for a reason unrelated to the
+  change under review.
+- **A gate for a component that does not exist yet logs a notice and passes**, then begins enforcing
+  automatically once the component lands.
+- **Never make a required check stricter in one step.** A check that has never enforced anything reds
+  every open pull request the moment it starts. Add the reporter, then measure and report, then
+  ratchet — as issues #178, #179 and #180 do for diff coverage.
+- Pin third-party actions to a commit SHA, matching the existing style.
+- A required status check only becomes enforceable after a workflow has reported it once, so apply a
+  ruleset change after the first pull request has run it.

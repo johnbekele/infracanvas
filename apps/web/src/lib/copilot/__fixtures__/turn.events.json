@@ -1,0 +1,227 @@
+{
+  "events": [
+    { "kind": "token", "seq": 1, "text": "I can enable Multi-AZ on " },
+    { "kind": "token", "seq": 2, "text": "the primary database. " },
+    {
+      "kind": "citation",
+      "seq": 3,
+      "scheme": "file",
+      "target": "apps/api/src/db.ts#L10-L20",
+      "verified": true,
+      "reason": null
+    },
+    {
+      "kind": "citation",
+      "seq": 4,
+      "scheme": "sku",
+      "target": "FAKE-SKU",
+      "verified": false,
+      "reason": "SKU was not returned by a tool this turn"
+    },
+    {
+      "kind": "tool_call",
+      "seq": 5,
+      "callId": "call-1",
+      "tool": "read_architecture",
+      "summary": "Reading the current architecture"
+    },
+    {
+      "kind": "tool_result",
+      "seq": 6,
+      "callId": "call-1",
+      "tool": "read_architecture",
+      "ok": true,
+      "summary": "Read 12 nodes",
+      "durationMs": 18
+    },
+    {
+      "kind": "tool_call",
+      "seq": 7,
+      "callId": "call-2",
+      "tool": "propose_patch",
+      "summary": "Proposing Multi-AZ for database-primary"
+    },
+    {
+      "kind": "tool_result",
+      "seq": 8,
+      "callId": "call-2",
+      "tool": "propose_patch",
+      "ok": true,
+      "summary": "Patch priced and ready to review",
+      "durationMs": 42
+    },
+    {
+      "kind": "patch_proposed",
+      "seq": 9,
+      "proposalId": "prop-1",
+      "patchDigest": "digest-abc",
+      "summary": "Enable Multi-AZ on database-primary",
+      "touchedNodeIds": ["database-primary"],
+      "operations": ["Set multiAz to true on database-primary"],
+      "preview": {
+        "previewVersion": 1,
+        "basedOnIrDigest": "ir-before",
+        "patchDigest": "digest-abc",
+        "applicable": true,
+        "problems": [],
+        "touchedNodeIds": ["database-primary"],
+        "cost": {
+          "monthlyUsdBefore": 100,
+          "monthlyUsdAfter": 131.4,
+          "monthlyUsdDelta": 31.4,
+          "completeness": "complete",
+          "byResource": [
+            {
+              "resourceId": "database-primary",
+              "change": "changed",
+              "monthlyUsdBefore": 100,
+              "monthlyUsdAfter": 131.4,
+              "monthlyUsdDelta": 31.4,
+              "lines": []
+            }
+          ],
+          "unpriced": []
+        },
+        "availability": {
+          "before": 0.9995,
+          "after": 0.9999,
+          "delta": 0.0004,
+          "downtimeMinutesBefore": 21.6,
+          "downtimeMinutesAfter": 4.3,
+          "weakestBefore": "database-primary",
+          "weakestAfter": "database-primary",
+          "completeness": "complete",
+          "unmodelled": []
+        },
+        "findings": {
+          "appeared": [],
+          "resolved": [
+            {
+              "ruleId": "rds.multi-az",
+              "pillar": "reliability",
+              "severity": "high",
+              "message": "Primary database is single-AZ",
+              "pointer": "/nodes/database-primary/params/multiAz",
+              "remediation": "Enable Multi-AZ"
+            }
+          ],
+          "unchangedCount": 2
+        },
+        "assumptions": [],
+        "baselineCacheHit": true,
+        "computedMs": 12
+      }
+    },
+    {
+      "kind": "token",
+      "seq": 10,
+      "text": "See [file:apps/api/src/db.ts#L10-L20] for the connection setup. Unverified claim [sku:FAKE-SKU]."
+    },
+    {
+      "kind": "done",
+      "seq": 11,
+      "finish": "complete",
+      "inputTokens": 120,
+      "outputTokens": 80,
+      "toolCalls": 2,
+      "unverifiedCitations": 1
+    }
+  ],
+  "transcriptMessage": {
+    "id": "msg-assistant-1",
+    "role": "assistant",
+    "content": "I can enable Multi-AZ on the primary database. See [file:apps/api/src/db.ts#L10-L20] for the connection setup. Unverified claim [sku:FAKE-SKU].",
+    "toolCalls": [
+      {
+        "callId": "call-1",
+        "tool": "read_architecture",
+        "summary": "Read 12 nodes",
+        "ok": true,
+        "durationMs": 18
+      },
+      {
+        "callId": "call-2",
+        "tool": "propose_patch",
+        "summary": "Patch priced and ready to review",
+        "ok": true,
+        "durationMs": 42
+      }
+    ],
+    "citations": [
+      {
+        "scheme": "file",
+        "target": "apps/api/src/db.ts#L10-L20",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "scheme": "sku",
+        "target": "FAKE-SKU",
+        "verified": false,
+        "reason": "SKU was not returned by a tool this turn"
+      }
+    ],
+    "proposal": {
+      "proposalId": "prop-1",
+      "summary": "Enable Multi-AZ on database-primary",
+      "operations": ["Set multiAz to true on database-primary"],
+      "touchedNodeIds": ["database-primary"],
+      "preview": {
+        "previewVersion": 1,
+        "basedOnIrDigest": "ir-before",
+        "patchDigest": "digest-abc",
+        "applicable": true,
+        "problems": [],
+        "touchedNodeIds": ["database-primary"],
+        "cost": {
+          "monthlyUsdBefore": 100,
+          "monthlyUsdAfter": 131.4,
+          "monthlyUsdDelta": 31.4,
+          "completeness": "complete",
+          "byResource": [
+            {
+              "resourceId": "database-primary",
+              "change": "changed",
+              "monthlyUsdBefore": 100,
+              "monthlyUsdAfter": 131.4,
+              "monthlyUsdDelta": 31.4,
+              "lines": []
+            }
+          ],
+          "unpriced": []
+        },
+        "availability": {
+          "before": 0.9995,
+          "after": 0.9999,
+          "delta": 0.0004,
+          "downtimeMinutesBefore": 21.6,
+          "downtimeMinutesAfter": 4.3,
+          "weakestBefore": "database-primary",
+          "weakestAfter": "database-primary",
+          "completeness": "complete",
+          "unmodelled": []
+        },
+        "findings": {
+          "appeared": [],
+          "resolved": [
+            {
+              "ruleId": "rds.multi-az",
+              "pillar": "reliability",
+              "severity": "high",
+              "message": "Primary database is single-AZ",
+              "pointer": "/nodes/database-primary/params/multiAz",
+              "remediation": "Enable Multi-AZ"
+            }
+          ],
+          "unchangedCount": 2
+        },
+        "assumptions": [],
+        "baselineCacheHit": true,
+        "computedMs": 12
+      },
+      "decision": "pending"
+    },
+    "status": "complete",
+    "unverifiedCitations": 1
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "document": "three-tier",
+  "summary": "Delete the database without deleting the edge that reaches it",
+  "ops": [{ "op": "remove_node", "nodeId": "rds-primary" }],
+  "expect": {
+    "opIndex": 0,
+    "source": "precondition",
+    "why": "remove_node does not cascade. The patch has to name the edges it also deletes, which keeps the inverse exact and stops a one-line operation hiding its own blast radius."
+  }
+}
