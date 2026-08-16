@@ -42,6 +42,8 @@ export interface SupervisorDeps {
 export interface RunOptions {
   /** Restrict to a single lane, for a controlled first run. */
   onlyLane?: Lane;
+  /** Restrict to a single issue number, for a controlled dry run of one issue. */
+  onlyIssue?: number;
   /** Get to a green, mergeable PR but do not merge. For dry runs. */
   noMerge?: boolean;
   /** Take at most this many issues this pass. */
@@ -108,7 +110,10 @@ export class Supervisor {
 
     const issues = await this.deps.github.listAgentReadyIssues();
     const ctx = await this.queueContext();
-    const eligible = selectEligible(issues, ctx);
+    let eligible = selectEligible(issues, ctx);
+    if (options.onlyIssue !== undefined) {
+      eligible = eligible.filter((i) => i.number === options.onlyIssue);
+    }
 
     // Bin by lane, respecting an onlyLane restriction, and take one per lane per
     // pass so the three tools progress together rather than one draining first.

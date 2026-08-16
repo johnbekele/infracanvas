@@ -7,6 +7,7 @@
  *   pnpm loop                     run continuously until the queue empties or .agent-loop/stop appears
  *   pnpm loop --once              a single scheduling pass, then exit
  *   pnpm loop --lane B            restrict to one lane
+ *   pnpm loop --issue 96          restrict to a single issue (implies --once), for a controlled dry run
  *   pnpm loop --no-merge          get PRs green and mergeable, but do not merge (dry run)
  *   pnpm loop --status            print the current run snapshots and exit
  *   pnpm loop --explain 202       say whether issue #202 is eligible, and why not
@@ -33,6 +34,7 @@ interface Args {
   noMerge: boolean;
   status: boolean;
   lane?: Lane;
+  issue?: number;
   explain?: number;
 }
 
@@ -47,6 +49,9 @@ function parseArgs(argv: readonly string[]): Args {
       const value = argv[++i];
       if (value === 'A' || value === 'B' || value === 'C') args.lane = value;
       else throw new Error(`--lane must be A, B, or C, got "${value}"`);
+    } else if (arg === '--issue') {
+      args.issue = Number.parseInt(argv[++i], 10);
+      if (Number.isNaN(args.issue)) throw new Error('--issue needs an issue number');
     } else if (arg === '--explain') {
       args.explain = Number.parseInt(argv[++i], 10);
       if (Number.isNaN(args.explain)) throw new Error('--explain needs an issue number');
@@ -84,7 +89,9 @@ async function main(): Promise<number> {
   }
 
   const supervisor = buildSupervisor(config, github, mainCheckout);
-  const runOptions = { onlyLane: args.lane, noMerge: args.noMerge };
+  const runOptions = { onlyLane: args.lane, onlyIssue: args.issue, noMerge: args.noMerge };
+  // Pinning a single issue is only ever a controlled one-shot; never loop on it.
+  const once = args.once || args.issue !== undefined;
 
   // A signal skips the per-issue finally blocks, so release held claims and
   // remove their trees here before exiting, or an interrupted run strands its
@@ -108,7 +115,7 @@ async function main(): Promise<number> {
       `  kill switch ${config.killSwitch}`
   );
 
-  if (args.once) {
+  if (once) {
     const outcomes = await supervisor.runOnce(runOptions);
     for (const [issue, outcome] of outcomes) log.info(`#${issue}: ${outcome}`);
     return 0;
