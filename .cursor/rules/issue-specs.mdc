@@ -1,0 +1,39 @@
+---
+description: The Gate 0 contract for issue spec files
+globs: docs/issues/**
+alwaysApply: false
+---
+
+# An issue spec is an engineering contract
+
+An agent picking up this issue reads **only** this file and the spec it links. Anything you leave out
+becomes something an agent invents differently from the next agent.
+
+Format: `---` frontmatter with `title` and `labels`, then the `### ` sections from
+`.github/ISSUE_TEMPLATE/agent-task.yml`. Every section is required; Gate 0 parses both the same way.
+
+The sections usually done badly:
+
+- **Contract** — copy-pasteable signatures, DDL, or types. If you cannot write it, the issue is not
+  ready and something it depends on has to land first.
+- **Acceptance Criteria** — observable behaviours, one per line, at least two checkboxes. "Handles
+  errors correctly" is not checkable; "returns null rather than throwing when the ciphertext cannot be
+  decrypted" is.
+- **Required Tests** — named cases, at least two, including a failure or edge case. An agent writes
+  exactly the tests listed.
+- **Out of Scope** — name the adjacent code that will look tempting to clean up.
+
+Also required: explicit `CREATE`/`MODIFY`/`DELETE` paths, a performance budget or `n/a`,
+`Dependencies`, and runnable verification commands.
+
+Where two issues share a seam, **write the type once and paste the same text into both**. Do not have
+the later issue guess at what the earlier one will produce.
+
+Validate and publish:
+
+```bash
+pnpm gh:issues --dry-run   # Gate 0's own rules, before touching GitHub
+pnpm gh:issues             # create or update; matched by title, so it never duplicates
+```
+
+Changing a `title` creates a second issue rather than renaming the first.
