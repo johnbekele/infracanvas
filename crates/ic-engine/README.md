@@ -8,7 +8,8 @@ a heap that rules out the ordinary laptop this is meant to run on.
 
 Right now the crate carries the skeleton (version, config, CLI, Python bridge), the repository
 walker (ignore rules, SHA-256 content hashing, Merkle manifest), tree-sitter parsing plus
-AST-boundary chunking, and a local int8 embedder for 384-dimension vectors.
+AST-boundary chunking, a local int8 embedder for 384-dimension vectors, and the Postgres index
+pipeline that turns a checkout into `files` / `chunks` / `chunk_embeddings` rows.
 
 ## Two entry points
 
@@ -143,6 +144,52 @@ before a download.
 than `max_tokens()` (512) are truncated at a token boundary with the committed tokeniser rather than
 rejected. One `LocalEmbedder` instance is `Send + Sync` and serves every worker; the ONNX session is
 shared.
+
+## Indexing into Postgres
+
+`index` is the pipeline the rest of the product calls. It walks a checkout, chunks what it finds,
+embeds the chunks (unless embeddings are disabled), and writes `files`, `chunks`, and
+`chunk_embeddings` for one ingestion run. The engine never touches `ingestion_runs`: the caller
+creates the run, passes `run_id`, and updates status and counters afterwards.
+
+Writes use `COPY ... FROM STDIN BINARY`. Chunk and file ids are UUIDv7 generated in-process so a
+chunk and its embedding can be written in the same pass. Batches commit every
+`files_per_transaction` files (default 256), so a crash leaves whole files rather than half of one.
+
+### Incremental re-indexing
+
+When `previous_run_id` is set, the engine rebuilds a `RepoManifest` from that run's `files` rows and
+diffs it against the new walk. Unchanged paths are copied forward inside the database: a new `files`
+row plus one `INSERT ... SELECT` that remaps chunk ids and re-attaches embeddings. Added and modified
+paths are parsed and embedded as usual; deleted paths simply do not appear in the new run.
+
+### CLI
+
+```bash
+ic-engine index <path> \
+  --repository-id <uuid> \
+  --run-id <uuid> \
+  [--previous-run-id <uuid>] \
+  [--database-url <url>] \
+  [--no-embeddings] \
+  [--json]
+```
+
+`--database-url` falls back to `DATABASE_URL`. `--json` prints one `IndexStats` object on stdout
+(what Gate 6 reads). `--no-embeddings` writes files and chunks only.
+
+### Large fixture for Gate 6
+
+The 100k-file perf checkout is generated, not committed:
+
+```bash
+node scripts/fixtures/generate-large-repo.mjs --files 100000 --out tests/fixtures/repos/large
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/ci/seed-perf-run.sql
+cargo run --release --bin ic-engine -- index tests/fixtures/repos/large \
+  --repository-id 22222222-2222-4222-8222-222222222222 \
+  --run-id 33333333-3333-4333-8333-333333333333 \
+  --json
+```
 
 ## Why `extension-module` is not in Cargo.toml
 

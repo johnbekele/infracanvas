@@ -76,6 +76,25 @@ jobs:
   test-rust:
     name: Unit tests (Rust)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Must match the image in docker-compose.yml so local and CI agree.
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: infracanvas
+          POSTGRES_PASSWORD: infracanvas
+          POSTGRES_DB: infracanvas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U infracanvas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_test?sslmode=disable
+      DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_test?sslmode=disable
+      CI: 'true'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - id: exists
@@ -98,6 +117,17 @@ jobs:
           key: infracanvas-embed-bge-small-en-v1.5-q-${{ runner.os }}
           restore-keys: |
             infracanvas-embed-bge-small-en-v1.5-q-
+      - name: Apply migrations
+        if: steps.exists.outputs.found == 'true'
+        run: |
+          if [ -d db/migrations ]; then
+            curl -fsSL -o /usr/local/bin/dbmate \
+              https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+            chmod +x /usr/local/bin/dbmate
+            dbmate --migrations-dir db/migrations --no-dump-schema up
+          else
+            echo "::notice::db/migrations not present yet; skipping."
+          fi
       - if: steps.exists.outputs.found == 'true'
         run: cargo test --all-features --workspace
 
