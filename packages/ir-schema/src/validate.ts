@@ -73,16 +73,27 @@ const validateDocument = ajv.compile(schemaJson);
  * once, which buries the one error a user can act on under two they cannot. A
  * node is dispatched to the branch its `kind` names so the pointer lands on the
  * offending parameter.
+ *
+ * Derived from the document's own `oneOf` rather than listed, because a listed
+ * map silently stops covering a kind the moment that kind gains typed
+ * parameters: the kind leaves the pending enum, finds no branch here, and every
+ * parameter error it has is reported as "not a resource kind this schema
+ * version knows". That is the wrong error, and twenty-one kinds are queued to
+ * hit it.
  */
 const BRANCH_BY_KIND = new Map<string, ValidateFunction>();
-for (const [def, kinds] of [
-  ['vpcNode', ['vpc']],
-  ['subnetNode', ['subnet']],
-  ['pendingContractNode', pendingKinds()],
-] as const) {
-  const branch = ajv.getSchema(`${IR_SCHEMA_ID}#/$defs/${def}`);
-  if (!branch) throw new Error(`Schema is missing the ${def} definition.`);
-  for (const kind of kinds) BRANCH_BY_KIND.set(kind, branch);
+for (const branchRef of schemaJson.properties.nodes.items.oneOf) {
+  const def = branchRef.$ref.replace('#/$defs/', '');
+  const validate = ajv.getSchema(`${IR_SCHEMA_ID}#/$defs/${def}`);
+  if (!validate) throw new Error(`Schema is missing the ${def} definition.`);
+
+  const defs = schemaJson.$defs as Record<string, { properties?: { kind?: { const?: string } } }>;
+  const constant = defs[def]?.properties?.kind?.const;
+  // A branch naming one kind claims that kind; the branch that names none is
+  // the untyped one, and claims every kind still waiting for a contract.
+  for (const kind of constant === undefined ? pendingKinds() : [constant]) {
+    BRANCH_BY_KIND.set(kind, validate);
+  }
 }
 
 function pendingKinds(): string[] {

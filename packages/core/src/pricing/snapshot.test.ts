@@ -159,6 +159,51 @@ describe('findRate', () => {
       })
     ).toBeNull();
   });
+
+  /**
+   * The regression this lookup exists to prevent. Every Lambda rate in the
+   * snapshot carries no attributes, so an attribute-only query matches all 494
+   * of them. Answering with the first by SKU prices a function at an EC2
+   * management hour -- a figure that is wrong by four orders of magnitude and
+   * looks entirely plausible on a cost panel.
+   */
+  it('returns null when the query names nothing that tells the rates apart', () => {
+    const undiscriminated = snapshot.rates.filter(
+      (rate) => rate.serviceId === 'lambda' && rate.region === 'us-east-1'
+    );
+    expect(undiscriminated.length).toBeGreaterThan(1);
+    expect(undiscriminated.every((rate) => Object.keys(rate.attributes).length === 0)).toBe(true);
+
+    expect(
+      findRate(snapshot, { serviceId: 'lambda', region: 'us-east-1', attributes: {} })
+    ).toBeNull();
+  });
+
+  it('finds a rate by usage type where the attributes do not discriminate', () => {
+    const rate = findRate(snapshot, {
+      serviceId: 'lambda',
+      region: 'us-east-1',
+      attributes: {},
+      usageType: 'Request',
+    });
+
+    expect(rate).not.toBeNull();
+    expect(rate?.usageType).toBe('Request');
+    expect(rate?.unit).toBe('Requests');
+    // $0.20 per million requests, which is the published figure.
+    expect(rate?.usd).toBeCloseTo(0.0000002, 12);
+  });
+
+  it('returns null when a usage type names no rate', () => {
+    expect(
+      findRate(snapshot, {
+        serviceId: 'lambda',
+        region: 'us-east-1',
+        attributes: {},
+        usageType: 'Request-NoSuchArchitecture',
+      })
+    ).toBeNull();
+  });
 });
 
 describe('build', () => {
