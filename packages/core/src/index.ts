@@ -144,6 +144,63 @@ export {
 
 export { normaliseCanvas, normaliseIr } from './ir/normalise';
 
+// The typed patch: how anything other than the canvas proposes a change
+export {
+  applyPatch,
+  invertPatch,
+  IR_PATCH_VERSION,
+  IrPatchError,
+  MAX_OPS_PER_PATCH,
+  type IrParamValue,
+  type IrPatch,
+  type IrPatchOp,
+  type PatchProblem,
+  type PatchResult,
+} from './ir/patch';
+
+export { canonicalJson, irDigest, patchDigest, semanticEncoding } from './ir/digest';
+
+// The preview: what a patch does to cost, availability and the findings
+export {
+  PATCH_PREVIEW_VERSION,
+  previewContext,
+  previewPatch,
+  type AvailabilityDelta,
+  type Completeness,
+  type CostDelta,
+  type FindingDelta,
+  type PatchBaseline,
+  type PatchPreview,
+  type PreviewContext,
+  type PreviewResult,
+  type PreviewUnknown,
+  type ResourceCostDelta,
+} from './ir/preview';
+
+export {
+  baselineKey,
+  createBaselineCache,
+  createLru,
+  createPreviewCache,
+  DEFAULT_BASELINE_ENTRIES,
+  DEFAULT_PREVIEW_ENTRIES,
+  previewKey,
+  type BaselineCache,
+  type Lru,
+  type PreviewCache,
+} from './ir/preview-cache';
+
+export {
+  collectFindings,
+  findingKey,
+  ruleCoverage,
+  type NodeFinding,
+  type RuleCoverage,
+  type UnruledNode,
+} from './ir/findings';
+
+export { PRICE_SNAPSHOT_VERSION } from './resources/pricing/version';
+
 // Resource contracts: cost, latency, reliability, rules and emitters per kind
 export {
   annualDowntimeMinutes,
