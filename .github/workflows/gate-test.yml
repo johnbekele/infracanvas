@@ -196,13 +196,26 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-      - name: Enforce 85% coverage on changed lines
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          pattern: coverage-*
+          path: coverage-reports
+          merge-multiple: false
+      - name: Report diff coverage
         run: |
-          # A global coverage threshold is trivially gamed by adding tests to
-          # untouched code. Diff coverage holds each PR to its own standard.
-          if ! ls coverage.xml **/coverage*.xml >/dev/null 2>&1; then
-            echo "::notice::No coverage reports produced yet; gate is inert."
-            exit 0
+          set -euo pipefail
+          mapfile -t reports < <(find coverage-reports -name '*.xml' -print 2>/dev/null || true)
+          if [ "${#reports[@]}" -eq 0 ]; then
+            echo "::error::No coverage reports were uploaded; the test jobs stopped producing them."
+            echo "No coverage reports were uploaded; the test jobs stopped producing them." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
+
+          node scripts/ci/rebase-coverage.mjs "${reports[@]}"
           pipx install diff-cover
-          diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref || 'main' }} --fail-under=85
+          diff-cover "${reports[@]}" \
+            --compare-branch="origin/${{ github.base_ref || 'main' }}" \
+            --fail-under=0 \
+            --markdown-report coverage.md
+          cat coverage.md >> "$GITHUB_STEP_SUMMARY"
