@@ -35,6 +35,9 @@ lerna-debug.log*
 #   - settings.local.json is per-machine tool permissions.
 .claude/worktrees/
 .claude/settings.local.json
+#   - The agent loop writes its live state here: claims, per-run JSONL logs, and
+#     the .agent-loop/stop kill switch. It is runtime bookkeeping, not source.
+.agent-loop/
 *.suo
 *.ntvs*
 *.njsproj

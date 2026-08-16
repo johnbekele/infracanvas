@@ -1,0 +1,27 @@
+{
+  "name": "@infracanvas/agent-loop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Unattended orchestrator that dispatches Claude Code, Codex and Cursor at the issue queue and merges what passes the gates",
+  "main": "src/cli.ts",
+  "scripts": {
+    "loop": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnbekele/infracanvas.git",
+    "directory": "packages/agent-loop"
+  },
+  "author": "johnbekele",
+  "license": "MIT"
+}

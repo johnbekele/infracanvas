@@ -1,189 +1,186 @@
 # Running several agents at once
 
-`AGENTS.md` describes the loop one agent runs. This describes running three of them — Claude Code,
-Codex and Cursor — against the same repository without them undoing each other's work.
+`AGENTS.md` describes the loop one agent runs by hand. This describes running three of them — Claude
+Code, Codex and Cursor — against the same repository unattended, with a supervisor that picks work,
+dispatches an agent at it, verifies the result, and merges what passes.
 
-The queue, the contracts and the pass/fail verdict are already machine-readable: `docs/issues/`
-holds the specs, `ROADMAP.md` holds the order, and the ten gates hold the verdict. Orchestration is
-therefore not about telling agents what to do. It is about **assigning ownership** so two of them
-never edit the same file, and **making the claim visible** so two of them never take the same issue.
+The queue, the contracts and the pass/fail verdict are already machine-readable: `docs/issues/` holds
+the specs, the ten gates hold the verdict. The orchestrator adds the part that was still manual —
+choosing what is safe to start, giving each agent an isolated tree, and deciding when a green pull
+request may merge — and it does all of that in `packages/agent-loop`.
 
-## One instruction file
+## The one rule that makes it safe
 
-All three tools read the same rules:
+**Agents never run git, `gh`, or a merge. They only edit files inside their own worktree.** Every
+irreversible action — the claim, the commit, the push, the pull request, the merge — is taken by
+deterministic orchestrator code in [`packages/agent-loop`](../packages/agent-loop). A model that goes
+wrong can waste a worktree; it cannot merge itself, push to `main`, or corrupt the queue's bookkeeping.
 
-| Tool        | Reads                                          |
-| ----------- | ---------------------------------------------- |
-| Codex CLI   | `AGENTS.md`                                    |
-| Cursor      | `AGENTS.md` and `.cursor/rules/*.mdc`          |
-| Claude Code | `CLAUDE.md`, which is a symlink to `AGENTS.md` |
+The prompt each agent receives says this in as many words, and the loop enforces it structurally: the
+agent's working directory is a linked worktree, and nothing in the loop hands it a GitHub token.
 
-So `AGENTS.md` is the single source of truth. Put a rule there unless it can only be expressed as a
-glob-scoped Cursor rule, in which case it goes in `.cursor/rules/` and applies to one directory.
+## Starting it
 
-Do not let `CLAUDE.md` become a real file again. Two files drift, and the day they disagree is the
-day an agent commits with the wrong identity because it happened to read the stale one.
+```bash
+pnpm loop                # run continuously until the queue empties or the kill switch appears
+pnpm loop --once         # a single scheduling pass, then exit
+pnpm loop --lane B       # restrict to one lane, for a controlled run
+pnpm loop --no-merge     # get pull requests green and mergeable, but stop short of merging
+pnpm loop --status       # print the current run snapshots
+pnpm loop --explain 202  # say whether an issue is eligible, and if not, why
+```
+
+The loop must run **outside any sandbox**: `gh` reads its token from the OS keyring, which a sandboxed
+process cannot reach (see `AGENTS.md`).
 
 ## Lanes: ownership by path, not by feature
 
-The rule that makes parallelism safe: **if two tasks touch the same file, they are not independent
-and must be serialized.** Git will not warn you — two worktrees editing one file on two branches is
-silent until merge.
+The rule that makes parallelism safe: **if two tasks touch the same file, they are not independent and
+must be serialised.** Git gives no warning — two worktrees editing one file on two branches is silent
+until merge.
 
-So lanes are drawn by path. `docs/issues/ROADMAP.md` already splits Phase 0 into three tracks it
-describes as parallel-safe, and they map almost exactly onto the three tools' strengths:
+A lane is a tool, and which tool takes an issue is decided by its `area:` labels:
 
-| Lane | Tool            | Track                                 | Owns                                                 |
-| ---- | --------------- | ------------------------------------- | ---------------------------------------------------- |
-| A    | **Claude Code** | Tenancy and schema — deep, tier 1     | `db/`, `apps/api/src/lib/db/`, `packages/ir-schema/` |
-| B    | **Codex**       | The gates — bounded and deterministic | `.github/`, `scripts/ci/`, `scripts/gh/`             |
-| C    | **Cursor**      | Verified defects and the web surface  | `apps/web/`, `packages/core/`                        |
+| Lane | Tool            | Areas it takes                                    | Owns                                                        |
+| ---- | --------------- | ------------------------------------------------- | ----------------------------------------------------------- |
+| A    | **Claude Code** | `area:db`, `area:ir`                              | `db/`, `apps/api/src/lib/db/`, `packages/ir-schema/`        |
+| B    | **Codex**       | `area:ci`, `area:infra`                           | `.github/`, `scripts/ci/`, `scripts/gh/`                    |
+| C    | **Cursor**      | `area:web`, `area:api`, `area:rust`, `area:brain` | `apps/web/`, `packages/core/`, `crates/`, `services/brain/` |
 
-Current Phase 0 and Phase 1 assignment:
+An issue that spans lanes (for example `area:api,area:db`) is taken by the higher-precedence lane —
+B, then A, then C — so the tool that owns the more sensitive surface leads and the others stay clear.
 
-| Lane | Issues                                                                                                                                                                                                            |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A    | [#190] organizations and workspaces, [#186] token revocation, [#187] no long-lived AWS keys, [#188] cross-origin cookie and CSRF                                                                                  |
-| B    | [#177] remove superseded plans, [#178]–[#180] the coverage sequence, [#181] wasm bundle budget, [#182] tier-1 security review, [#183] scheduled gates, [#184] retire the Pages deploy, [#185] extend epic seeding |
-| C    | [#189] branch endpoint, [#191] IR validator dispatch, [#192] price lookup ambiguity                                                                                                                               |
+Whether it is _safe_ to start is a separate question from which lane owns it, and the loop computes it
+rather than reading it from a table. A hand-maintained assignment goes stale the moment the backlog
+moves: earlier in this project one dispatched an agent onto three issues an open pull request had
+already implemented, a guaranteed conflict. The scheduler instead parses each spec's `### Files`
+section — which Gate 0 forces every issue to fill in — and refuses to start an issue whose declared
+paths overlap one already running.
 
-Three rules keep the lanes honest:
+## What the loop will start
 
-- **A file has exactly one owner at a time.** If your issue needs a file in someone else's lane,
-  stop and say so rather than editing it. The fix is either to sequence the two issues or to move the
-  file's ownership for the duration.
-- **`AGENTS.md`, `package.json`, `.gitignore` and `pnpm-lock.yaml` are shared.** Everyone touches
-  them eventually, so touch them in the smallest possible commit and rebase often.
-- **Lane B outranks the others on `.github/` and `scripts/ci/`.** It is rewriting the gates that
-  judge everyone else, so its changes land first and the others rebase onto them.
+An issue is eligible only when every one of these holds. They are checked cheapest-first, and the
+first failure is what `--explain` reports:
 
-## Claiming an issue
+1. labelled `agent-ready`, and not `status:in-progress` or `status:blocked`;
+2. an `area:` label maps it to a lane;
+3. every `#N` in its `### Dependencies` section is **closed**;
+4. no lane already holds a local claim on it;
+5. **no open pull request already says `Closes #N`** for it;
+6. its declared paths do not overlap any running issue's.
 
-Three agents pulling one queue will grab the same issue unless the claim is visible in the queue
-itself. The `status:in-progress` label already exists for this and is currently unused:
+Rule 5 is the collision guard. Rule 3 means `agent-ready` is necessary but not sufficient: it says the
+spec is complete, not that the work is unblocked.
 
-```bash
-# before starting
-gh issue edit <N> --add-label status:in-progress --add-assignee johnbekele
+## The per-issue state machine
 
-# on finishing, or on abandoning
-gh issue edit <N> --remove-label status:in-progress
+```
+claim -> worktree -> implement -> verify -> deliver -> watch CI -> merge -> cleanup
+                          ^          |                     |
+                          +--repair--+ (<=3)               +--repair--+ (<=2)
 ```
 
-Pick with the claim in mind:
+For each issue the loop claims it (label plus a local lockfile), creates a worktree, and prompts the
+lane's agent with the issue body verbatim. It then runs `pnpm verify` **itself** — the agent's word
+that it is done does not count — and feeds any failure back for another pass, up to the local repair
+budget. Once green, it ticks the pull request checklist from facts it can prove (the changed paths
+against the declared paths, a secret scan of the diff, the commit log for assistant trailers), commits
+under the personal identity, pushes, and opens a pull request whose body is built to satisfy Gate 7 on
+the first try. It watches CI, repairs within budget, and merges only when the predicate in
+[`merge.ts`](../packages/agent-loop/src/merge.ts) is satisfied.
+
+An issue that exhausts a budget, produces no changes, reports itself blocked, or trips the identity or
+secret guard is commented on, labelled `status:blocked`, released, and left for a human. The claim and
+the worktree are cleaned up on every exit path.
+
+## Merge policy
+
+The loop is configured to **merge every tier, including tier 1, unattended**, because the repository
+ruleset requires no approving review and the gates are trusted to be the verdict. It merges only when a
+fresh read shows the pull request mergeable, every required check green, and no unresolved review
+thread — and only pull requests it opened itself, labelled `agent-loop`. The **pre-existing open pull
+requests are never touched**; draining those is a separate, human decision. A tier-1 merge is recorded
+in the run log with a note that it merged unreviewed, so there is an audit trail.
+
+To take a more conservative stance, run with `--no-merge` (green and mergeable, but the merge click is
+left to you) or change `mergeAllTiers` in [`config.ts`](../packages/agent-loop/src/config.ts).
+
+## Budgets and the kill switch
+
+Defaults live in [`config.ts`](../packages/agent-loop/src/config.ts): 45 minutes per agent pass, three
+local repair attempts, two CI repair attempts, and three concurrent issues. The point of the budgets
+is that a stuck lane holds a claim and starves the queue, so every phase has a deadline after which the
+loop moves on.
+
+Create `.agent-loop/stop` to halt the loop between transitions:
 
 ```bash
-gh issue list --repo johnbekele/infracanvas \
-  --label agent-ready --label 'epic:0-delivery' \
-  --search '-label:status:in-progress' --state open
+touch .agent-loop/stop     # stop after the current transitions finish
+rm .agent-loop/stop        # allow it to resume
 ```
-
-An issue is startable only when every issue in its `Dependencies` section is **closed** and its phase
-predecessor is complete. The `agent-ready` label means the spec is complete, not that the work is
-unblocked — `ROADMAP.md` phase order decides that, as it says itself.
 
 ## Worktrees
 
-One worktree per agent per issue. Never two agents in one working directory, and never an agent on
-`main`.
+One worktree per issue, created by [`scripts/agent/new-worktree.sh`](../scripts/agent/new-worktree.sh),
+which the loop wraps rather than reimplements — it already gets the per-tree API port and the
+commit-identity guard right. Trees live in a sibling `<repo>-wt/` directory, never under the repository
+root, because a nested tree is a second checkout that `git add -A` would commit into the first.
 
-```bash
-scripts/agent/new-worktree.sh tenancy feat/190-organizations-and-workspaces
-```
+**Cap concurrency at three to five.** The limit is review bandwidth, not CPU: twenty trees is not five
+times the throughput of four, it is four times the merge conflicts.
 
-That script creates `../infracanvas-wt/<slug>` from `origin/main`, verifies the commit identity,
-gives the tree its own API port, and installs dependencies.
+## Two runtime hazards the loop handles
 
-**Trees live outside the repository root.** A tree nested under the root appears as hundreds of
-untracked files including a nested `.git`, and a single `git add -A` commits an entire second
-checkout into the first. Claude Code's `--worktree` flag puts trees in `.claude/worktrees/`, which is
-gitignored for exactly this reason; the sibling directory is preferred.
+- **The integration suites share one Postgres.** `pnpm verify --integration` is serialised across
+  lanes by a file mutex ([`mutex.ts`](../packages/agent-loop/src/mutex.ts)); without it two lanes
+  truncate each other's tables and the failure reads as data corruption rather than a scheduling
+  mistake. Integration is off unless `DATABASE_URL` is set.
+- **`apps/web/vite.config.ts` hardcodes its proxy target to `localhost:3001`.** So a web dev server in
+  any tree calls the API on 3001 regardless of which tree started it. The loop never starts a dev
+  server — it runs tests, not servers — but if you run one by hand, run only one at a time.
 
-**Cap concurrency at three to five.** The limit is review bandwidth, not CPU: an agent's output is
-only useful once you have read it. Twenty trees is not five times the throughput of four, it is four
-times the merge conflicts.
+## The run log
 
-**Remove a tree once its pull request merges.** Because pull requests here are squash-merged, the
-branch never becomes an ancestor of `main`, so `git branch --merged` will not list it and stale trees
-accumulate invisibly. Check the pull request state instead:
+Every transition appends JSONL to `.agent-loop/runs/<issue>.jsonl` with a monotonic cursor, alongside
+a `<issue>.status.json` snapshot. This is deliberately the same shape as the `agent_runs` /
+`agent_run_events` contract in [#198](https://github.com/johnbekele/infracanvas/issues/198), so when
+epic 18 lands the reporter ([#201](https://github.com/johnbekele/infracanvas/issues/201)) has a real
+producer to forward and the lane board ([#200](https://github.com/johnbekele/infracanvas/issues/200))
+has something to draw.
 
-```bash
-gh pr list --head "$(git branch --show-current)" --state all --json number,state
-git -C <main-checkout> worktree remove ../infracanvas-wt/<slug>
-git -C <main-checkout> worktree prune
-```
+## Before the first unattended run
 
-### Runtime isolation, and one sharp edge
+- Install and authenticate the Cursor CLI, which lane C uses and which is not installed by default:
 
-Worktrees isolate files, not runtimes. The bootstrap script gives each tree its own `PORT` for the
-API, but `apps/web/vite.config.ts` hardcodes its proxy target:
+  ```bash
+  curl https://cursor.com/install -fsS | bash
+  cursor-agent login
+  ```
 
-```ts
-proxy: { '/api': { target: 'http://localhost:3001' } }
-```
+  Claude Code and Codex are already configured for the LiteLLM proxy.
 
-So a web dev server in any tree calls the API on 3001 regardless of which tree started it. Until that
-target reads an environment variable, **run only one web dev server at a time.** Two agents each
-running `pnpm dev` will silently share one API and one database, and the resulting bug looks like
-data corruption rather than a configuration mistake.
+- Start Postgres and export `DATABASE_URL` if you want the integration suites to run rather than skip:
 
-## Verifying before pushing
+  ```bash
+  pnpm db:up
+  ```
 
-Every lane runs the same command, and it is the same thing CI runs:
+- Do a controlled dry run before switching merging on:
 
-```bash
-pnpm verify              # format, lint, typecheck, forbidden patterns, unit tests
-pnpm verify --fast       # static only, for a tight edit loop
-pnpm verify --integration # adds the Postgres-backed suites
-```
+  ```bash
+  pnpm loop --once --lane B --no-merge
+  ```
 
-A local pass is not a guarantee — Gates 4, 5 and 6 (type drift, dependency and licence scanning,
-benchmarks and bundle budget) only run in CI. It does mean a green pull request on the first attempt
-is the normal case rather than the lucky one.
-
-`git rerere` is enabled in this repository. When three lanes rebase onto a moving `main`, the same
-conflict appears repeatedly; rerere records how you resolved it the first time and replays it.
-
-## Merge order
-
-Land in dependency order, smallest first:
-
-1. **Lane B's gate repairs**, because everything else is judged by them. Within lane B the coverage
-   sequence [#178] → [#179] → [#180] is strictly ordered: it exists as three issues precisely so that
-   switching on a never-enforced required check does not turn every open pull request red at once.
-2. **Lane C's defect fixes**, which are small, self-contained, and unblock cost work.
-3. **Lane A's tenancy change**, last of the three, because it touches every table and every query and
-   rebasing it repeatedly is the expensive option.
-
-Before dispatching two long-running agents, check whether their changes would collide:
-
-```bash
-git merge-tree "$(git merge-base main lane-a)" main lane-a
-```
+  Read the resulting pull request end to end, then drop `--no-merge`.
 
 ## When a lane blocks
 
-- **Missing contract.** The issue is not ready. Fix the spec file in `docs/issues/`, reseed with
-  `pnpm gh:issues`, and let Gate 0 relabel it. Do not invent the interface.
-- **Needs a file another lane owns.** Say so and stop. Sequence the issues, do not race.
-- **A gate looks wrong.** Change the gate in its own pull request. Never `--no-verify`, never an
-  admin merge.
-- **Phase not finished.** Do not start the next phase early. Each phase removes a class of blocker
-  the next would otherwise trip over.
+The loop already handles the common cases by commenting and labelling `status:blocked`. When you pick
+one up:
 
-[#177]: https://github.com/johnbekele/infracanvas/issues/177
-[#178]: https://github.com/johnbekele/infracanvas/issues/178
-[#179]: https://github.com/johnbekele/infracanvas/issues/179
-[#180]: https://github.com/johnbekele/infracanvas/issues/180
-[#181]: https://github.com/johnbekele/infracanvas/issues/181
-[#182]: https://github.com/johnbekele/infracanvas/issues/182
-[#183]: https://github.com/johnbekele/infracanvas/issues/183
-[#184]: https://github.com/johnbekele/infracanvas/issues/184
-[#185]: https://github.com/johnbekele/infracanvas/issues/185
-[#186]: https://github.com/johnbekele/infracanvas/issues/186
-[#187]: https://github.com/johnbekele/infracanvas/issues/187
-[#188]: https://github.com/johnbekele/infracanvas/issues/188
-[#189]: https://github.com/johnbekele/infracanvas/issues/189
-[#190]: https://github.com/johnbekele/infracanvas/issues/190
-[#191]: https://github.com/johnbekele/infracanvas/issues/191
-[#192]: https://github.com/johnbekele/infracanvas/issues/192
+- **Missing contract.** The spec is not ready. Fix the file in `docs/issues/`, reseed with
+  `pnpm gh:issues`, and let Gate 0 relabel it. Do not invent the interface.
+- **A gate looks wrong.** Change the gate in its own pull request. Never `--no-verify`, never an admin
+  merge.
+- **Phase not finished.** Dependencies enforce this: an issue whose predecessor is open is not
+  eligible, so it will not be started early.
