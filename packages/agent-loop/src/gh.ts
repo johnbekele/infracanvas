@@ -119,6 +119,51 @@ export class GitHub {
     }));
   }
 
+  /**
+   * Open pull requests with the fields the merge train selects on: base branch,
+   * draft flag, and labels. Separate from {@link listOpenPullRequests}, which the
+   * issue loop uses and which carries the body for its dependency parsing.
+   */
+  async listOpenPullRequestsDetailed(): Promise<
+    {
+      number: number;
+      title: string;
+      headRefName: string;
+      baseRefName: string;
+      isDraft: boolean;
+      labels: string[];
+    }[]
+  > {
+    type Raw = {
+      number: number;
+      title: string;
+      headRefName: string;
+      baseRefName: string;
+      isDraft: boolean;
+      labels: { name: string }[];
+    };
+    const raw = await this.json<Raw[]>([
+      'pr',
+      'list',
+      '--repo',
+      this.repo,
+      '--state',
+      'open',
+      '--limit',
+      '200',
+      '--json',
+      'number,title,headRefName,baseRefName,isDraft,labels',
+    ]);
+    return raw.map((r) => ({
+      number: r.number,
+      title: r.title,
+      headRefName: r.headRefName,
+      baseRefName: r.baseRefName,
+      isDraft: r.isDraft,
+      labels: r.labels.map((l) => l.name),
+    }));
+  }
+
   async issueBody(issue: number): Promise<string> {
     const raw = await this.json<{ body: string }>([
       'issue',

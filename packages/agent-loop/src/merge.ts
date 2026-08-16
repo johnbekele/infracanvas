@@ -18,8 +18,12 @@ export interface MergeInput {
   checks: readonly CheckRun[];
   /** Count of review threads still open; the ruleset requires them resolved. */
   unresolvedThreads: number;
-  /** Only pull requests the loop itself opened are ever merged. */
-  isAgentLoop: boolean;
+  /**
+   * Whether this pull request is cleared to merge at all. The issue loop only
+   * authorises the pull requests it opened itself; the merge train authorises the
+   * explicit set the operator chose to drain. Everything else is left for a human.
+   */
+  authorized: boolean;
   /** A draft is never merged. */
   isDraft: boolean;
 }
@@ -34,8 +38,8 @@ export interface MergeDecision {
  * itself, so the run log records why a pull request waited rather than merged.
  */
 export function mergeDecision(input: MergeInput): MergeDecision {
-  if (!input.isAgentLoop) {
-    return { merge: false, reason: 'not an agent-loop pull request; left for a human' };
+  if (!input.authorized) {
+    return { merge: false, reason: 'not authorised to merge; left for a human' };
   }
   if (input.isDraft) {
     return { merge: false, reason: 'pull request is a draft' };
