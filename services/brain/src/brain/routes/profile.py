@@ -13,8 +13,10 @@ from brain.db import open_pool
 from brain.llm.credentials import load_default_credential
 from brain.llm.providers import build_model
 from brain.profile.agent import ReasoningSettings, build_profile
-from brain.profile.models import AppProfileInput, CitedAppProfile
+from brain.profile.judge import Judge
+from brain.profile.models import AppProfileInput, VerifiedAppProfile
 from brain.profile.tools import ProfileDeps
+from brain.profile.verifier import PoolSpanReader, UnsupportedClaimError, verify_profile
 from brain.settings import load_settings
 
 router = APIRouter()
@@ -30,7 +32,7 @@ class ProfileRequest(BaseModel):
 class ProfileResponse(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
-    profile: CitedAppProfile
+    profile: VerifiedAppProfile
 
 
 class UnusableProfileError(ValueError):
@@ -133,4 +135,19 @@ async def create_profile(
             detail="The agent produced nothing usable",
         )
 
-    return ProfileResponse(profile=profile)
+    reader = PoolSpanReader(
+        repository_id=body.repository_id,
+        run_id=body.run_id,
+        pool=pool,
+    )
+    judge = Judge(model)
+
+    try:
+        verified = await verify_profile(profile, reader, judge)
+    except UnsupportedClaimError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+
+    return ProfileResponse(profile=verified)
