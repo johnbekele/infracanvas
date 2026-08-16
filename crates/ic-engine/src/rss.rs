@@ -26,7 +26,7 @@ fn peak_rss_linux() -> u64 {
         let Some(rest) = line.strip_prefix("VmHWM:") else {
             continue;
         };
-        let digits: String = rest.chars().filter(|c| c.is_ascii_digit()).collect();
+        let digits: String = rest.chars().filter(char::is_ascii_digit).collect();
         if let Ok(kb) = digits.parse::<u64>() {
             return kb.saturating_mul(1024);
         }
