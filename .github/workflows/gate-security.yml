@@ -109,3 +109,13 @@ jobs:
         with:
           format: cyclonedx-json
           artifact-name: infracanvas-sbom.cdx.json
+
+  no-egress:
+    name: Egress allowlist and no telemetry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Outbound host allowlist
+        run: node scripts/ci/check-egress-allowlist.mjs
+      - name: No analytics or telemetry in the lockfile
+        run: node scripts/ci/check-no-telemetry.mjs
