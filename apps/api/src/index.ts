@@ -4,11 +4,13 @@ import { corsMiddleware } from './middleware/cors.js';
 import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
 import experimentRoutes from './routes/experiments/index.js';
+import agentLoopRoutes from './routes/agent-loop/index.js';
 import { mountInternalRoutes } from './routes/internal/index.js';
 import repositoryRoutes from './routes/repositories/index.js';
 import settingsRoutes from './routes/settings/index.js';
 import { closePool, ping } from './lib/db/client.js';
 import { startWorker, stopWorker } from './lib/jobs/runtime.js';
+import { settleAbandonedTurns } from './lib/copilot/recovery.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
 import { logError } from './lib/log.js';
 import { env } from './lib/env.js';
@@ -64,6 +66,7 @@ app.use('/github', githubRoutes);
 app.use('/repositories', repositoryRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/experiments', experimentRoutes);
+app.use('/agent-loop', agentLoopRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -82,6 +85,11 @@ const server = app.listen(PORT, () => {
 });
 
 startWorker();
+
+// A turn is streamed by the process that started it, so any turn still marked
+// live belongs to a process that is gone. Closing them here is what keeps a
+// restart from leaving conversations that spin forever and refuse the next turn.
+void settleAbandonedTurns();
 
 // Graceful shutdown. The worker is stopped before the pool closes, because
 // handing a job back to the queue is a database write: closing the pool first

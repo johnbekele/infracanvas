@@ -30,6 +30,14 @@ const SettingsPage = lazy(() =>
 );
 
 /**
+ * The agent-loop board is an operator tool, reached deliberately and never on a
+ * cold start, so it is kept out of the initial payload like the other lazy pages.
+ */
+const AgentLoopPage = lazy(() =>
+  import('@/pages/AgentLoopPage').then((module) => ({ default: module.AgentLoopPage }))
+);
+
+/**
  * The dashboard pulls in all four prediction models and the chart components,
  * and it is reached from the canvas rather than from a cold start.
  */
@@ -89,6 +97,14 @@ function App() {
           element={
             <Suspense fallback={<Loading what="settings" />}>
               <SettingsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/agent-loop"
+          element={
+            <Suspense fallback={<Loading what="the agents" />}>
+              <AgentLoopPage />
             </Suspense>
           }
         />
