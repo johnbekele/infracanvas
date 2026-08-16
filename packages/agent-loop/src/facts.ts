@@ -7,15 +7,35 @@
 
 import { pathsCollide } from './conflicts';
 
-/** Files every lane touches eventually; a change to one is not a scope violation. */
-const SHARED_FILES = [
+/** Root files every lane touches eventually; a change to one is not a scope violation. */
+const SHARED_FILES = ['.gitignore', 'AGENTS.md', 'CLAUDE.md'];
+
+/**
+ * Dependency manifests and lockfiles, matched by name at any depth: adding a
+ * library is a normal part of implementing an issue, and in a monorepo the
+ * manifest lives next to the package (`apps/api/package.json`), not only at the
+ * root. Editing one to declare a needed dependency is never a scope violation.
+ */
+const DEPENDENCY_MANIFESTS = new Set([
   'package.json',
   'pnpm-lock.yaml',
   'pnpm-workspace.yaml',
-  '.gitignore',
-  'AGENTS.md',
-  'CLAUDE.md',
-];
+  'Cargo.toml',
+  'Cargo.lock',
+  'pyproject.toml',
+  'uv.lock',
+  'requirements.txt',
+]);
+
+function baseName(path: string): string {
+  const slash = path.lastIndexOf('/');
+  return slash < 0 ? path : path.slice(slash + 1);
+}
+
+/** A file any issue may edit without declaring it: shared root files and dependency manifests. */
+export function isSharedFile(path: string): boolean {
+  return SHARED_FILES.includes(path) || DEPENDENCY_MANIFESTS.has(baseName(path));
+}
 
 /**
  * Did the branch change only files the issue declared, plus the shared files
@@ -27,7 +47,7 @@ export function scopeRespected(
   declaredPaths: readonly string[]
 ): boolean {
   return changedPaths.every((changed) => {
-    if (SHARED_FILES.includes(changed)) return true;
+    if (isSharedFile(changed)) return true;
     return declaredPaths.some((declared) => pathsCollide(changed, declared));
   });
 }

@@ -34,6 +34,7 @@ function prohibitions(boundaryPaths: readonly string[]): string {
 - Edit only files inside this worktree, and only the paths this issue's Files section declares:
 ${paths}
   If finishing the work needs a path this list does not name, stop and report it in the \`blocked\` field rather than editing outside the list.
+- Adding a dependency is in scope by default: you may edit the manifest and lockfile it needs — package.json and pnpm-lock.yaml, or Cargo.toml/Cargo.lock or pyproject.toml/uv.lock for the language you are working in — even when the Files section omits them. Make the smallest change that adds what you need, and never bump unrelated packages.
 - Do not touch \`.github/\`, the gates, or the CI configuration unless the issue's Files section names them.
 - Do not add an AI or assistant co-author trailer anywhere.
 - Follow AGENTS.md. Write the tests the "Required Tests" section names. Respect "Out of Scope".
