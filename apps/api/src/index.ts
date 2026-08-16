@@ -6,6 +6,7 @@ import githubRoutes from './routes/github/index.js';
 import repositoryRoutes from './routes/repositories/index.js';
 import settingsRoutes from './routes/settings/index.js';
 import { closePool, ping } from './lib/db/client.js';
+import { startWorker, stopWorker } from './lib/jobs/runtime.js';
 import { TRUST_PROXY_HOPS } from './middleware/rate-limit.js';
 import { logError } from './lib/log.js';
 import { env } from './lib/env.js';
@@ -66,10 +67,15 @@ const server = app.listen(PORT, () => {
   console.log(`InfraCanvas API server running on port ${PORT}`);
 });
 
-// Graceful shutdown
+startWorker();
+
+// Graceful shutdown. The worker is stopped before the pool closes, because
+// handing a job back to the queue is a database write: closing the pool first
+// would leave every in-flight job stranded until its lease lapsed.
 const shutdown = async () => {
   console.log('Shutting down gracefully...');
   server.close();
+  await stopWorker();
   await closePool();
   process.exit(0);
 };

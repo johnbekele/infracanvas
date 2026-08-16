@@ -55,14 +55,29 @@ interface FetchOptions {
   token: string;
   owner: string;
   repo: string;
+  /**
+   * Abort an in-flight request.
+   *
+   * A repository with 120 manifests is 120 requests, and when nobody is waiting
+   * for the answer any more -- the worker is shutting down, the job lost its
+   * lease -- finishing them spends GitHub's rate limit on a result that will be
+   * discarded.
+   */
+  signal?: AbortSignal;
 }
 
-async function githubRequest<T>(url: string, token: string, what: string): Promise<T> {
+async function githubRequest<T>(
+  url: string,
+  token: string,
+  what: string,
+  signal?: AbortSignal
+): Promise<T> {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
     },
+    signal,
   });
 
   if (!response.ok) {
@@ -77,12 +92,13 @@ async function githubRequest<T>(url: string, token: string, what: string): Promi
 
 /** Resolve a ref to the commit it points at, so the profile records exact code. */
 export async function resolveCommit(options: FetchOptions & { ref: string }): Promise<string> {
-  const { token, owner, repo, ref } = options;
+  const { token, owner, repo, ref, signal } = options;
 
   const commit = await githubRequest<{ sha: string }>(
     `${GITHUB_API}/repos/${owner}/${repo}/commits/${encodeBranch(ref)}`,
     token,
-    `the commit for ${ref}`
+    `the commit for ${ref}`,
+    signal
   );
 
   return commit.sha;
@@ -91,7 +107,7 @@ export async function resolveCommit(options: FetchOptions & { ref: string }): Pr
 export async function fetchTree(
   options: FetchOptions & { commitSha: string }
 ): Promise<RepositoryTree> {
-  const { token, owner, repo, commitSha } = options;
+  const { token, owner, repo, commitSha, signal } = options;
 
   const tree = await githubRequest<{
     tree: TreeEntry[];
@@ -99,7 +115,8 @@ export async function fetchTree(
   }>(
     `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
     token,
-    'the file tree'
+    'the file tree',
+    signal
   );
 
   return { entries: tree.tree ?? [], truncated: tree.truncated === true };
@@ -107,12 +124,13 @@ export async function fetchTree(
 
 /** Bytes of code per language, as GitHub classifies them. */
 export async function fetchLanguages(options: FetchOptions): Promise<Record<string, number>> {
-  const { token, owner, repo } = options;
+  const { token, owner, repo, signal } = options;
 
   return githubRequest<Record<string, number>>(
     `${GITHUB_API}/repos/${owner}/${repo}/languages`,
     token,
-    'the language breakdown'
+    'the language breakdown',
+    signal
   );
 }
 
@@ -123,12 +141,13 @@ export async function fetchLanguages(options: FetchOptions): Promise<Record<stri
  * was resolved, and cannot drift if the branch moves mid-analysis.
  */
 export async function fetchBlobText(options: FetchOptions & { sha: string }): Promise<string> {
-  const { token, owner, repo, sha } = options;
+  const { token, owner, repo, sha, signal } = options;
 
   const blob = await githubRequest<{ content: string; encoding: string }>(
     `${GITHUB_API}/repos/${owner}/${repo}/git/blobs/${sha}`,
     token,
-    'a file'
+    'a file',
+    signal
   );
 
   if (blob.encoding !== 'base64') {
