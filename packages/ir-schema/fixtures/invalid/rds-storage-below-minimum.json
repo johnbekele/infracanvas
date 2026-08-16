@@ -1,0 +1,19 @@
+{
+  "irVersion": "1.1.0",
+  "name": "Database asking for less storage than RDS will allocate",
+  "provider": "aws",
+  "region": "eu-west-1",
+  "nodes": [
+    {
+      "id": "rds-primary",
+      "kind": "rds_instance",
+      "name": "Primary database",
+      "params": {
+        "engine": "postgres",
+        "instanceClass": "db.t3.micro",
+        "allocatedStorageGb": 10
+      }
+    }
+  ],
+  "edges": []
+}

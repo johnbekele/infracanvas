@@ -24,6 +24,37 @@ uv run --directory services/brain uvicorn brain.app:create_app --factory --reloa
 matters when every pull request pays that cost, and `uv.lock` pins hashes so CI installs exactly
 what you tested against.
 
+## Engine parity test
+
+The engine parity test compares the `ic_engine` Python extension against the `ic-engine` CLI. It
+skips when the extension has not been built, so the regular Python suite still works without a Rust
+toolchain.
+
+```bash
+maturin build -m crates/ic-engine/Cargo.toml --release
+uv pip install --directory services/brain "$PWD"/target/wheels/ic_engine-*.whl
+cargo build --bin ic-engine --release
+PATH="$PWD/target/release:$PATH" uv run --directory services/brain pytest tests/test_engine_parity.py -v
+```
+
+## Local Ollama (no API key)
+
+A contributor with no hosted key, and CI with no secrets, can exercise the whole agent path
+against a local Ollama. The provider registry treats a missing key as expected for Ollama and
+reads `OLLAMA_BASE_URL` (default `http://localhost:11434/v1`).
+
+```bash
+# Install and start Ollama, then pull a model once:
+#   ollama pull llama3.3
+export OLLAMA_BASE_URL=http://localhost:11434/v1
+# ENCRYPTION_KEY is only needed when reading encrypted rows from llm_credentials.
+# Pure Ollama use needs neither ENCRYPTION_KEY nor a credentials row.
+uv run --directory services/brain uvicorn brain.app:create_app --factory --reload
+```
+
+Point the default credential at provider `ollama` (or call `build_model` with an ollama
+`ProviderCredential` and no `api_key`) and the service talks to the local daemon.
+
 ## Checks
 
 These are the same commands the gates run, so a clean run here means a clean run there.

@@ -177,19 +177,42 @@ function bucketsOf(snapshot: PriceSnapshot): Map<string, PriceRate[]> {
   return buckets;
 }
 
-/** Exact lookup. Returns null rather than the nearest match, because a wrong
- *  price that looks right is worse than a missing one. */
+/**
+ * Exact lookup. Returns null rather than the nearest match, because a wrong
+ * price that looks right is worse than a missing one.
+ *
+ * A query must identify exactly one rate. Matching several is a missing
+ * discriminator rather than a result, so it returns null for the same reason
+ * matching none does: the caller asked a question this snapshot cannot answer.
+ *
+ * That rule is what makes the promise above true. Attribute matching is
+ * `every`, and `every` over an empty set is true, so a query naming no
+ * attributes used to match the whole bucket and return its first entry. Most
+ * services do not discriminate on attributes at all -- every Lambda, ALB and
+ * Fargate rate in the snapshot carries no attributes and is told apart by
+ * `usageType` -- so pricing a Lambda function the obvious way returned the
+ * first Lambda rate by SKU, which is an EC2 management hour.
+ */
 export function findRate(
   snapshot: PriceSnapshot,
-  query: { serviceId: string; region: string; attributes: Record<string, string> }
+  query: {
+    serviceId: string;
+    region: string;
+    attributes: Record<string, string>;
+    /** The discriminator for services whose rates share their attributes. */
+    usageType?: string;
+  }
 ): PriceRate | null {
   const bucket = bucketsOf(snapshot).get(`${query.serviceId}\u0000${query.region}`);
   if (bucket === undefined) return null;
 
   const wanted = Object.entries(query.attributes);
-  // Rates arrive sorted, so the first match is the same one on every run.
-  for (const rate of bucket) {
-    if (wanted.every(([name, value]) => rate.attributes[name] === value)) return rate;
-  }
-  return null;
+  const matches = bucket.filter(
+    (rate) =>
+      (query.usageType === undefined || rate.usageType === query.usageType) &&
+      wanted.every(([name, value]) => rate.attributes[name] === value)
+  );
+
+  const [only] = matches;
+  return matches.length === 1 && only !== undefined ? only : null;
 }

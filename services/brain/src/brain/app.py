@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from brain import __version__
 from brain.db import close_pool
 from brain.health import router as health_router
+from brain.routes.profile import router as profile_router
 
 
 @asynccontextmanager
@@ -31,4 +32,5 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(health_router)
+    app.include_router(profile_router)
     return app

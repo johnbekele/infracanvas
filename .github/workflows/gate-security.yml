@@ -66,7 +66,13 @@ jobs:
         run: |
           if [ -f Cargo.toml ]; then
             cargo install cargo-audit --locked
-            cargo audit --deny warnings
+            # --deny warnings promotes unmaintained/yanked advisories to failures,
+            # not just vulnerabilities. RUSTSEC-2024-0436 is one such warning: the
+            # `paste` crate is archived, not vulnerable, and reaches us only as a
+            # transitive dependency of tree-sitter, which we cannot drop. Ignore
+            # this single advisory by id so a genuine vulnerability still fails the
+            # gate; revisit if a maintained replacement propagates upstream.
+            cargo audit --deny warnings --ignore RUSTSEC-2024-0436
           else
             echo "::notice::No Cargo workspace yet."
           fi
@@ -109,3 +115,13 @@ jobs:
         with:
           format: cyclonedx-json
           artifact-name: infracanvas-sbom.cdx.json
+
+  no-egress:
+    name: Egress allowlist and no telemetry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Outbound host allowlist
+        run: node scripts/ci/check-egress-allowlist.mjs
+      - name: No analytics or telemetry in the lockfile
+        run: node scripts/ci/check-no-telemetry.mjs

@@ -73,6 +73,17 @@ export interface FlowArchitecture {
   edges: Edge[];
 }
 
+/**
+ * An inferred connection is drawn dashed and a declared one solid.
+ *
+ * A dashed line reads as provisional, which is what an edge derived from
+ * capability overlap is: the engine saw that both ends speak the same protocol.
+ * A connection the repository wrote down in a compose file is not provisional,
+ * and drawing the two identically would invite the user to check work that has
+ * already been stated.
+ */
+const INFERRED_EDGE_STYLE = { strokeDasharray: '6 4' };
+
 export function proposalToFlow(proposal: ArchitectureProposal): FlowArchitecture {
   const nodes = proposal.nodes
     .map(toFlowNode)
@@ -92,6 +103,10 @@ export function proposalToFlow(proposal: ArchitectureProposal): FlowArchitecture
         target: edge.target,
         label: edge.label,
         type: 'deletable',
+        // Carried onto the edge as well as drawn, so anything reading the canvas
+        // back can still tell a stated connection from a proposed one.
+        data: { origin: edge.origin },
+        ...(edge.origin === 'declared' ? {} : { style: INFERRED_EDGE_STYLE }),
       })),
   };
 }

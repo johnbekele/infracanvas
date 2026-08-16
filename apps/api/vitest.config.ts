@@ -7,5 +7,11 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     exclude: ['**/node_modules/**', '**/dist/**', 'src/**/*.integration.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['cobertura', 'text-summary'],
+      reportsDirectory: './coverage',
+      enabled: true,
+    },
   },
 });
