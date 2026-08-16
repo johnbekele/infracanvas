@@ -3,14 +3,18 @@
 //! Gate 6 compares each run against a stored baseline. Establishing the harness
 //! alongside the code it measures means the first real benchmark has somewhere
 //! to land. The `walk` bench exercises the repository walker over a generated
-//! tree; the `chunk` bench measures AST-boundary chunking of `tests/data/sample.ts`.
+//! tree; the `chunk` bench measures AST-boundary chunking of `tests/data/sample.ts`;
+//! the `embed` bench measures local embedding throughput for 128-token inputs.
 
 use std::fs;
 use std::hint::black_box;
 use std::path::Path;
 
-use criterion::{Criterion, criterion_group, criterion_main};
-use ic_engine::{ChunkOptions, EngineConfig, Language, WalkOptions, chunk_file, walk};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
+use ic_engine::{
+    ChunkOptions, Embedder, EngineConfig, Language, LocalEmbedder, LocalEmbedderOptions,
+    WalkOptions, chunk_file, walk,
+};
 use tempfile::TempDir;
 
 fn config_resolution(c: &mut Criterion) {
@@ -62,10 +66,39 @@ fn chunk_sample_typescript(c: &mut Criterion) {
     });
 }
 
+fn embed_batch_throughput(c: &mut Criterion) {
+    let mut options = LocalEmbedderOptions {
+        batch_size: 64,
+        ..LocalEmbedderOptions::default()
+    };
+    if LocalEmbedder::is_cached(&options) {
+        options.offline = true;
+    }
+    let embedder = LocalEmbedder::load(&options).expect("load embedder");
+
+    // Roughly 128 WordPiece tokens: repeated short tokens keep length stable.
+    let sample = "alpha beta gamma delta ".repeat(32);
+    let batch: Vec<&str> = std::iter::repeat_n(sample.as_str(), 64).collect();
+    let batch_len = batch.len() as u64;
+
+    let mut group = c.benchmark_group("embed");
+    group.throughput(Throughput::Elements(batch_len));
+    group.bench_function("embed", |b| {
+        b.iter(|| {
+            let vectors = embedder
+                .embed_batch(black_box(batch.as_slice()))
+                .expect("embed");
+            black_box(vectors.len());
+        });
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     config_resolution,
     walk_generated_tree,
-    chunk_sample_typescript
+    chunk_sample_typescript,
+    embed_batch_throughput
 );
 criterion_main!(benches);

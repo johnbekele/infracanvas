@@ -18,8 +18,18 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
+dirs = "6"
+# Image models are unused; keep the ONNX + hub features that download the
+# int8 bge-small weights on first load.
+fastembed = { version = "5.17", default-features = false, features = [
+    "hf-hub-native-tls",
+    "ort-download-binaries-native-tls",
+] }
 hex = "0.4"
 ignore = "0.4"
+# Matches the version fastembed pins; declared so the CPU execution provider
+# stays an explicit dependency of this crate rather than a transitive detail.
+ort = { version = "=2.0.0-rc.13", default-features = false }
 # Deliberately without the `extension-module` feature. That feature stops the
 # crate linking libpython, which is right for a wheel and fatal for
 # `cargo test --all-features`. maturin adds it at build time instead.
