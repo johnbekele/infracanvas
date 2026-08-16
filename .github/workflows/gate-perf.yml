@@ -96,7 +96,11 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/ci/seed-perf-run.sql
       - name: Benchmark against the stored baseline
         if: steps.guard.outputs.run == 'true'
-        run: cargo bench --workspace -- --baseline main --noplot
+        # `--benches` because the criterion flags below reach every benchable
+        # target, and a libtest harness rejects them. Lenient because no step
+        # restores a `main` baseline yet: compare where one exists, measure
+        # where it does not, and start enforcing when a baseline is stored.
+        run: cargo bench --workspace --benches -- --baseline-lenient main --noplot
       - name: Assert the peak RSS ceiling
         if: steps.guard.outputs.run == 'true'
         run: |

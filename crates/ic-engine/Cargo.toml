@@ -11,10 +11,14 @@ repository.workspace = true
 # can link the same code rather than duplicating it.
 name = "ic_engine"
 crate-type = ["cdylib", "rlib"]
+# `cargo bench` would otherwise run the unit tests under the libtest harness,
+# which rejects the criterion flags Gate 6 passes. Benchmarks live in benches/.
+bench = false
 
 [[bin]]
 name = "ic-engine"
 path = "src/main.rs"
+bench = false
 
 [dependencies]
 clap = { version = "4.5", features = ["derive", "env"] }
