@@ -7,8 +7,8 @@ works. Parsing and embedding a large repository from Node or Python means either
 a heap that rules out the ordinary laptop this is meant to run on.
 
 Right now the crate carries the skeleton (version, config, CLI, Python bridge), the repository
-walker (ignore rules, SHA-256 content hashing, Merkle manifest), and tree-sitter parsing plus
-AST-boundary chunking. Embedding lands later in the engine epic.
+walker (ignore rules, SHA-256 content hashing, Merkle manifest), tree-sitter parsing plus
+AST-boundary chunking, and a local int8 embedder for 384-dimension vectors.
 
 ## Two entry points
 
@@ -77,8 +77,8 @@ exactly one of added, modified, removed, or unchanged.
 
 `chunk_file` / `chunk_manifest` split source on declaration boundaries so a retrieved chunk is a
 thing a developer would recognise. Token counts come from the committed
-`assets/bge-small-en-v1.5/tokenizer.json` (no model weights), the same tokeniser the embedder will
-use.
+`assets/bge-small-en-v1.5/tokenizer.json` (no model weights), the same tokeniser the embedder
+uses when truncating long inputs.
 
 ### Supported languages
 
@@ -114,6 +114,35 @@ Postgres sink applies backpressure instead of accumulating the whole repository 
 2. Extend `Language` in `src/parse.rs` (extension, shebang, `name`, `grammar`, `query_source`).
 3. Add `queries/<language>.scm` with `@declaration` / `@name` / `@import` captures.
 4. Map new node kinds in `kind_from_node` only when the defaults do not already classify them.
+
+## Local embeddings
+
+`LocalEmbedder` runs the int8-quantised ONNX form of `bge-small-en-v1.5` through `fastembed` on
+ONNX Runtime's CPU execution provider. The dimension is fixed at 384 to match
+`chunk_embeddings.embedding halfvec(384)`. Vectors are L2-normalised before they leave the
+embedder so a unit-length vector loses less precision when stored as `halfvec`, and so dot
+product and cosine distance agree if a later query uses the cheaper operator.
+
+### Model cache and offline mode
+
+Weights are not in the repository. The first `LocalEmbedder::load` fetches
+`Qdrant/bge-small-en-v1.5-onnx-Q` into:
+
+- `$XDG_CACHE_HOME/infracanvas/models`, or
+- `~/.cache/infracanvas/models` when `XDG_CACHE_HOME` is unset
+
+Override the location with `LocalEmbedderOptions::cache_dir`. The same directory is shared by the
+CLI, the Python wheel, and CI.
+
+`LocalEmbedder::load` with `offline: true` and an empty cache returns `EmbedError::ModelNotCached`
+naming that directory, without opening a network socket. After the first successful fetch, a second
+load with `offline: true` succeeds from disk alone. `LocalEmbedder::is_cached` lets a caller warn
+before a download.
+
+`model_id()` returns `bge-small-en-v1.5-q` for the `chunk_embeddings.model` column. Inputs longer
+than `max_tokens()` (512) are truncated at a token boundary with the committed tokeniser rather than
+rejected. One `LocalEmbedder` instance is `Send + Sync` and serves every worker; the ONNX session is
+shared.
 
 ## Why `extension-module` is not in Cargo.toml
 
@@ -152,6 +181,6 @@ bump.
 
 ## Benchmarks
 
-`benches/ingest.rs` includes a `walk` criterion bench over a generated tree and a `chunk` bench over
-`tests/data/sample.ts`. Gate 6 compares runs against a stored baseline; the large perf fixture is
-owned by the index issue.
+`benches/ingest.rs` includes a `walk` criterion bench over a generated tree, a `chunk` bench over
+`tests/data/sample.ts`, and an `embed` bench for 128-token inputs at `batch_size: 64`. Gate 6
+compares runs against a stored baseline; the large perf fixture is owned by the index issue.
