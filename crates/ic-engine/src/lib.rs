@@ -23,6 +23,14 @@
     clippy::panic
 )]
 
+mod merkle;
+mod walk;
+
+pub use walk::{
+    BUILTIN_DENY_PATTERNS, FileRecord, ManifestDiff, RepoManifest, SkipReason, SkippedFile,
+    WalkError, WalkOptions, walk,
+};
+
 /// Limits on a single ingestion run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EngineConfig {

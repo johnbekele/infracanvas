@@ -6,9 +6,9 @@ This is Rust because it is the part of the system where memory and speed decide 
 works. Parsing and embedding a large repository from Node or Python means either one slow thread or
 a heap that rules out the ordinary laptop this is meant to run on.
 
-Right now it is a skeleton: a version function, a config type, a CLI, and the Python bridge. That is
-enough to establish both build targets and turn on the Rust halves of Gates 2, 3, and 5. Tree-sitter
-parsing, chunking, and embedding land in the engine epic.
+Right now the crate carries the skeleton (version, config, CLI, Python bridge) and the repository
+walker: ignore rules, SHA-256 content hashing, and a Merkle manifest. Tree-sitter parsing, chunking,
+and embedding land later in the engine epic.
 
 ## Two entry points
 
@@ -29,6 +29,49 @@ python -c "import ic_engine; print(ic_engine.version())"
 
 Both report the same version string, so a bug reported against one describes the same build as the
 other.
+
+## Repository walk and Merkle manifest
+
+`walk` answers which files are worth reading and which of them changed. It returns a `RepoManifest`
+with every hashed text file, every skipped path and reason, and a `root_hash` over the tree.
+
+### Ignore rules and the built-in deny list
+
+The walker uses `ignore::WalkBuilder` with `follow_links(false)` and `require_git(false)`, so a
+tarball checkout without a `.git` directory still honours `.gitignore` and `.ignore`. Symlinks are
+never followed; escaping links are recorded as `SkipReason::OutsideRoot` and their targets are not
+read.
+
+On top of ignore files, a built-in deny list drops content that is useless to index even when a
+repository forgets to exclude it:
+
+`.git/`, `node_modules/`, `target/`, `dist/`, `build/`, `.next/`, `vendor/`, `__pycache__/`,
+`.venv/`, `*.min.js`, `*.min.css`, `*.map`, `*.lock`, `pnpm-lock.yaml`, `package-lock.json`,
+`poetry.lock`, `Cargo.lock`, `uv.lock`.
+
+Ignored **files** appear in `skipped` with `SkipReason::Ignored` so a `.gitignore` change is visible
+in the manifest. Ignored **directories** are pruned and contribute nothing to the Merkle tree, so
+adding a vendored tree does not invalidate an unchanged root hash.
+
+Files over `max_file_bytes` are skipped without reading; a NUL in the first 8 KiB is `Binary`.
+
+### Merkle construction
+
+Hashing uses SHA-256 (matching `files.sha256`). The tree is defined exactly so two implementations
+cannot disagree:
+
+```text
+file entry     = sha256(contents)
+skipped entry  = sha256("skip\0" || reason_discriminant)
+directory hash = sha256( for each child, sorted by name as bytes:
+                           name || "\0" || kind || "\0" || child_hash || "\n" )
+                 where kind is "f", "s", or "d"
+root_hash      = directory hash of the root directory
+```
+
+Skipped entries participate so a size-cap crossing or an ignore change moves `root_hash`. Empty
+directories after filtering contribute nothing. `RepoManifest::diff` classifies every hashed path as
+exactly one of added, modified, removed, or unchanged.
 
 ## Why `extension-module` is not in Cargo.toml
 
@@ -67,6 +110,5 @@ bump.
 
 ## Benchmarks
 
-`benches/ingest.rs` is wired but nearly empty. Gate 6 compares each run against a stored baseline,
-and a harness that appears only alongside the code it measures has no baseline on the day it is
-needed.
+`benches/ingest.rs` includes a `walk` criterion bench over a generated tree. Gate 6 compares runs
+against a stored baseline; the large perf fixture is owned by the index issue.
