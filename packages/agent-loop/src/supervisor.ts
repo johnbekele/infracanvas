@@ -51,6 +51,9 @@ export interface RunOptions {
 export type IssueOutcome = 'merged' | 'delivered' | 'blocked' | 'failed';
 
 export class Supervisor {
+  /** Issues currently held, so a signal can release them before the process dies. */
+  private readonly active = new Map<number, { slug: string }>();
+
   constructor(
     private readonly config: LoopConfig,
     private readonly deps: SupervisorDeps
@@ -58,6 +61,27 @@ export class Supervisor {
 
   private stopRequested(): boolean {
     return existsSync(this.config.killSwitch);
+  }
+
+  /**
+   * Release every held claim and remove its worktree. Called from the CLI's
+   * signal handlers, because a SIGTERM or SIGINT skips the per-issue `finally`
+   * blocks — Node does not run them on a signal — and a claim that outlives the
+   * process would strand its issue behind a `status:in-progress` label nothing
+   * is working.
+   */
+  async shutdown(): Promise<void> {
+    const held = [...this.active.entries()];
+    for (const [issue, { slug }] of held) {
+      log.warn(`shutdown: releasing #${issue}`);
+      await this.deps.claims
+        .release(issue)
+        .catch((e) => log.warn(`release failed: ${describe(e)}`));
+      await this.deps.worktrees
+        .remove(slug)
+        .catch((e) => log.warn(`worktree remove failed: ${describe(e)}`));
+      this.active.delete(issue);
+    }
   }
 
   /** Build the live eligibility context from GitHub and the local claims. */
@@ -161,6 +185,7 @@ export class Supervisor {
         startedAt: new Date().toISOString(),
       });
       claimed = true;
+      this.active.set(issue.number, { slug });
       reporter.event('info', 'claim', `claimed #${issue.number}`);
 
       if (this.stopRequested()) return await this.abandon(issue, reporter, 'kill switch');
@@ -317,6 +342,7 @@ export class Supervisor {
           .remove(slug)
           .catch((e) => log.warn(`worktree remove failed: ${describe(e)}`));
       }
+      this.active.delete(issue.number);
     }
   }
 

@@ -86,6 +86,19 @@ async function main(): Promise<number> {
   const supervisor = buildSupervisor(config, github, mainCheckout);
   const runOptions = { onlyLane: args.lane, noMerge: args.noMerge };
 
+  // A signal skips the per-issue finally blocks, so release held claims and
+  // remove their trees here before exiting, or an interrupted run strands its
+  // issues behind a status:in-progress label.
+  let shuttingDown = false;
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      log.warn(`received ${signal}; releasing claims before exit`);
+      void supervisor.shutdown().finally(() => process.exit(130));
+    });
+  }
+
   log.banner(
     `InfraCanvas agent loop\n` +
       `  repo        ${config.repo}\n` +
