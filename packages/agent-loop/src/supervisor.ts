@@ -18,7 +18,7 @@ import { declaredPaths } from './conflicts';
 import { buildPullRequestBody, conventionalTitle } from './deliver';
 import { hasAiTrailer, hasSecret, scopeRespected } from './facts';
 import { Git } from './git';
-import type { GitHub } from './gh';
+import { GhError, type GitHub } from './gh';
 import * as log from './log';
 import { mergeDecision } from './merge';
 import { buildRepairPrompt, buildTaskPrompt } from './prompt';
@@ -477,6 +477,11 @@ function slugify(issue: Issue): string {
 }
 
 function describe(err: unknown): string {
+  // A gh failure without its stderr is just an exit code; the reason the command
+  // gives ("could not add label: 'agent-loop' not found") is the whole point.
+  if (err instanceof GhError && err.stderr.trim()) {
+    return `${err.message}: ${err.stderr.trim()}`;
+  }
   return err instanceof Error ? err.message : String(err);
 }
 

@@ -157,6 +157,26 @@ export class GitHub {
     await this.plain(['issue', 'comment', String(issue), '--repo', this.repo, '--body', body]);
   }
 
+  /**
+   * Ensure the label every loop-opened PR carries exists, so `pr create --label`
+   * does not fail on a fresh repository. `--force` makes it idempotent: it
+   * creates the label or updates it in place, and never errors on a re-run.
+   */
+  async ensureAgentLoopLabel(): Promise<void> {
+    await this.plain([
+      'label',
+      'create',
+      AGENT_LOOP_LABEL,
+      '--repo',
+      this.repo,
+      '--color',
+      '5319E7',
+      '--description',
+      'Opened by the autonomous agent loop',
+      '--force',
+    ]);
+  }
+
   /** Create a pull request and return its number. */
   async createPullRequest(input: {
     head: string;
@@ -164,6 +184,7 @@ export class GitHub {
     body: string;
     tier: Tier;
   }): Promise<number> {
+    await this.ensureAgentLoopLabel();
     await this.plain([
       'pr',
       'create',
