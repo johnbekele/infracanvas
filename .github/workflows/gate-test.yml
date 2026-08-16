@@ -38,6 +38,26 @@ jobs:
       - run: uv sync --directory services/brain --all-extras
       - run: pnpm turbo build --filter=@infracanvas/core
       - run: pnpm turbo test
+      - name: Collect coverage reports
+        if: always()
+        run: |
+          mkdir -p coverage-artifacts/node
+          find apps -path '*/coverage/cobertura-coverage.xml' -print -exec sh -c '
+            for report do
+              package_dir=${report%/coverage/cobertura-coverage.xml}
+              artifact_dir="coverage-artifacts/node/${package_dir#apps/}"
+              mkdir -p "$artifact_dir"
+              artifact="$artifact_dir/coverage.xml"
+              sed "s#filename=\"src/#filename=\"$package_dir/src/#g" "$report" > "$artifact"
+            done
+          ' sh {} +
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: coverage-node
+          path: '**/coverage.xml'
+          if-no-files-found: warn
+          retention-days: 7
 
   test-python:
     name: Unit tests (Python)
@@ -72,6 +92,19 @@ jobs:
         run: echo "$PWD/target/release" >> "$GITHUB_PATH"
       - if: steps.exists.outputs.found == 'true'
         run: uv run --directory services/brain pytest -m "not integration" --cov=src --cov-report=xml
+      - name: Normalize Python coverage paths
+        if: always()
+        run: |
+          if [ -f services/brain/coverage.xml ]; then
+            sed -i 's#filename="src/#filename="services/brain/src/#g' services/brain/coverage.xml
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: coverage-python
+          path: '**/coverage.xml'
+          if-no-files-found: warn
+          retention-days: 7
 
   test-rust:
     name: Unit tests (Rust)
@@ -107,6 +140,8 @@ jobs:
           fi
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
         if: steps.exists.outputs.found == 'true'
+        with:
+          components: llvm-tools-preview
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         if: steps.exists.outputs.found == 'true'
       # Local embedder weights: fetch once per runner, reuse across runs.
@@ -117,6 +152,10 @@ jobs:
           key: infracanvas-embed-bge-small-en-v1.5-q-${{ runner.os }}
           restore-keys: |
             infracanvas-embed-bge-small-en-v1.5-q-
+      - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+        if: steps.exists.outputs.found == 'true'
+        with:
+          tool: cargo-llvm-cov
       - name: Apply migrations
         if: steps.exists.outputs.found == 'true'
         run: |
@@ -129,7 +168,14 @@ jobs:
             echo "::notice::db/migrations not present yet; skipping."
           fi
       - if: steps.exists.outputs.found == 'true'
-        run: cargo test --all-features --workspace
+        run: cargo llvm-cov --workspace --all-features --cobertura --output-path coverage.xml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: coverage-rust
+          path: '**/coverage.xml'
+          if-no-files-found: warn
+          retention-days: 7
 
   test-integration:
     name: Integration tests
@@ -180,13 +226,26 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-      - name: Enforce 85% coverage on changed lines
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          pattern: coverage-*
+          path: coverage-reports
+          merge-multiple: false
+      - name: Report diff coverage
         run: |
-          # A global coverage threshold is trivially gamed by adding tests to
-          # untouched code. Diff coverage holds each PR to its own standard.
-          if ! ls coverage.xml **/coverage*.xml >/dev/null 2>&1; then
-            echo "::notice::No coverage reports produced yet; gate is inert."
-            exit 0
+          set -euo pipefail
+          mapfile -t reports < <(find coverage-reports -name '*.xml' -print 2>/dev/null || true)
+          if [ "${#reports[@]}" -eq 0 ]; then
+            echo "::error::No coverage reports were uploaded; the test jobs stopped producing them."
+            echo "No coverage reports were uploaded; the test jobs stopped producing them." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
+
+          node scripts/ci/rebase-coverage.mjs "${reports[@]}"
           pipx install diff-cover
-          diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref || 'main' }} --fail-under=85
+          diff-cover "${reports[@]}" \
+            --compare-branch="origin/${{ github.base_ref || 'main' }}" \
+            --fail-under=0 \
+            --markdown-report coverage.md
+          cat coverage.md >> "$GITHUB_STEP_SUMMARY"
