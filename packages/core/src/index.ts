@@ -42,6 +42,7 @@ export {
   type ArchitectureDecision,
   type ArchitectureProposal,
   type Confidence,
+  type EdgeOrigin,
   type ProposedEdge,
   type ProposedNode,
 } from './analysis/architecture';
