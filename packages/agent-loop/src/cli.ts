@@ -141,6 +141,9 @@ function buildSupervisor(
     claims: new ClaimStore(config.stateDir, github, config.assignee),
     adapters,
     integrationMutex: new FileMutex(config.stateDir, 'integration'),
+    // A short lease: worktree setup is seconds, so a lock older than this is a
+    // crashed lane, not a slow one, and must not wedge the other two.
+    worktreeMutex: new FileMutex(config.stateDir, 'worktree', 5 * 60 * 1000),
   });
 }
 

@@ -37,6 +37,14 @@ export interface SupervisorDeps {
   claims: ClaimStore;
   adapters: Record<Lane, AgentAdapter>;
   integrationMutex: FileMutex;
+  /**
+   * Serialises worktree creation across lanes. `new-worktree.sh` runs `git fetch`
+   * and `git worktree add` against the one shared `.git`, and two lanes fetching
+   * at once race on locking `refs/remotes/origin/main` — one wins, the other
+   * dies with "cannot lock ref". The agents still run in parallel; only the few
+   * seconds of tree setup are taken one lane at a time.
+   */
+  worktreeMutex: FileMutex;
 }
 
 export interface RunOptions {
@@ -196,7 +204,9 @@ export class Supervisor {
       if (this.stopRequested()) return await this.abandon(issue, reporter, 'kill switch');
 
       reporter.event('info', 'worktree', `creating worktree ${slug}`);
-      const tree = await this.deps.worktrees.create(slug, branch);
+      const tree = await this.deps.worktreeMutex.withLock(() =>
+        this.deps.worktrees.create(slug, branch)
+      );
       treeCreated = true;
       const git = new Git(tree.path);
 
