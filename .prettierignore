@@ -5,6 +5,11 @@ build
 coverage
 pnpm-lock.yaml
 
+# A worktree created under the repository root holds a whole second checkout of
+# another branch. CI never sees one, so checking it locally reports failures from
+# code that is not under review.
+.claude/worktrees
+
 # Python
 .venv
 uv.lock

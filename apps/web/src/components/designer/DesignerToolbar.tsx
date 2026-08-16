@@ -12,9 +12,11 @@ import {
   FolderArchive,
   Loader2,
   Github,
+  MessageSquare,
 } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
 import { useDesignerStore, type PulumiLanguage } from '@/lib/stores/designer-store';
+import { useCopilotStore } from '@/lib/stores/copilot-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   generateTerraformProject,
@@ -56,6 +58,9 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
   } = useDesignerStore();
 
   const { isAuthenticated, user } = useAuthStore();
+  const copilotOpen = useCopilotStore((s) => s.isOpen);
+  const openCopilot = useCopilotStore((s) => s.open);
+  const closeCopilot = useCopilotStore((s) => s.close);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isExporting, setIsExporting] = useState<'terraform' | 'pulumi' | null>(null);
@@ -333,6 +338,21 @@ export function DesignerToolbar({ isMobile = false }: DesignerToolbarProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={copilotOpen ? 'default' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => (copilotOpen ? closeCopilot() : openCopilot())}
+                aria-label={copilotOpen ? 'Close Copilot' : 'Open Copilot'}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{copilotOpen ? 'Close Copilot' : 'Open Copilot'}</TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>

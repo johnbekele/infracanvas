@@ -111,10 +111,21 @@ The ratchet blocks further growth; reducing it to the 250 KB target is tracked s
 
 ```bash
 pnpm install          # also installs the Gate 1 git hooks via lefthook
+pnpm verify           # runs locally what Gates 2 and 3 run in CI
 pnpm lint             # ESLint across the workspace
 pnpm format           # Prettier
 pnpm turbo typecheck  # TypeScript
 ```
+
+`pnpm verify` exists so the first honest verdict on a change does not arrive minutes after a push.
+It copies its commands from the gate workflows rather than reinventing them, reports every failure in
+one pass instead of stopping at the first, and marks a toolchain that is not installed as skipped
+rather than passed. `--fast` limits it to the static checks, `--integration` adds the Postgres-backed
+suites. Gates 4 to 6 still only run in CI.
+
+`AGENTS.md` is the instruction file all three coding agents read; `CLAUDE.md` is a symlink to it.
+`docs/ORCHESTRATION.md` covers running several agents at once — lane ownership, issue claiming, and
+worktree conventions.
 
 Install `gitleaks` (`brew install gitleaks`) so the pre-commit hook can scan staged changes for
 credentials. Without it the hook prints a warning and continues; CI still scans.

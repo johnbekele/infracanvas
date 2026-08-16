@@ -1,0 +1,26 @@
+---
+description: Migration rules enforced by Gate 4
+globs: db/migrations/**,apps/api/src/lib/db/**
+alwaysApply: false
+---
+
+# Migrations must be reversible
+
+`db/migrations` is the schema source of truth, applied by dbmate. Generated schema dumps
+(`db/schema.sql`) are gitignored; do not commit one and do not hand-edit it.
+
+- **Every migration needs a working `-- migrate down`.** Gate 4 applies up, rolls back, and applies
+  again. A down section that drops data the up section did not create fails the gate.
+- **Destructive DDL needs approval.** `DROP TABLE`, `DROP COLUMN` and narrowing type changes require
+  the `db:destructive-approved` label on the pull request. Prefer a reversible path: rename rather
+  than drop, so the provenance survives and the migration can be undone.
+- **Adding tenancy to an existing table is a rename, not a replacement.** `user_id` becomes the new
+  column by rename so the migration is reversible.
+- Treat this directory as tier-1-adjacent: it changes what the whole product can see.
+
+Verify before pushing:
+
+```bash
+pnpm db:migrate && pnpm db:rollback && pnpm db:migrate
+pnpm verify --integration   # needs DATABASE_URL
+```

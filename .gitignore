@@ -26,6 +26,15 @@ lerna-debug.log*
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea
+
+# Agent tooling. `.cursor/rules` and AGENTS.md are tracked deliberately: they are
+# the shared contract. These two are not.
+#   - Claude Code's --worktree flag checks a whole second working tree out under
+#     .claude/worktrees, nested .git and all. Untracked, a `git add -A` stages it
+#     into the repository it was created from.
+#   - settings.local.json is per-machine tool permissions.
+.claude/worktrees/
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj

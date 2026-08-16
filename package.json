@@ -21,6 +21,7 @@
     "test": "turbo run test",
     "test:integration": "turbo run test:integration",
     "typecheck": "turbo run typecheck",
+    "verify": "node scripts/ci/verify-local.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules",
@@ -33,13 +34,15 @@
     "gh:labels": "node scripts/gh/seed-labels.mjs",
     "gh:milestones": "node scripts/gh/seed-milestones.mjs",
     "gh:ruleset": "node scripts/gh/apply-ruleset.mjs",
-    "gh:issues": "node scripts/gh/seed-issues.mjs"
+    "gh:issues": "node scripts/gh/seed-issues.mjs",
+    "connector:dev": "node scripts/local-connector.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^9.18.0",
     "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.18.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.18",
