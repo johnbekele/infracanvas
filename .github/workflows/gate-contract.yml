@@ -17,11 +17,11 @@ jobs:
     name: Generated types match their schema
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-node
       # The Pydantic half of the generated types comes from
       # datamodel-code-generator, which the generator runs through uv.
-      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
         with:
           enable-cache: true
       - name: Regenerate IR types
@@ -44,7 +44,7 @@ jobs:
     name: API client matches the server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-node
       - name: Regenerate the OpenAPI client
         # Guarded on the generator, not on the service it would describe. The
@@ -79,7 +79,7 @@ jobs:
     env:
       DATABASE_URL: postgres://infracanvas:infracanvas@localhost:5432/infracanvas_migrate?sslmode=disable
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Up, down, up
         run: |
           if [ ! -d db/migrations ]; then
@@ -99,7 +99,7 @@ jobs:
     name: Destructive DDL requires approval
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Scan added migrations
@@ -136,7 +136,7 @@ jobs:
     name: IR schema changes require a version bump
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Compare schema and version
