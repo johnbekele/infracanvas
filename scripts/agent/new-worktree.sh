@@ -70,10 +70,35 @@ if [ "$ACTUAL_EMAIL" != "$EXPECTED_EMAIL" ]; then
 fi
 
 # One port block per tree, so concurrent dev servers cannot reach each other's
-# database. Offset by how many trees already exist.
-COUNT="$(git -C "$COMMON" worktree list --porcelain | grep -c '^worktree ' || echo 1)"
-API_PORT=$((3001 + COUNT * 10))
-WEB_PORT=$((5173 + COUNT * 10))
+# database.
+#
+# The port is claimed by reading what the other trees already wrote, not by
+# counting trees. A count shrinks when a tree is removed, so the next tree would
+# be handed a port a live tree is already using — and a duplicate here is the
+# silent failure this whole scheme exists to prevent.
+claimed_ports() {
+  git -C "$COMMON" worktree list --porcelain | sed -n 's/^worktree //p' | while read -r tree; do
+    [ -f "$tree/apps/api/.env" ] || continue
+    sed -n 's/^PORT=\([0-9][0-9]*\).*/\1/p' "$tree/apps/api/.env"
+  done
+}
+
+CLAIMED="$(claimed_ports | sort -u)"
+# Starts at 3011 rather than 3001: the primary checkout uses the 3001 default
+# without necessarily recording it anywhere.
+API_PORT=3011
+while :; do
+  if printf '%s\n' "$CLAIMED" | grep -qx "$API_PORT"; then
+    API_PORT=$((API_PORT + 10))
+    continue
+  fi
+  if command -v lsof >/dev/null 2>&1 && lsof -iTCP:"$API_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    API_PORT=$((API_PORT + 10))
+    continue
+  fi
+  break
+done
+WEB_PORT=$((5173 + API_PORT - 3001))
 
 if [ -f "$ROOT/apps/api/.env" ]; then
   cp "$ROOT/apps/api/.env" "$DEST/apps/api/.env"
@@ -84,6 +109,12 @@ elif [ -f "$DEST/apps/api/.env.example" ]; then
 fi
 
 if [ -f "$DEST/apps/api/.env" ]; then
+  # Drop the inherited definitions before appending. Two PORT= lines in one file
+  # leaves the effective value up to whether the loader takes the first or the
+  # last, which is not something a per-worktree port should depend on.
+  grep -vE '^[[:space:]]*(PORT|API_URL|APP_URL)=' "$DEST/apps/api/.env" \
+    >"$DEST/apps/api/.env.new" || true
+  mv "$DEST/apps/api/.env.new" "$DEST/apps/api/.env"
   {
     echo ""
     echo "# --- set by scripts/agent/new-worktree.sh for worktree '$SLUG' ---"
