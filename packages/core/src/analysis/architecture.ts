@@ -67,11 +67,24 @@ export interface ProposedNode {
   componentPath?: string;
 }
 
+/**
+ * Where a connection came from.
+ *
+ * `declared` means the repository states it: a compose `depends_on` naming the
+ * service on the other end. `inferred` means this engine derived it, from
+ * capability overlap or from the shape of the architecture. The distinction is
+ * worth carrying because the two invite different responses -- a declared edge
+ * is a fact about the repository and an inferred one is a proposal the user may
+ * know to be wrong.
+ */
+export type EdgeOrigin = 'declared' | 'inferred';
+
 export interface ProposedEdge {
   id: string;
   source: string;
   target: string;
   label?: string;
+  origin: EdgeOrigin;
 }
 
 export interface ArchitectureDecision {
@@ -241,6 +254,14 @@ export function proposeArchitecture(
     return null;
   };
 
+  /**
+   * The node that stands for a compose service, by the name compose gave it.
+   *
+   * `depends_on` is written in terms of these names, so resolving a declared
+   * dependency is a lookup here rather than a guess about what the name meant.
+   */
+  const nodeForComposeService = new Map<string, Draft>();
+
   const deployed = deployables(profile);
   const frontends = deployed.filter((component) => component.kind === 'frontend');
   const runnable = deployed.filter((component) => component.kind !== 'frontend');
@@ -258,6 +279,11 @@ export function proposeArchitecture(
   }
 
   // --- Front ends: one bucket and distribution per built site -----------------
+  //
+  // A front end's compose service is deliberately not registered against its
+  // nodes. `depends_on: [api]` from a front end container is about start-up order
+  // in development; once built, the bundle is files in a bucket and the browser
+  // reaches the services through the load balancer, which is already drawn.
 
   interface FrontendPair {
     bucket: Draft;
@@ -345,6 +371,9 @@ export function proposeArchitecture(
       if (endpoint) {
         computeDrafts.push(endpoint);
         computeByPath.set(component.path, endpoint);
+        if (component.composeService) {
+          nodeForComposeService.set(component.composeService, endpoint);
+        }
         sagemakerCount += 1;
         continue;
       }
@@ -386,6 +415,9 @@ export function proposeArchitecture(
     if (draft) {
       computeDrafts.push(draft);
       computeByPath.set(component.path, draft);
+      if (component.composeService) {
+        nodeForComposeService.set(component.composeService, draft);
+      }
     }
   }
 
@@ -410,6 +442,17 @@ export function proposeArchitecture(
    */
   const managedByCompose = (capability: Capability) =>
     profile.composeServices.filter((service) => service.capability === capability);
+
+  /**
+   * Register the compose services a node replaces, so a `depends_on` naming any
+   * of them resolves to it. Several compose services can share one node -- two
+   * Redis containers become one cache -- and each name still has to resolve.
+   */
+  const indexCompose = (capability: Capability, draft: Draft) => {
+    for (const service of managedByCompose(capability)) {
+      nodeForComposeService.set(service.name, draft);
+    }
+  };
 
   const componentsNeeding = (capability: Capability) =>
     deployed.filter((component) => component.capabilities.includes(capability));
@@ -446,6 +489,9 @@ export function proposeArchitecture(
         if (draft) {
           dataDrafts.push(draft);
           remember(engine === 'postgres' ? 'postgres' : 'mysql', draft);
+          // Registered per service rather than per capability: two declared
+          // databases are two nodes, and each name must reach its own.
+          nodeForComposeService.set(service.name, draft);
         }
       }
       return;
@@ -516,6 +562,7 @@ export function proposeArchitecture(
     if (draft) {
       dataDrafts.push(draft);
       remember(capability, draft);
+      indexCompose(capability, draft);
     }
   };
 
@@ -650,6 +697,7 @@ export function proposeArchitecture(
     if (draft) {
       externalDrafts.push(draft);
       remember(capability, draft);
+      indexCompose(capability, draft);
     }
   };
 
@@ -1021,19 +1069,74 @@ export function proposeArchitecture(
 
   // --- Edges: what talks to what ---------------------------------------------
 
-  const link = (source: string, target: string, label?: string) => {
+  /** First writer wins, which is how a declared edge displaces an inferred one. */
+  const link = (source: string, target: string, label: string, origin: EdgeOrigin) => {
     const id = `edge-${source}-${target}`;
     if (edges.some((edge) => edge.id === id)) return;
-    edges.push({ id, source, target, ...(label ? { label } : {}) });
+    edges.push({ id, source, target, label, origin });
   };
 
+  // --- Declared topology ------------------------------------------------------
+  //
+  // A compose `depends_on` is the repository stating its own shape, and it is
+  // drawn before anything is guessed. Capability overlap can only see that two
+  // services both speak Postgres; the compose file says which of the two
+  // databases each of them opens.
+  //
+  // The statement is only taken as complete for the services compose names. A
+  // bucket or a model API is not a compose service, so a declaration says
+  // nothing about them and nothing there is suppressed.
+
+  /** Nodes standing for a service compose declares. */
+  const composeDerived = new Set<string>();
+  for (const service of profile.composeServices) {
+    const node = nodeForComposeService.get(service.name);
+    if (node) composeDerived.add(node.id);
+  }
+
+  /** Node ids each compose service declared a dependency on. */
+  const declaredTargets = new Map<string, Set<string>>();
+
+  for (const service of profile.composeServices) {
+    const from = nodeForComposeService.get(service.name);
+    if (!from) continue;
+
+    const targets = new Set<string>();
+
+    for (const name of service.dependsOn) {
+      const to = nodeForComposeService.get(name);
+
+      if (!to) {
+        // A name compose never declares is a typo or an override this analysis
+        // did not read, and there is nothing to say about it. A name it does
+        // declare but that produced no node is a dependency being dropped, and
+        // the user should hear that rather than wonder where the arrow went.
+        if (profile.composeServices.some((other) => other.name === name)) {
+          gaps.push(
+            `${service.file} declares that ${service.name} depends on ${name}, but nothing was proposed for ${name}, so that connection is not drawn.`
+          );
+        }
+        continue;
+      }
+
+      // Two compose services can share one node -- two Redis containers, one
+      // cache -- and a dependency between them has nothing to draw.
+      if (to.id === from.id) continue;
+
+      targets.add(to.id);
+      link(from.id, to.id, 'depends_on', 'declared');
+    }
+
+    declaredTargets.set(service.name, targets);
+  }
+
   for (const pair of frontendPairs) {
-    link(pair.bucket.id, pair.cdn.id, 'origin');
+    link(pair.bucket.id, pair.cdn.id, 'origin', 'inferred');
   }
 
   if (albDraft) {
     for (const pair of frontendPairs) {
-      link(pair.cdn.id, albDraft.id, 'API requests');
+      link(pair.cdn.id, albDraft.id, 'API requests', 'inferred');
     }
   }
 
@@ -1048,14 +1151,28 @@ export function proposeArchitecture(
       component.kind !== 'worker' &&
       SERVING.some((c) => component.capabilities.includes(c))
     ) {
-      link(albDraft.id, draft.id, 'HTTP');
+      link(albDraft.id, draft.id, 'HTTP', 'inferred');
     }
+
+    const declared = component.composeService
+      ? declaredTargets.get(component.composeService)
+      : undefined;
+    const statesItsDependencies = declared !== undefined && declared.size > 0;
 
     for (const [capability, targets] of nodeForCapability) {
       if (!component.capabilities.includes(capability)) continue;
       for (const target of targets) {
         if (target.id === draft.id) continue;
-        link(draft.id, target.id, capability);
+
+        // Where this component declared what it depends on, that list is taken
+        // as complete for the services compose names. Adding the second database
+        // as well because the driver matches is how a service ends up drawn
+        // against storage it never opens.
+        if (statesItsDependencies && composeDerived.has(target.id) && !declared.has(target.id)) {
+          continue;
+        }
+
+        link(draft.id, target.id, capability, 'inferred');
       }
     }
 
@@ -1063,7 +1180,7 @@ export function proposeArchitecture(
     // from its own dependency rather than named in its manifest.
     const queue = nodeForCapability.get('background-jobs')?.[0];
     if (queue && component.kind === 'worker') {
-      link(draft.id, queue.id, 'consumes');
+      link(draft.id, queue.id, 'consumes', 'inferred');
     }
   }
 

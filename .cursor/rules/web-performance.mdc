@@ -1,0 +1,24 @@
+---
+description: Web performance budgets enforced by Gate 6
+globs: apps/web/**
+alwaysApply: false
+---
+
+# The bundle budget is a product requirement
+
+Gate 6 fails the pull request, not a dashboard.
+
+- **Initial JavaScript is ratcheted at 260 KB gzip**, against a 250 KB target. The app currently ships
+  around 255 KB in a single chunk, so the ratchet blocks growth; reducing it to 250 KB is tracked
+  separately. Adding a dependency to `apps/web` is a budget decision — check
+  `node scripts/ci/check-bundle-size.mjs` before assuming there is room.
+- **A 500-node canvas must hold 60fps.** Per-node work in a render path is the thing that breaks this.
+- `apps/web/vite.config.js` and `vite.config.d.ts` are build artefacts and gitignored. Do not commit
+  them; `tsc -b` emits them next to the source config.
+
+## Running a dev server here
+
+`vite.config.ts` hardcodes its proxy target to `http://localhost:3001`, so a web dev server started
+from any worktree calls the API on 3001 regardless of which worktree started it. **Run only one web
+dev server at a time**, or two agents will silently share one API and one database. See
+`docs/ORCHESTRATION.md`.

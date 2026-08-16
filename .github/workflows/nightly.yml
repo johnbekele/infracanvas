@@ -10,6 +10,14 @@ permissions:
   issues: write
 
 jobs:
+  self-host:
+    name: Self-host guide
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: node scripts/ci/verify-self-host.mjs
+
   e2e:
     name: End-to-end pipeline
     runs-on: ubuntu-latest
@@ -69,7 +77,7 @@ jobs:
 
   report-failure:
     name: Open an issue on failure
-    needs: [e2e, rag-eval, cost-accuracy]
+    needs: [self-host, e2e, rag-eval, cost-accuracy]
     if: failure()
     runs-on: ubuntu-latest
     steps:

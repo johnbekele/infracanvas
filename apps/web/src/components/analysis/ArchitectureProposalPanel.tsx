@@ -4,6 +4,7 @@ import type { ArchitectureProposal } from '@infracanvas/core';
 import { Button } from '@/components/ui/button';
 import { useDesignerStore } from '@/lib/stores/designer-store';
 import { proposalToFlow } from '@/lib/architecture/to-flow';
+import { edgeProvenance, provenanceSentence } from '@/lib/architecture/edge-provenance';
 
 interface ArchitectureProposalPanelProps {
   proposal: ArchitectureProposal;
@@ -25,6 +26,7 @@ export function ArchitectureProposalPanel({ proposal }: ArchitectureProposalPane
   };
 
   const hasArchitecture = proposal.nodes.length > 0;
+  const connections = provenanceSentence(edgeProvenance(proposal.edges));
 
   return (
     <div className="space-y-4">
@@ -38,6 +40,9 @@ export function ArchitectureProposalPanel({ proposal }: ArchitectureProposalPane
               ? `${proposal.nodes.length} resources, derived from the analysis above.`
               : 'Nothing was proposed for this repository.'}
           </p>
+          {connections && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{connections}</p>
+          )}
         </div>
 
         {hasArchitecture && (
