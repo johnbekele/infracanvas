@@ -117,6 +117,20 @@ class Cited[T](BaseModel):
     source: Literal["deterministic", "agent"]
 
 
+Verdict = Literal["supported", "unsupported", "span_missing", "span_changed"]
+
+
+class Verification(BaseModel):
+    verdict: Verdict
+    checked_by: Literal["literal", "model", "budget-exhausted"]
+    # Shown to the user next to the dropped finding, so it must read as English.
+    reason: str
+
+
+class VerifiedCited[T](Cited[T]):
+    verification: Verification
+
+
 class LanguageBreakdown(_CamelModel):
     name: str
     bytes: int
@@ -208,6 +222,39 @@ class CitedAppProfile(_CamelModel):
     def to_app_profile(self) -> dict[str, object]:
         """Strip the envelope. The result validates against the TypeScript
         `AppProfile` in packages/core/src/analysis/profile.ts."""
+        plain = AppProfile(
+            schema_version=self.schema_version,
+            commit_sha=self.commit_sha,
+            ref=self.ref,
+            analysed_at=self.analysed_at,
+            languages=self.languages,
+            components=[item.value for item in self.components],
+            dependencies=[item.value for item in self.dependencies],
+            containerisation=self.containerisation.value,
+            file_count=self.file_count,
+            total_bytes=self.total_bytes,
+            notes=self.notes,
+        )
+        return plain.model_dump(by_alias=True, mode="json")
+
+
+class VerifiedAppProfile(_CamelModel):
+    """CitedAppProfile after every finding has a standing, supported citation."""
+
+    schema_version: Literal[1]
+    commit_sha: str
+    ref: str
+    analysed_at: datetime
+    languages: list[LanguageBreakdown]
+    components: list[VerifiedCited[Component]]
+    dependencies: list[VerifiedCited[DetectedDependency]]
+    containerisation: VerifiedCited[Containerisation]
+    file_count: int
+    total_bytes: int
+    notes: list[str]
+
+    def to_app_profile(self) -> dict[str, object]:
+        """Strip the citation and verification envelopes."""
         plain = AppProfile(
             schema_version=self.schema_version,
             commit_sha=self.commit_sha,
