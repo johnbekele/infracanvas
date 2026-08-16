@@ -1,0 +1,20 @@
+{
+  "document": "three-tier",
+  "summary": "Connect the API to a cache nothing declares",
+  "ops": [
+    {
+      "op": "add_edge",
+      "edge": {
+        "id": "api-to-cache",
+        "kind": "connects",
+        "source": "ecs-api",
+        "target": "cache-sessions"
+      }
+    }
+  ],
+  "expect": {
+    "opIndex": 0,
+    "source": "precondition",
+    "why": "add_edge names a target the document does not contain, so the operation is refused before the document is ever handed to validateIr. An orphan edge cannot reach the validator through this protocol, which is the point of stating the precondition per operation."
+  }
+}
