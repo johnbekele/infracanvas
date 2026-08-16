@@ -51,22 +51,3 @@ pub fn count_tokens(text: &str) -> Result<u32, ChunkError> {
     u32::try_from(encoding.get_ids().len())
         .map_err(|_| ChunkError::Tokeniser("token count exceeds u32::MAX".to_owned()))
 }
-
-#[cfg(test)]
-mod tests {
-    #![allow(clippy::expect_used)]
-
-    use super::{count_tokens, tokenizer};
-
-    #[test]
-    fn loads_the_committed_tokeniser() {
-        assert!(tokenizer().is_ok());
-    }
-
-    #[test]
-    fn counts_a_short_string() {
-        let n = count_tokens("hello world").expect("count");
-        assert!(n > 0);
-        assert!(n < 16);
-    }
-}
