@@ -13,6 +13,10 @@ import type { CheckRun, Issue, OpenPullRequest, Tier } from './types';
 
 const AGENT_LOOP_LABEL = 'agent-loop';
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class GhError extends Error {
   constructor(
     message: string,
@@ -269,6 +273,27 @@ export class GitHub {
    */
   async updateBranch(pr: number): Promise<void> {
     await capture('gh', ['api', '-X', 'PUT', `repos/${this.repo}/pulls/${pr}/update-branch`]);
+  }
+
+  /**
+   * Like {@link pullRequestState}, but waits out GitHub's asynchronous
+   * mergeability computation. Right after a push or a branch update, `mergeable`
+   * is reported UNKNOWN for a few seconds until the background job finishes;
+   * merging on UNKNOWN wrongly gives up on a PR that is about to be mergeable.
+   */
+  async settledPullRequestState(
+    pr: number,
+    opts: { timeoutMs?: number; pollMs?: number } = {}
+  ): ReturnType<GitHub['pullRequestState']> {
+    const timeoutMs = opts.timeoutMs ?? 90_000;
+    const pollMs = opts.pollMs ?? 6_000;
+    const deadline = Date.now() + timeoutMs;
+    let state = await this.pullRequestState(pr);
+    while (state.mergeable === 'UNKNOWN' && Date.now() < deadline) {
+      await delay(pollMs);
+      state = await this.pullRequestState(pr);
+    }
+    return state;
   }
 
   /** Count of unresolved review threads, via GraphQL since REST does not expose it. */

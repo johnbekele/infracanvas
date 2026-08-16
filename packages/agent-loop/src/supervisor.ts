@@ -31,6 +31,10 @@ import type { Worktrees } from './worktree';
 
 const EXPECTED_EMAIL = '164889902+johnbekele@users.noreply.github.com';
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export interface SupervisorDeps {
   github: GitHub;
   worktrees: Worktrees;
@@ -345,13 +349,20 @@ export class Supervisor {
           return 'delivered';
         }
 
-        const state = await this.deps.github.pullRequestState(prNumber);
+        // GitHub computes mergeability asynchronously and reports UNKNOWN for a
+        // few seconds after any push, including our own branch update; settle it
+        // so a merge is never abandoned on a verdict that has not been made yet.
+        const state = await this.deps.github.settledPullRequestState(prNumber);
         if (state.mergeStateStatus === 'BEHIND') {
           if (sync >= this.config.budgets.branchSyncs) {
             return await this.block(issue, reporter, 'branch kept falling behind main');
           }
           reporter.event('info', 'merge', 'branch behind main; updating and re-verifying');
           await this.deps.github.updateBranch(prNumber);
+          // The update pushes a merge commit, which re-triggers the checks. Give
+          // GitHub time to reset them to pending before re-watching, or watchChecks
+          // sees the previous run still green and returns before the rerun starts.
+          await delay(this.config.budgets.rerunSettleMs);
           continue;
         }
 

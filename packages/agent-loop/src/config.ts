@@ -38,6 +38,12 @@ export interface LoopConfig {
      * others behind, so the loop resyncs and re-runs CI rather than blocking.
      */
     branchSyncs: number;
+    /**
+     * Pause after a branch update before re-watching CI, in ms. The update
+     * re-triggers the checks; without the pause, the watcher sees the prior
+     * green run and returns before the rerun has reset them to pending.
+     */
+    rerunSettleMs: number;
     /** Concurrent issues across all lanes. */
     concurrency: number;
     /** Consecutive failures that pause a lane. */
@@ -65,6 +71,7 @@ export function defaultConfig(overrides: Partial<LoopConfig> = {}): LoopConfig {
       localRepairs: 3,
       ciRepairs: 2,
       branchSyncs: 3,
+      rerunSettleMs: 30 * 1000,
       concurrency: 3,
       laneFailurePause: 2,
     },
