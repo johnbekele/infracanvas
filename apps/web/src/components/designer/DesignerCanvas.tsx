@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useRef, useState, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -10,9 +10,10 @@ import ReactFlow, {
   type Node,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Layers, X, ArrowRight } from 'lucide-react';
+import { Layers, MessageSquare, X, ArrowRight } from 'lucide-react';
 
 import { useDesignerStore, type ServiceNodeData } from '@/lib/stores/designer-store';
+import { useCopilotStore } from '@/lib/stores/copilot-store';
 import { type AWSService, canConnect } from '@infracanvas/core';
 import {
   CONTAINER_DEFAULT_SIZE,
@@ -34,6 +35,14 @@ import { CodePanel } from './CodePanel';
 import { DesignerToolbar } from './DesignerToolbar';
 import { DeletableEdge } from './DeletableEdge';
 import { Button } from '@/components/ui/button';
+
+/**
+ * Second lazy boundary inside the already-lazy designer route: opening the
+ * designer without opening chat downloads no copilot chunk.
+ */
+const CopilotPanel = lazy(() =>
+  import('@/components/copilot/CopilotPanel').then((module) => ({ default: module.CopilotPanel }))
+);
 
 const nodeTypes = {
   serviceNode: ServiceNode,
@@ -84,6 +93,9 @@ function DesignerCanvasInner() {
     reparentNode,
     resizeNode,
   } = useDesignerStore();
+
+  const copilotOpen = useCopilotStore((s) => s.isOpen);
+  const openCopilot = useCopilotStore((s) => s.open);
 
   // Check for mobile screen size
   useEffect(() => {
@@ -437,8 +449,30 @@ function DesignerCanvasInner() {
         <CodePanel isMobile={isMobile} />
       </div>
 
-      {/* Properties Panel */}
-      <PropertiesPanel isMobile={isMobile} />
+      {/* Right column: copilot above properties, matching the palette's mobile pattern */}
+      <div className="relative flex h-full min-h-0 flex-col">
+        {isMobile && !copilotOpen && (
+          <Button
+            variant="default"
+            size="sm"
+            className="absolute right-2 top-14 z-50 gap-2 shadow-lg"
+            onClick={openCopilot}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span className="text-xs">Copilot</span>
+          </Button>
+        )}
+
+        {copilotOpen && (
+          <Suspense fallback={null}>
+            <CopilotPanel isMobile={isMobile} />
+          </Suspense>
+        )}
+
+        <div className="min-h-0 flex-1">
+          <PropertiesPanel isMobile={isMobile} />
+        </div>
+      </div>
 
       {/* Estimate Panel */}
       <EstimatePanel isMobile={isMobile} />
