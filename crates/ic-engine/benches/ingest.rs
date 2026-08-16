@@ -3,14 +3,14 @@
 //! Gate 6 compares each run against a stored baseline. Establishing the harness
 //! alongside the code it measures means the first real benchmark has somewhere
 //! to land. The `walk` bench exercises the repository walker over a generated
-//! tree; the epic's 100k-file fixture is owned by the index issue / Gate 6.
+//! tree; the `chunk` bench measures AST-boundary chunking of `tests/data/sample.ts`.
 
 use std::fs;
 use std::hint::black_box;
 use std::path::Path;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use ic_engine::{EngineConfig, WalkOptions, walk};
+use ic_engine::{ChunkOptions, EngineConfig, Language, WalkOptions, chunk_file, walk};
 use tempfile::TempDir;
 
 fn config_resolution(c: &mut Criterion) {
@@ -44,5 +44,28 @@ fn walk_generated_tree(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, config_resolution, walk_generated_tree);
+fn chunk_sample_typescript(c: &mut Criterion) {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/sample.ts");
+    let source = fs::read_to_string(&path).expect("sample.ts");
+    let options = ChunkOptions::default();
+
+    c.bench_function("chunk", |b| {
+        b.iter(|| {
+            let chunks = chunk_file(
+                black_box(&source),
+                Some(Language::TypeScript),
+                black_box(&options),
+            )
+            .expect("chunk");
+            black_box(chunks.len());
+        });
+    });
+}
+
+criterion_group!(
+    benches,
+    config_resolution,
+    walk_generated_tree,
+    chunk_sample_typescript
+);
 criterion_main!(benches);

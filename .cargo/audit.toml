@@ -1,0 +1,27 @@
+# cargo-audit configuration, read by Gate 5 and by `cargo audit` run locally, so a
+# developer sees the same verdict the gate reaches.
+#
+# `cargo audit --deny warnings` stays as it is: every vulnerability, every yanked
+# crate, and every other unmaintained crate still fails the build. Only the single
+# advisory assessed below is accepted, and it is named by ID so a second retired
+# dependency cannot slip in behind it.
+
+[advisories]
+# RUSTSEC-2024-0436 - `paste` is no longer maintained.
+#
+# No vulnerability is claimed. `paste` is a proc-macro that concatenates
+# identifiers at compile time; it emits no code into the binary and reads nothing
+# at run time, so an unmaintained version cannot be exploited by repository
+# content the engine parses.
+#
+# It is unavoidable rather than accepted out of convenience. `paste` is a
+# required, non-optional dependency of every `tokenizers` release from 0.12
+# onwards, and `tokenizers` is what reads the committed `tokenizer.json`, so
+# `token_count` is the number the embedder will really see. `fastembed`, which
+# the embedder issue depends on, pulls the same crate. Cargo cannot substitute
+# the maintained `pastey` fork through `[patch.crates-io]`, because a patch must
+# point at a different source than the one it replaces.
+#
+# Remove this entry when `tokenizers` drops `paste`, and re-run
+# `cargo tree --invert paste` to confirm nothing else reintroduced it.
+ignore = ["RUSTSEC-2024-0436"]
