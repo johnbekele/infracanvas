@@ -6,9 +6,9 @@ This is Rust because it is the part of the system where memory and speed decide 
 works. Parsing and embedding a large repository from Node or Python means either one slow thread or
 a heap that rules out the ordinary laptop this is meant to run on.
 
-Right now the crate carries the skeleton (version, config, CLI, Python bridge) and the repository
-walker: ignore rules, SHA-256 content hashing, and a Merkle manifest. Tree-sitter parsing, chunking,
-and embedding land later in the engine epic.
+Right now the crate carries the skeleton (version, config, CLI, Python bridge), the repository
+walker (ignore rules, SHA-256 content hashing, Merkle manifest), and tree-sitter parsing plus
+AST-boundary chunking. Embedding lands later in the engine epic.
 
 ## Two entry points
 
@@ -73,6 +73,48 @@ Skipped entries participate so a size-cap crossing or an ignore change moves `ro
 directories after filtering contribute nothing. `RepoManifest::diff` classifies every hashed path as
 exactly one of added, modified, removed, or unchanged.
 
+## Parsing and chunking
+
+`chunk_file` / `chunk_manifest` split source on declaration boundaries so a retrieved chunk is a
+thing a developer would recognise. Token counts come from the committed
+`assets/bge-small-en-v1.5/tokenizer.json` (no model weights), the same tokeniser the embedder will
+use.
+
+### Supported languages
+
+| Language   | Extensions                             | Query file               |
+| ---------- | -------------------------------------- | ------------------------ |
+| TypeScript | `.ts`, `.d.ts`                         | `queries/typescript.scm` |
+| TSX        | `.tsx`                                 | `queries/tsx.scm`        |
+| JavaScript | `.js`, `.mjs`, `.cjs`, `.jsx`          | `queries/javascript.scm` |
+| Python     | `.py`, `.pyi`, `#!/usr/bin/env python` | `queries/python.scm`     |
+| Rust       | `.rs`                                  | `queries/rust.scm`       |
+| Go         | `.go`                                  | `queries/go.scm`         |
+
+Everything else falls back to `line_window` chunks rather than being dropped.
+
+### Chunking rules
+
+1. Split at the smallest `@declaration` capture (function, method, class, struct, interface, type
+   alias). Leading doc comments, attributes, and decorators attach to the declaration that follows.
+2. Imports and top-level `use` statements collapse into one `imports` chunk.
+3. A declaration above `max_tokens` (default 512) splits with `split_overlap_lines` of the signature
+   repeated on each continuation; split pieces keep the parent `symbol`.
+4. Consecutive declarations below `min_tokens` (default 64) merge when they share a parent; a method
+   never merges with the following class.
+5. Files with no grammar, parse timeouts, and tree-sitter `ERROR` ranges become `line_window`
+   chunks. Timeouts are counted in `ChunkStats::files_timed_out` and do not fail the run.
+
+`chunk_manifest` parses one file per worker and pushes results through a bounded channel so a slow
+Postgres sink applies backpressure instead of accumulating the whole repository in RAM.
+
+### Adding a grammar
+
+1. Add the `tree-sitter-*` crate to `Cargo.toml`.
+2. Extend `Language` in `src/parse.rs` (extension, shebang, `name`, `grammar`, `query_source`).
+3. Add `queries/<language>.scm` with `@declaration` / `@name` / `@import` captures.
+4. Map new node kinds in `kind_from_node` only when the defaults do not already classify them.
+
 ## Why `extension-module` is not in Cargo.toml
 
 That pyo3 feature stops the crate linking libpython, which is correct for a wheel and fatal for
@@ -110,5 +152,6 @@ bump.
 
 ## Benchmarks
 
-`benches/ingest.rs` includes a `walk` criterion bench over a generated tree. Gate 6 compares runs
-against a stored baseline; the large perf fixture is owned by the index issue.
+`benches/ingest.rs` includes a `walk` criterion bench over a generated tree and a `chunk` bench over
+`tests/data/sample.ts`. Gate 6 compares runs against a stored baseline; the large perf fixture is
+owned by the index issue.
