@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
+
+from brain.llm.metering import MeteredRunner
 
 # Matches the shared `fast` ceiling in packages/core/src/llm/reasoning.ts.
 # Issue 030 will replace this constant with reasoning_settings("fast", ...).
@@ -36,7 +39,13 @@ class Judge:
     # accident. Tests assert this stays vacant.
     repository_tools: tuple[()] = ()
 
-    def __init__(self, model: Model) -> None:
+    def __init__(
+        self,
+        model: Model,
+        *,
+        meter: MeteredRunner | None = None,
+        user_id: UUID | None = None,
+    ) -> None:
         self._model = model
         self._settings = ModelSettings(max_tokens=FAST_MAX_TOKENS)
         # No deps_type and no tools: a fresh call with only the prompt.
@@ -44,6 +53,8 @@ class Judge:
             output_type=JudgeBatchResult,
             system_prompt=JUDGE_SYSTEM_PROMPT,
         )
+        self._meter = meter or MeteredRunner.passthrough(model=model, model_settings=self._settings)
+        self._user_id = user_id if user_id is not None else UUID(int=0)
 
     @property
     def reasoning_scale(self) -> str:
@@ -69,12 +80,14 @@ class Judge:
             lines.append(f"   Span: {span}")
             lines.append("")
 
-        result = await self._agent.run(
+        result = await self._meter.run(
+            self._agent,
             "\n".join(lines),
-            model=self._model,
-            model_settings=self._settings,
+            deps=None,
+            purpose="judge",
+            user_id=self._user_id,
         )
-        answers = list(result.output.supported)
+        answers = list(result.supported)
         # Fail closed when the model returns the wrong arity.
         if len(answers) < len(claims):
             answers.extend([False] * (len(claims) - len(answers)))

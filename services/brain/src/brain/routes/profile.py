@@ -2,24 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
+from pydantic_ai.settings import ModelSettings
 
 from brain.db import open_pool
+from brain.llm.budget import BudgetExceededError
+from brain.llm.cache import ReasoningScale
 from brain.llm.credentials import load_default_credential
+from brain.llm.metering import MeteredRunner
 from brain.llm.providers import build_model
 from brain.profile.agent import ReasoningSettings, build_profile
-from brain.profile.judge import Judge
+from brain.profile.judge import FAST_MAX_TOKENS, Judge
 from brain.profile.models import AppProfileInput, VerifiedAppProfile
 from brain.profile.tools import ProfileDeps
 from brain.profile.verifier import PoolSpanReader, UnsupportedClaimError, verify_profile
 from brain.settings import load_settings
 
 router = APIRouter()
+
+_VALID_SCALES: frozenset[str] = frozenset({"fast", "balanced", "thorough"})
 
 
 class ProfileRequest(BaseModel):
@@ -39,6 +45,18 @@ class UnusableProfileError(ValueError):
     """The agent produced nothing that can be turned into a profile."""
 
 
+def _budget_exceeded_response(error: BudgetExceededError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+        detail={
+            "error": "budget_exceeded",
+            "usedTokens": error.used_tokens,
+            "budgetTokens": error.budget_tokens,
+            "resetsAt": error.resets_at.isoformat().replace("+00:00", "Z"),
+        },
+    )
+
+
 @router.post("/profile", response_model=ProfileResponse)
 async def create_profile(
     body: ProfileRequest,
@@ -50,7 +68,17 @@ async def create_profile(
     Ownership failures are 404 rather than 403 so the existence of another
     user's run is not confirmed.
     """
-    del reasoning_scale  # Scale mapping lands with issue 030; defaults apply.
+    scale: ReasoningScale = (
+        cast(ReasoningScale, reasoning_scale) if reasoning_scale in _VALID_SCALES else "balanced"
+    )
+    # Scale mapping lands with issue 030; max_tokens follow the shared ceilings.
+    max_tokens_by_scale: dict[ReasoningScale, int] = {
+        "fast": 2_048,
+        "balanced": 8_192,
+        "thorough": 32_768,
+    }
+    max_tokens = max_tokens_by_scale[scale]
+
     settings = load_settings()
     pool = await open_pool(settings)
 
@@ -119,10 +147,36 @@ async def create_profile(
         run_id=body.run_id,
         pool=pool,
     )
-    reasoning = ReasoningSettings(max_tokens=2048)
+    reasoning = ReasoningSettings(max_tokens=max_tokens)
+
+    profile_meter = MeteredRunner(
+        model=model,
+        model_settings=ModelSettings(max_tokens=max_tokens),
+        credential=credential,
+        scale=scale,
+        prompt_version="profile-v1",
+        max_output_tokens=max_tokens,
+    )
+    judge_meter = MeteredRunner(
+        model=model,
+        model_settings=ModelSettings(max_tokens=FAST_MAX_TOKENS),
+        credential=credential,
+        scale="fast",
+        prompt_version="judge-v1",
+        max_output_tokens=FAST_MAX_TOKENS,
+    )
 
     try:
-        profile = await build_profile(deterministic, deps, model, reasoning)
+        profile = await build_profile(
+            deterministic,
+            deps,
+            model,
+            reasoning,
+            meter=profile_meter,
+            user_id=x_user_id,
+        )
+    except BudgetExceededError as error:
+        raise _budget_exceeded_response(error) from error
     except UnusableProfileError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -140,10 +194,12 @@ async def create_profile(
         run_id=body.run_id,
         pool=pool,
     )
-    judge = Judge(model)
+    judge = Judge(model, meter=judge_meter, user_id=x_user_id)
 
     try:
         verified = await verify_profile(profile, reader, judge)
+    except BudgetExceededError as error:
+        raise _budget_exceeded_response(error) from error
     except UnsupportedClaimError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
