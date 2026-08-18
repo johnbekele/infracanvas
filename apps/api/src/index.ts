@@ -1,6 +1,7 @@
 // InfraCanvas API Server
 import express from 'express';
 import { corsMiddleware } from './middleware/cors.js';
+import { requireCsrf } from './middleware/csrf.js';
 import authRoutes from './routes/auth/index.js';
 import githubRoutes from './routes/github/index.js';
 import repositoryRoutes from './routes/repositories/index.js';
@@ -32,6 +33,7 @@ app.set('trust proxy', TRUST_PROXY_HOPS);
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(corsMiddleware);
+app.use(requireCsrf);
 
 // Health check. Reports the database separately so a load balancer can tell a
 // process that is up from one that cannot serve requests.
