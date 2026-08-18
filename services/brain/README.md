@@ -7,10 +7,45 @@ This is Python rather than TypeScript because it is where the agent and machine-
 lives, and rewriting that ecosystem in another language to avoid a second runtime would cost far
 more than running two.
 
-Right now it is a skeleton: an application factory, a health endpoint, and a database pool. That is
-deliberate. It establishes the toolchain and turns on the Python halves of Gates 2, 3, and 5, which
-until now logged "not present yet" and passed. Agents, retrieval, and generation arrive in later
-epics on top of this.
+Right now it is a skeleton: an application factory, a health endpoint, a database pool, and an MCP
+server entry point. That is deliberate. It establishes the toolchain and turns on the Python halves
+of Gates 2, 3, and 5, which until now logged "not present yet" and passed. Agents, retrieval, and
+generation arrive in later epics on top of this.
+
+## MCP server
+
+`brain-mcp` is a stdio MCP server inside this package. It exists so coding agents talk to the same
+Python tool functions the in-app copilot will use, rather than a second implementation over HTTP.
+Transport is stdio only; the process reads `DATABASE_URL` and `INFRACANVAS_TOKEN` from its
+environment. The protocol revision targeted is `2026-07-28` (`MCP_PROTOCOL_VERSION` in
+`brain.mcp.manifest`).
+
+```bash
+uv run --directory services/brain brain-mcp
+```
+
+Host configuration (Cursor / Claude Desktop and similar):
+
+```json
+{
+  "mcpServers": {
+    "infracanvas": {
+      "command": "uv",
+      "args": ["run", "--directory", "services/brain", "brain-mcp"],
+      "env": {
+        "DATABASE_URL": "postgres://infracanvas:infracanvas@localhost:5432/infracanvas",
+        "INFRACANVAS_TOKEN": "ic_pat_..."
+      }
+    }
+  }
+}
+```
+
+Interactive inspection (needs `npx`):
+
+```bash
+uv run --directory services/brain mcp dev brain.mcp.server:create_mcp_server
+```
 
 ## Working on it
 
