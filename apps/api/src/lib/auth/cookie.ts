@@ -19,8 +19,8 @@ export const CSRF_COOKIE = 'infracanvas_csrf';
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;
 
 function crossOriginCookieFlags(): Pick<CookieOptions, 'secure' | 'sameSite'> {
-  // Development shares an origin via the Vite proxy, so Lax is enough and
-  // Secure would refuse to set the cookie on http://localhost.
+  // Development shares an origin via the Vite proxy, so Lax is enough, and a
+  // Secure cookie would be dropped by the browser over plain http locally.
   const isDev = env().NODE_ENV === 'development';
   return {
     secure: !isDev,
