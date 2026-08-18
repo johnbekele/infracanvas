@@ -13,8 +13,6 @@ import pytest
 
 from brain.mcp.manifest import MCP_PROTOCOL_VERSION, SERVER_NAME
 
-pytestmark = pytest.mark.anyio
-
 BRAIN_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = BRAIN_DIR.parent.parent
 

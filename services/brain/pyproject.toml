@@ -59,7 +59,11 @@ warn_unreachable = true
 files = ["src", "tests"]
 
 [tool.pytest.ini_options]
-addopts = "-q --strict-markers"
+# anyio arrives transitively and its pytest plugin claims async fixtures too, so
+# with pytest-asyncio also installed the runner an async fixture gets depends on
+# plugin registration order. pytest-asyncio is this suite's runner; the other one
+# is switched off rather than left to chance.
+addopts = "-q --strict-markers -p no:anyio"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [

@@ -11,12 +11,12 @@ from mcp_types import TextContent
 from brain.mcp.errors import ToolError, ToolFailure
 from brain.mcp.server import create_mcp_server
 
-pytestmark = pytest.mark.anyio
 
+async def test_unknown_tool_is_a_protocol_error_not_a_tool_error() -> None:
+    async with Client(create_mcp_server(), raise_exceptions=True) as client:
+        with pytest.raises(MCPError) as raised:
+            await client.call_tool("definitely_not_registered", {})
 
-async def test_unknown_tool_is_a_protocol_error_not_a_tool_error(client: Client) -> None:
-    with pytest.raises(MCPError) as raised:
-        await client.call_tool("definitely_not_registered", {})
     assert raised.value.code == INVALID_PARAMS
     assert raised.value.code == -32602
 

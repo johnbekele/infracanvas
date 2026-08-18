@@ -8,12 +8,12 @@ from mcp.client import Client
 from brain.mcp.manifest import MCP_PROTOCOL_VERSION, SERVER_NAME
 from brain.mcp.server import create_mcp_server
 
-pytestmark = pytest.mark.anyio
 
+async def test_tool_order_is_stable_across_calls() -> None:
+    async with Client(create_mcp_server(), raise_exceptions=True) as client:
+        first = await client.list_tools()
+        second = await client.list_tools()
 
-async def test_tool_order_is_stable_across_calls(client: Client) -> None:
-    first = await client.list_tools()
-    second = await client.list_tools()
     assert [tool.name for tool in first.tools] == [tool.name for tool in second.tools]
 
 
