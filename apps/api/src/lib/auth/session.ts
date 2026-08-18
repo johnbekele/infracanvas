@@ -11,7 +11,8 @@ import { createSessionToken, SESSION_DURATION_MS, SESSION_MAX_AGE_MS } from '../
 import { findOrCreateUser } from '../db/users.js';
 import { saveGitHubToken } from '../db/tokens.js';
 import { createSession, type AuthMethodId } from '../db/sessions.js';
-import { setSessionCookie } from './cookie.js';
+import { CSRF_COOKIE, csrfCookieOptions, setSessionCookie } from './cookie.js';
+import { mintCsrfToken } from './csrf.js';
 
 const GITHUB_USER_URL = 'https://api.github.com/user';
 
@@ -105,6 +106,12 @@ export async function establishSession(
   });
 
   setSessionCookie(res, sessionToken, SESSION_DURATION_MS);
+  // Bound to the session row id so a rotated cookie always carries a matching
+  // CSRF companion. setSessionCookie also writes this on refresh.
+  res.cookie(CSRF_COOKIE, mintCsrfToken(session.id), {
+    ...csrfCookieOptions(),
+    maxAge: SESSION_DURATION_MS,
+  });
 
   return { ok: true, username: user.githubUsername };
 }

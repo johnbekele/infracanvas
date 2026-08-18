@@ -20,8 +20,26 @@ class ApiError extends Error {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+/** Must match `CSRF_COOKIE` in apps/api/src/lib/auth/cookie.ts. */
+export const CSRF_COOKIE = 'infracanvas_csrf';
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 if (import.meta.env.PROD && !API_BASE_URL) {
   console.warn('VITE_API_URL is unset; API requests will fail against a static deployment.');
+}
+
+/** Read the double-submit CSRF cookie the API sets alongside the session. */
+export function readCsrfToken(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const prefix = `${CSRF_COOKIE}=`;
+  for (const part of document.cookie.split(';')) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith(prefix)) {
+      return decodeURIComponent(trimmed.slice(prefix.length));
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -33,13 +51,23 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   // Use full URL for Render backend, or relative /api for local proxy
   const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : `/api${endpoint}`;
 
+  const method = (fetchOptions.method ?? 'GET').toUpperCase();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(fetchOptions.headers as Record<string, string> | undefined),
+  };
+
+  if (!SAFE_METHODS.has(method)) {
+    const csrf = readCsrfToken();
+    if (csrf) {
+      headers['X-CSRF-Token'] = csrf;
+    }
+  }
+
   const response = await fetch(url, {
     ...fetchOptions,
     credentials: 'include', // Include cookies for session
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
