@@ -8,6 +8,40 @@ without a network hop between systems.
 The image is `pgvector/pgvector:pg17`, which is stock Postgres 17 with the `vector` extension
 already built. A plain `postgres:17` image will fail on the first migration.
 
+## Tenancy
+
+Two levels, not one and not three.
+
+An **organization** owns billing, the plan, audit retention and organization-wide policy. A
+**workspace** is the isolation boundary: every tenant row carries `workspace_id`, and every row-level
+security policy compares against it. Projects, architectures, experiments and deployments live inside
+a workspace.
+
+A third level was considered and rejected. Teams that group members inside a workspace are a
+permissions convenience, and can be added later as a grouping over `workspace_members` without moving
+the boundary. Moving the boundary later is a migration of every table.
+
+A solo user gets an organization too. `kind = 'personal'` marks it, and nothing else about it is
+special: one member, one workspace, the same policies and the same code path. The alternative — a
+nullable `organization_id` meaning "just me" — puts a branch in every query and every policy, and the
+branch that is rarely exercised is the one that leaks.
+
+`organization_id` lives only on `workspaces`. Denormalising it onto every leaf table would make the
+policies marginally cheaper and would invite exactly one bug: a row whose `workspace_id` and
+`organization_id` disagree. The request context resolves workspace to organization once, on the way
+in.
+
+Deleting an organization that still has a workspace is refused by the database (`ON DELETE
+RESTRICT`). A cascade would let one `DELETE` remove an organization, its workspaces, and eventually
+every experiment and deployment record beneath them — including the rows naming AWS stacks that are
+still running and still billing. Deleting an organization has to be a workflow that destroys cloud
+resources and settles accounts, so the database refuses the shortcut.
+
+Slug uniqueness is enforced by partial unique indexes over `lower(slug)` `WHERE deleted_at IS NULL`,
+scoped to the organization for workspaces. Two organizations may each have a workspace called
+`production`; one organization may not have two. A soft-deleted workspace frees its slug for reuse,
+which is what makes the index partial rather than total.
+
 ## Running it locally
 
 ```bash
@@ -36,6 +70,25 @@ fails before it merges rather than during an incident.
 Dropping a table or column in `migrate:up` additionally requires the `db:destructive-approved`
 label. A `DROP` inside `migrate:down` is the normal way to write a reversible migration and is not
 flagged.
+
+When a column must be replaced rather than added, rename it instead of dropping it. A rename is
+reversible in one statement and keeps the provenance of the old values; a drop plus an insert is
+neither.
+
+### No new `ENUM` for a value set that will grow
+
+New value sets use `text` with a `CHECK`, not a Postgres `ENUM`.
+
+`ALTER TYPE ... ADD VALUE` has no inverse. Undoing it means recreating the type and rewriting every
+dependent column, which is destructive DDL inside `migrate:down` and fails the up/rollback/up round
+trip Gate 4 runs. Adding a value to a `CHECK` is reversed by dropping the constraint and adding the
+previous one back, which is an ordinary reversible statement.
+
+The `ENUM` types already in the schema — `analysis_status` and the others created before this policy
+— stay as they are. Rewriting them would be exactly the destructive migration the policy exists to
+avoid. `organizations.kind` and `organizations.plan` are the first columns written under it.
+
+A closed set that genuinely cannot grow is still a fair use of `ENUM`. In practice, very few are.
 
 `db/schema.sql` is not committed. The migrations are the source of truth, and a generated dump would
 only be one more thing to fall out of date.
