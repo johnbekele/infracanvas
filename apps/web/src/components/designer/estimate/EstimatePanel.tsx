@@ -7,8 +7,10 @@ import { useEstimate } from '@/lib/estimate/use-estimate';
 
 import { AssumptionEditor } from './AssumptionEditor';
 import { AvailabilitySummary } from './AvailabilitySummary';
+import { BottleneckSummary } from './BottleneckSummary';
 import { CostBreakdown } from './CostBreakdown';
 import { FindingsList } from './FindingsList';
+import { LatencySummary } from './LatencySummary';
 import { SloProposals } from './SloProposals';
 
 /**
@@ -72,6 +74,8 @@ export function EstimatePanel({ isMobile = false }: { isMobile?: boolean }) {
             <>
               <CostBreakdown cost={estimate.cost} />
               <AvailabilitySummary report={estimate.availability} />
+              <LatencySummary latency={estimate.latency} />
+              <BottleneckSummary report={estimate.bottleneck} />
               <SloProposals slos={estimate.slos} />
               <FindingsList findings={estimate.findings} />
 
