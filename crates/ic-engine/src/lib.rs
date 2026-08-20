@@ -11,7 +11,7 @@
 //! service calls in-process, so ingesting a repository does not serialise
 //! several hundred megabytes of chunks across a subprocess boundary.
 //!
-//! Parsing, chunking, and local embeddings land in this crate.
+//! Parsing, chunking, local embeddings, and Postgres indexing land in this crate.
 
 // The engine parses untrusted repository content, where a panic is a denial of
 // service rather than a crash report.
@@ -23,9 +23,12 @@
 )]
 
 mod chunk;
+mod db;
 mod embed;
+mod index;
 mod merkle;
 mod parse;
+mod rss;
 mod tokenise;
 mod walk;
 
@@ -33,6 +36,7 @@ pub use chunk::{
     Chunk, ChunkError, ChunkKind, ChunkOptions, ChunkStats, chunk_file, chunk_manifest,
 };
 pub use embed::{EmbedError, Embedder, LocalEmbedder, LocalEmbedderOptions};
+pub use index::{EmbedderChoice, IndexError, IndexOptions, IndexStats, index, index_with_embedder};
 pub use parse::Language;
 pub use tokenise::{count_tokens, tokenizer, tokenizer_path};
 pub use walk::{

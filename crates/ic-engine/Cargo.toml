@@ -11,13 +11,17 @@ repository.workspace = true
 # can link the same code rather than duplicating it.
 name = "ic_engine"
 crate-type = ["cdylib", "rlib"]
+# `cargo bench` would otherwise run the unit tests under the libtest harness,
+# which rejects the criterion flags Gate 6 passes. Benchmarks live in benches/.
+bench = false
 
 [[bin]]
 name = "ic-engine"
 path = "src/main.rs"
+bench = false
 
 [dependencies]
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.5", features = ["derive", "env"] }
 dirs = "6"
 # Image models are unused; keep the ONNX + hub features that download the
 # int8 bge-small weights on first load.
@@ -27,13 +31,19 @@ fastembed = { version = "5.17", default-features = false, features = [
 ] }
 hex = "0.4"
 ignore = "0.4"
+libc = "0.2"
 # Matches the version fastembed pins; declared so the CPU execution provider
 # stays an explicit dependency of this crate rather than a transitive detail.
 ort = { version = "=2.0.0-rc.13", default-features = false }
+# Synchronous client: indexing is CPU-bound and already parallel across threads.
+postgres = { version = "0.19", features = ["with-uuid-1"] }
+pgvector = { version = "0.4", features = ["halfvec", "postgres"] }
 # Deliberately without the `extension-module` feature. That feature stops the
 # crate linking libpython, which is right for a wheel and fatal for
 # `cargo test --all-features`. maturin adds it at build time instead.
 pyo3 = { version = "0.29", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 sha2 = "0.10"
 thiserror = "2"
 # 0.25 matches the grammar crates; 0.26 is ahead of them.
@@ -45,13 +55,18 @@ tree-sitter-rust = "0.24"
 tree-sitter-typescript = "0.23"
 # Tokeniser only — no hub download. `onig` is required for the WordPiece model.
 tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
+# v7 for chunk/file ids written via COPY (server defaults cannot be returned).
+uuid = { version = "1", features = ["v7", "serde"] }
 
 [features]
 python = ["dep:pyo3"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+postgres = { version = "0.19", features = ["with-uuid-1"] }
+serde_json = "1"
 tempfile = "3"
+uuid = { version = "1", features = ["v7", "serde"] }
 
 [[bench]]
 name = "ingest"
