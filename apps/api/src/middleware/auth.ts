@@ -57,11 +57,12 @@ function extractToken(req: Request): string | null {
  * copy would keep access until the token expired on its own. It is a primary
  * key lookup, which is the cheapest question the database can be asked.
  *
- * Tokens with no `sessionId` predate the sessions table and are trusted on
- * their signature alone, so an existing sign-in is not invalidated by a deploy.
+ * Every authenticated request resolves its session row. A token naming no
+ * session names nothing that can be revoked, so it is refused rather than
+ * trusted on its signature.
  */
 async function sessionIsLive(payload: SessionPayload): Promise<boolean> {
-  if (!payload.sessionId) return true;
+  if (!payload.sessionId) return false;
 
   try {
     return (await findLiveSession(payload.sessionId)) !== null;

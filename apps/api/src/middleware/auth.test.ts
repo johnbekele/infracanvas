@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { optionalAuth, requireAuth, SESSION_COOKIE_NAME } from './auth.js';
 import { createSessionToken } from '../lib/jwt.js';
 import { findLiveSession, touchSession } from '../lib/db/sessions.js';
+import { logError } from '../lib/log.js';
 
 // The session row is the only part of authentication that needs a database.
 // Mocking it keeps these tests runnable on a laptop with nothing installed,
@@ -12,8 +13,13 @@ vi.mock('../lib/db/sessions.js', () => ({
   touchSession: vi.fn(),
 }));
 
+vi.mock('../lib/log.js', () => ({
+  logError: vi.fn(),
+}));
+
 const liveSession = vi.mocked(findLiveSession);
 const extendSession = vi.mocked(touchSession);
+const loggedError = vi.mocked(logError);
 
 const SESSION_ROW = {
   id: 's-1',
@@ -30,6 +36,7 @@ const SESSION_ROW = {
 beforeEach(() => {
   liveSession.mockReset();
   extendSession.mockReset();
+  loggedError.mockReset();
   liveSession.mockResolvedValue(SESSION_ROW);
   extendSession.mockResolvedValue(true);
 });
@@ -82,7 +89,18 @@ function recordingResponse(): Recorded {
   return recorded;
 }
 
+/** A signed token that names a live session — the ordinary path. */
 async function validToken(): Promise<string> {
+  return createSessionToken({
+    userId: 'u-1',
+    githubId: 7,
+    githubUsername: 'johnbekele',
+    sessionId: 's-1',
+  });
+}
+
+/** A signed token with no sessionId — the compatibility shape that must now fail. */
+async function tokenWithoutSession(): Promise<string> {
   return createSessionToken({ userId: 'u-1', githubId: 7, githubUsername: 'johnbekele' });
 }
 
@@ -150,6 +168,17 @@ describe('optionalAuth', () => {
 
     expect(req.session).toBeUndefined();
   });
+
+  it('optionalAuth does not populate a session for a token that names none', async () => {
+    const req = requestWith({ authorization: `Bearer ${await tokenWithoutSession()}` });
+    const next = vi.fn();
+
+    await optionalAuth(req, recordingResponse().res, next);
+
+    expect(req.session).toBeUndefined();
+    expect(liveSession).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledOnce();
+  });
 });
 
 describe('requireAuth', () => {
@@ -175,7 +204,7 @@ describe('requireAuth', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('admits a valid token', async () => {
+  it('accepts a signed token naming a live session', async () => {
     const req = requestWith({ authorization: `Bearer ${await validToken()}` });
     const recorded = recordingResponse();
     const next = vi.fn();
@@ -184,7 +213,25 @@ describe('requireAuth', () => {
 
     expect(recorded.status).toBeNull();
     expect(req.session?.userId).toBe('u-1');
+    expect(req.session?.sessionId).toBe('s-1');
+    expect(liveSession).toHaveBeenCalledWith('s-1');
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('refuses a signed token that names no session', async () => {
+    const recorded = recordingResponse();
+    const next = vi.fn();
+
+    await requireAuth(
+      requestWith({ authorization: `Bearer ${await tokenWithoutSession()}` }),
+      recorded.res,
+      next
+    );
+
+    expect(recorded.status).toBe(401);
+    expect(recorded.body).toEqual({ error: 'Invalid or expired session' });
+    expect(liveSession).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 });
 
@@ -198,9 +245,8 @@ describe('session rows', () => {
     });
   }
 
-  it('rejects a session that has been revoked', async () => {
-    // The signature is still valid: revocation is the only thing saying no, and
-    // before the sessions table there was nothing to say it with.
+  it('refuses a signed token whose session was revoked', async () => {
+    // The signature is still valid: revocation is the only thing saying no.
     liveSession.mockResolvedValue(null);
 
     const recorded = recordingResponse();
@@ -213,6 +259,7 @@ describe('session rows', () => {
     );
 
     expect(recorded.status).toBe(401);
+    expect(recorded.body).toEqual({ error: 'Invalid or expired session' });
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -225,7 +272,7 @@ describe('session rows', () => {
     expect(req.session).toBeUndefined();
   });
 
-  it('refuses rather than admits when the session lookup fails', async () => {
+  it('fails closed when the session lookup throws', async () => {
     liveSession.mockRejectedValue(new Error('connection refused'));
 
     const recorded = recordingResponse();
@@ -236,16 +283,7 @@ describe('session rows', () => {
     );
 
     expect(recorded.status).toBe(401);
-  });
-
-  it('admits a token that predates the sessions table without a lookup', async () => {
-    const req = requestWith({ authorization: `Bearer ${await validToken()}` });
-    const next = vi.fn();
-
-    await requireAuth(req, recordingResponse().res, next);
-
-    expect(liveSession).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledOnce();
+    expect(loggedError).toHaveBeenCalledWith('Session lookup failed', expect.any(Error));
   });
 
   it('rewrites the session cookie when the token is close to expiry', async () => {
