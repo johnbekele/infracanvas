@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
+from uuid import UUID
 
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 
+from brain.llm.metering import MeteredRunner
 from brain.profile.merge import (
     format_rejection_prompt,
     merge_profiles,
@@ -75,6 +77,9 @@ async def build_profile(
     deps: ProfileDeps,
     model: Model,
     reasoning: ReasoningSettings,
+    *,
+    meter: MeteredRunner | None = None,
+    user_id: UUID | None = None,
 ) -> CitedAppProfile:
     """Run the agent, discard unsupported findings, and merge what survives
     into the deterministic profile. Deterministic findings win on conflict.
@@ -83,27 +88,31 @@ async def build_profile(
     reason, and the run ends after the second attempt regardless.
     """
     model_settings = _to_model_settings(reasoning)
+    runner = meter or MeteredRunner.passthrough(model=model, model_settings=model_settings)
+    uid = user_id if user_id is not None else UUID(int=0)
     orm_keys = {
         (dep.name, dep.ecosystem) for dep in deterministic.dependencies if dep.category == "orm"
     }
 
-    first = await profile_agent.run(
+    first = await runner.run(
+        profile_agent,
         _initial_prompt(deterministic),
-        model=model,
         deps=deps,
-        model_settings=model_settings,
+        purpose="profile",
+        user_id=uid,
     )
-    kept, rejected, notes = sanitize_agent_findings(first.output, deps.reads, orm_keys=orm_keys)
+    kept, rejected, notes = sanitize_agent_findings(first, deps.reads, orm_keys=orm_keys)
 
     if rejected:
-        second = await profile_agent.run(
+        second = await runner.run(
+            profile_agent,
             format_rejection_prompt(rejected),
-            model=model,
             deps=deps,
-            model_settings=model_settings,
+            purpose="profile-repair",
+            user_id=uid,
         )
         repaired, rejected_again, repair_notes = sanitize_agent_findings(
-            second.output, deps.reads, orm_keys=orm_keys
+            second, deps.reads, orm_keys=orm_keys
         )
         notes.extend(repair_notes)
         kept = AgentFindings(
