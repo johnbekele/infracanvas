@@ -21,7 +21,7 @@
     "express-rate-limit": "^8.6.2",
     "jose": "^5.2.0",
     "pg": "^8.13.1",
-    "smol-toml": "^1.7.1",
+    "smol-toml": "^1.8.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
